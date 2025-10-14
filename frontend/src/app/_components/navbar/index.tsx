@@ -24,7 +24,6 @@ export default function Navbar() {
               <AvatarFallback>Logo</AvatarFallback>
             </Avatar>
             <span className={`${iceland.className} text-2xl font-bold`}>HR Dashboard</span>
-            {/* TODO: Add font for HR Dashboard */}
           </div>
 
           {/* Nhóm bên trái: clock + notification + avatar */}
