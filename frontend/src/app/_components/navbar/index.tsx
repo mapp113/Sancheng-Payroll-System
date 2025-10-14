@@ -2,7 +2,9 @@
 import { usePathname } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Bell, ChevronDown, CircleChevronDown, Clock } from 'lucide-react';
+import localFont from "next/font/local";
 
+const iceland = localFont({ src: "../../../../public/fonts/Iceland-Regular.ttf", variable: "--font-iceland" })
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -21,7 +23,7 @@ export default function Navbar() {
               <AvatarImage src="logo.jpg" />
               <AvatarFallback>Logo</AvatarFallback>
             </Avatar>
-            <span className="text-2xl font-bold">HR Dashboard</span>
+            <span className={`${iceland.className} text-2xl font-bold`}>HR Dashboard</span>
             {/* TODO: Add font for HR Dashboard */}
           </div>
 
