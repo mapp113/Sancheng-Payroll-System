@@ -1,10 +1,12 @@
-
+import PayrollTable from "@/app/_components/payroll-table";
+import PayrollToolbar from "@/app/_components/payroll-toolbar";
 
 export default function payrollPage() {
-
+  
   return (
     <>
-      <h1>Payroll Management</h1>
+      <PayrollToolbar />
+      <PayrollTable />
     </>
   );
 }
