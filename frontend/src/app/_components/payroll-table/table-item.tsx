@@ -20,6 +20,10 @@ const payrollDetailHandler = () => {
   alert("Detail")
 }
 
+const payrolDownloadHandler = () => {
+  alert("Download")
+}
+
 export default function PayrollItem({ row }: { row: PayrollRow }) {
   return (
     <tr className="border-b last:border-b-0">
@@ -32,14 +36,14 @@ export default function PayrollItem({ row }: { row: PayrollRow }) {
       </td>
       <td className="px-4 py-4">
         <button
-          className="rounded-full bg-cyan-300/90 px-4 py-1 text-sm font-semibold text-slate-700 shadow"
-          onClick={() => alert(`Downloading payslip for ${row.name}`)}
+          className="rounded-full bg-cyan-300/90 px-4 py-1 text-sm font-semibold text-slate-700 shadow cursor-pointer"
+          onClick={payrolDownloadHandler}
         >
           Download
         </button>
       </td>
       <td className="px-4 py-4">
-          <Info className="inline-flex h-6 w-6 items-center justify-center" onClick={payrollDetailHandler}/>
+          <Info className="inline-flex h-6 w-6 items-center justify-center cursor-pointer" onClick={payrollDetailHandler}/>
       </td>
     </tr>
   );
