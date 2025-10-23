@@ -1,9 +1,10 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Dispatch, SetStateAction } from "react";
 import { Funnel } from "lucide-react";
 
-export default function FilterOption() {
+export default function FilterOption({ filter }: { filter: [string, Dispatch<SetStateAction<string>>] }) {
   const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState("ID");
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Đóng khi click ra ngoài hoặc nhấn ESC
@@ -24,6 +25,12 @@ export default function FilterOption() {
     };
   }, []);
 
+  const handleSelect = (value: string) => {
+    setSelected(value);
+    setOpen(false);
+    filter[0] = "value";
+  };
+
   return (
     <div className="relative inline-block">
       <button
@@ -32,7 +39,7 @@ export default function FilterOption() {
         className="flex items-center p-1 border border-black rounded-sm text-sm cursor-pointer bg-white hover:bg-gray-100"
       >
         <Funnel className="inline mr-1 h-4 w-4" />
-        Filters
+        {selected ? `Filter by: ${selected}` : "Filters"}
       </button>
 
       {open && (
@@ -44,7 +51,11 @@ export default function FilterOption() {
           <div className="space-y-2 text-sm">
             {["ID", "Name", "Position", "Salary"].map((item) => (
               <label key={item} className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="filter" value={item} />
+                <input
+                  type="radio"
+                  name="filter" value={item}
+                  checked={selected === item}
+                  onChange={() => handleSelect(item)} />
                 {item}
               </label>
             ))}

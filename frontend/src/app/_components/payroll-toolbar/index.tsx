@@ -2,6 +2,7 @@
 
 import { CloudUpload, Search } from "lucide-react";
 import FilterOption from "./filter-option";
+import { payrollQuery } from "../payroll-table/payroll-query-type";
 
 const backButtonHandler = () => {
   alert("Back")
@@ -11,7 +12,7 @@ const exportButtonHandler = () => {
   alert("Export")
 }
 
-export default function PayrollToolbar() {
+export default function PayrollToolbar({ search, filter, date }: payrollQuery) {
   return (
     <div className="flex items-end border-b border-black p-2">
       <button
@@ -28,15 +29,27 @@ export default function PayrollToolbar() {
           id="payroll-toolbar-search-input"
           className="inline focus:outline-0"
           placeholder="Search"
+          defaultValue={search[0]}
+          onKeyDown={(e) => {
+            if ((e as React.KeyboardEvent<HTMLInputElement>).key === "Enter") {
+              search[0] = (e.target as HTMLInputElement).value;
+            }
+          }}
         />
       </div>
 
-      <FilterOption />
+      <FilterOption filter={filter} />
 
       {/* Đưa nhóm bên phải */}
       <div className="flex items-center gap-2 ml-auto">
         <div className="flex items-center p-1 border border-black rounded-lg">
-          <input type="month" className="focus:outline-0" />
+          <input
+            type="month"
+            className="focus:outline-0"
+            onChange={(e) => {
+              date[0] = e.target.value;
+            }}
+          />
         </div>
         <button
           id="payroll-toolbar-export-button"
