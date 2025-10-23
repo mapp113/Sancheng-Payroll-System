@@ -1,9 +1,5 @@
-
+import { redirect } from "next/navigation";
 
 export default function Home() {
-  return (
-    <>
-    <div>The inside page</div>
-    </>
-  );
+  redirect("/login"); // chuyển thẳng đến trang login
 }
