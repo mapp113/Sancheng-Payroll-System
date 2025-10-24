@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, Dispatch, SetStateAction } from "react";
 import { Funnel } from "lucide-react";
 
-export default function FilterOption({ filter }: { filter: [string, Dispatch<SetStateAction<string>>] }) {
+export default function FilterOption({ filter, onReload }: { filter: [string, Dispatch<SetStateAction<string>>]} & { onReload: () => void } ) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState("ID");
   const panelRef = useRef<HTMLDivElement>(null);
@@ -28,7 +28,8 @@ export default function FilterOption({ filter }: { filter: [string, Dispatch<Set
   const handleSelect = (value: string) => {
     setSelected(value);
     setOpen(false);
-    filter[0] = "value";
+    filter[1](value);
+    onReload();
   };
 
   return (

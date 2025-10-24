@@ -12,7 +12,7 @@ const exportButtonHandler = () => {
   alert("Export")
 }
 
-export default function PayrollToolbar({ search, filter, date }: payrollQuery) {
+export default function PayrollToolbar({ search, filter, date, index, onReload }: payrollQuery & { onReload: () => void }) {
   return (
     <div className="flex items-end border-b border-black p-2">
       <button
@@ -32,13 +32,15 @@ export default function PayrollToolbar({ search, filter, date }: payrollQuery) {
           defaultValue={search[0]}
           onKeyDown={(e) => {
             if ((e as React.KeyboardEvent<HTMLInputElement>).key === "Enter") {
-              search[0] = (e.target as HTMLInputElement).value;
+              search[1]((e.target as HTMLInputElement).value);
+              index[1]("1");
+              onReload();
             }
           }}
         />
       </div>
 
-      <FilterOption filter={filter} />
+      <FilterOption filter={filter} onReload={onReload}/>
 
       {/* Đưa nhóm bên phải */}
       <div className="flex items-center gap-2 ml-auto">
@@ -47,7 +49,7 @@ export default function PayrollToolbar({ search, filter, date }: payrollQuery) {
             type="month"
             className="focus:outline-0"
             onChange={(e) => {
-              date[0] = e.target.value;
+              date[1](e.target.value);
             }}
           />
         </div>
