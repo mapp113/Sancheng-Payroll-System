@@ -7,10 +7,32 @@ import PayrollBody from "./table-body";
 import type { PayrollRow } from "./table-item";
 import { payrollQuery, payrollParam } from "./payroll-query-type";
 
+type jsonResponsePayroll = {
+  employeeCode: string;
+  fullName?: string;
+  positionName?: string;
+  netSalary?: number;
+  status?: string;
+  downloadUrl?: string;
+};
+
+function jsonToPayrollRow(json: jsonResponsePayroll[]) {
+  return json.map(element => ({
+    id: element.employeeCode,
+    name: String(element.fullName ?? "").trim(),
+    position: String(element.positionName ?? ""),
+    salary: Number(element.netSalary ?? 0),
+    status: (String(element.status ?? "").toLowerCase() === "approved" ? "green" :
+             String(element.status ?? "").toLowerCase() === "pending" ? "yellow" :
+             "red") as "green" | "yellow" | "red",
+    downloadUrl: String(element.downloadUrl ?? "").trim()
+  }));
+}
+
 // ===== CẤU HÌNH =====
 export const PAGE_SIZE = 5;
 // Bật/tắt fallback dữ liệu mẫu khi fetch lỗi
-const USE_SAMPLE_ON_ERROR = true;
+const USE_SAMPLE_ON_ERROR = false;
 
 // ===== DỮ LIỆU MẪU =====
 const sample: PayrollRow[] = [
@@ -42,17 +64,18 @@ export async function fetchPayrollData(
     const qs = new URLSearchParams();
     if (params) {
       if (params.sortBy != null && params.sortBy !== "") qs.append("sortBy", String(params.sortBy));
-      if (params.date != null && params.date !== "") qs.append("date", String(params.date));
+      if (params.date != null && params.date !== "") qs.append("date", String(params.date)+"-31");
       if (params.keyword != null && params.keyword !== "") qs.append("keyword", String(params.keyword));
-      if (params.page != null && params.page !== "") qs.append("index", String(params.page));
+      if (params.page != null && params.page !== ""&& params.page !== "1") qs.append("page", String(params.page));
     }
 
-    const url = "/api/payroll" + (qs.toString() ? `?${qs.toString()}` : "");
+    const url = "http://localhost:8080/api/paysummaries" + (qs.toString() ? `?${qs.toString()}` : "");
     console.log(url);
     const res = await fetch(url, { signal, cache: "no-store" });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
-    return (json?.data ?? []) as PayrollRow[];
+    //console.log("Payroll fetch response:", jsonToPayrollRow(json.content));
+    return (jsonToPayrollRow(json.content)) as PayrollRow[];
   } catch {
     return USE_SAMPLE_ON_ERROR ? sample : [];
   }
@@ -79,6 +102,7 @@ export default function PayrollPage({ filter, date, search, index, reloadFlag }:
   setLoading(true);
   try {
       const data = await fetchPayrollData(buildParams(), signal);
+      console.log("Fetched payroll data:", data);
       return setRows(data);
     } finally {
       return setLoading(false);

@@ -9,7 +9,7 @@ import { useCallback, useState } from "react";
 export default function PayrollPage() {
   const filter = useState("");
   const search = useState("");
-  const date = useState("");
+  const date = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   const [page, setPage] = useState("1"); // Initialize with "1" as string
   const [reloadFlag, setReloadFlag] = useState(0);
   const triggerReload = useCallback(() => {

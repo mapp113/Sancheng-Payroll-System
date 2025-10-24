@@ -8,6 +8,7 @@ export type PayrollRow = {
   position: string;
   salary: number | string;
   status: Status;
+  downloadUrl?: string;
 };
 
 const dotClass: Record<Status, string> = {
@@ -18,10 +19,6 @@ const dotClass: Record<Status, string> = {
 
 const payrollDetailHandler = () => {
   alert("Detail")
-}
-
-const payrolDownloadHandler = () => {
-  alert("Download")
 }
 
 export default function PayrollItem({ row }: { row: PayrollRow }) {
@@ -36,8 +33,15 @@ export default function PayrollItem({ row }: { row: PayrollRow }) {
       </td>
       <td className="px-4 py-4">
         <button
-          className="rounded-full bg-cyan-300/90 px-4 py-1 text-sm font-semibold text-slate-700 shadow cursor-pointer"
-          onClick={payrolDownloadHandler}
+          className="rounded-full bg-cyan-300/90 disabled:bg-gray-300/90 px-4 py-1 text-sm font-semibold text-slate-700 shadow cursor-pointer"
+          onClick={(e) => {
+            if (row.downloadUrl === "" || row.downloadUrl === undefined) {
+              //alert("No file available for download");
+              (e.target as HTMLButtonElement).disabled = true;
+            } else {
+              window.open(row.downloadUrl, "_blank");
+            }
+          }}
         >
           Download
         </button>

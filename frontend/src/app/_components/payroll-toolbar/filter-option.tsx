@@ -50,7 +50,7 @@ export default function FilterOption({ filter, onReload }: { filter: [string, Di
         >
           <p className="text-sm font-medium mb-2">Filter by:</p>
           <div className="space-y-2 text-sm">
-            {["ID", "Name", "Position", "Salary"].map((item) => (
+            {["ID", "Name", "Position", "Salary", "Status"].map((item) => (
               <label key={item} className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"

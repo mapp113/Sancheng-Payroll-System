@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react";
 import { CloudUpload, Search } from "lucide-react";
 import FilterOption from "./filter-option";
 import { payrollQuery } from "../payroll-table/payroll-query-type";
@@ -13,6 +14,7 @@ const exportButtonHandler = () => {
 }
 
 export default function PayrollToolbar({ search, filter, date, index, onReload }: payrollQuery & { onReload: () => void }) {
+
   return (
     <div className="flex items-end border-b border-black p-2">
       <button
@@ -51,6 +53,7 @@ export default function PayrollToolbar({ search, filter, date, index, onReload }
             onChange={(e) => {
               date[1](e.target.value);
             }}
+            value={date[0] || new Date().toISOString().slice(0, 7)}
           />
         </div>
         <button
