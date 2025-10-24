@@ -20,7 +20,7 @@ export default function Navbar() {
           {/* Nhóm bên phải: logo + tên dashboard */}
           <div className="flex items-center gap-3">
             <Avatar className="w-12 h-12">
-              <AvatarImage src="logo.jpg" />
+              <AvatarImage src="/logo.jpg" />
               <AvatarFallback>Logo</AvatarFallback>
             </Avatar>
             <span className={`${iceland.className} text-2xl font-bold`}>HR Dashboard</span>
@@ -38,7 +38,7 @@ export default function Navbar() {
             </span>
             <span className="flex items-center gap-1 cursor-pointer">
               <Avatar className="w-12 h-12">
-                <AvatarImage src="logo.jpg" />
+                <AvatarImage src="/logo.jpg" />
                 <AvatarFallback>Avatar</AvatarFallback>
               </Avatar>
               <span id="username">Nguyễn Văn A</span>
