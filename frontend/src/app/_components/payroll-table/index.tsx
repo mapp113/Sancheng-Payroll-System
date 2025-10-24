@@ -62,6 +62,7 @@ export default function PayrollPage({ filter, date, search, index, reloadFlag }:
   const [rows, setRows] = useState<PayrollRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [, setPageIndex] = index; // Extract the setter from index prop
 
   // Gom tham số build một lần theo props
   const buildParams = useCallback(() => ({
@@ -155,7 +156,10 @@ export default function PayrollPage({ filter, date, search, index, reloadFlag }:
         <Pagination
           currentPage={page}
           totalPages={totalPages}
-          onPageChangeAction={(p: number) => setPage(p)}
+          onPageChangeAction={(p: number) => {
+            setPage(p);
+            setPageIndex(p.toString()); // Update the page state in parent component
+          }}
         />
       )}
     </div>
