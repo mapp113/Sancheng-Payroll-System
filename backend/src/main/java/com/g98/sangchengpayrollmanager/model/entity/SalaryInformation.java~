@@ -1,0 +1,42 @@
+package com.g98.sangchengpayrollmanager.model.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "salary_infomation")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class SalaryInformation {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Integer id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "employee_code",
+            referencedColumnName = "employee_code",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_salary_user")
+    )
+    private User user; // FK tới user (nhiều salary info -> 1 user)
+
+    @Column(name = "base_salary", nullable = false)
+    private Integer baseSalary; // lương cơ bản
+
+    @Column(name = "base_hourly_rate", nullable = false)
+    private Integer baseHourlyRate; // lương theo giờ cơ bản
+
+    @Column(name = "date")
+    private LocalDate date; // ngày áp dụng hoặc tạo bản ghi
+
+    @Column(name = "status", length = 10)
+    private String status; // trạng thái (Active, Inactive,...)
+}

@@ -1,0 +1,4 @@
+package com.g98.sangchengpayrollmanager.model.entity;
+
+public class Employee_information {
+}
