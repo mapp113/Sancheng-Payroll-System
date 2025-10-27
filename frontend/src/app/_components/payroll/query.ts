@@ -34,7 +34,7 @@ export async function PayrollQuery(param: PayrollParam) : Promise<{content: Payr
   }
   const queryParams = new URLSearchParams();
   if (param.keyword) queryParams.set('keyword', param.keyword);
-  if (param.filter) queryParams.set('filter', param.filter);
+  if (param.sortBy) queryParams.set('sortBy', param.sortBy);
   if (param.date) queryParams.set('date', param.date + "-31");
   if (param.page) queryParams.set('page', param.page);
   const requestUrl = `${API_URL}?${queryParams.toString()}`;

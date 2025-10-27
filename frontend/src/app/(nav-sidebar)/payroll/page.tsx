@@ -10,7 +10,7 @@ import { useState } from "react";
 export default function PayrollPage() {
   const [payrollParams, setPayrollParams] = useState<PayrollParam>({
     keyword: "",
-    filter: "",
+    sortBy: "",
     date: new Date().toISOString().slice(0, 7),
     page: "0",
     totalPage: "",

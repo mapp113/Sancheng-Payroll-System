@@ -1,6 +1,6 @@
 export interface PayrollParam {
   keyword: string;
-  filter: string;
+  sortBy: string;
   date: string;
   page: string;
   totalPage: string;
