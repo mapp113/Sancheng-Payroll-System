@@ -1,36 +1,28 @@
 "use client"
 
-import PayrollTable from "@/app/_components/payroll-table";
-import PayrollToolbar from "@/app/_components/payroll-toolbar";
-import { useCallback, useState } from "react";
-
+import { DataContext, ParamsContext } from "@/app/_components/payroll/payroll-context";
+import PayrollTable from "@/app/_components/payroll/table";
+import PayrollToolbar from "@/app/_components/payroll/toolbar";
+import { PayrollParam, PayrollRecord } from "@/app/_components/payroll/type";
+import { useState } from "react";
 
 
 export default function PayrollPage() {
-  const filter = useState("");
-  const search = useState("");
-  const date = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
-  const [page, setPage] = useState("1"); // Initialize with "1" as string
-  const [reloadFlag, setReloadFlag] = useState(0);
-  const triggerReload = useCallback(() => {
-    setReloadFlag((f) => f + 1); // đổi giá trị -> PayrollPage chạy lại useEffect
-  }, []);
+  const [payrollParams, setPayrollParams] = useState<PayrollParam>({
+    keyword: "",
+    filter: "",
+    date: new Date().toISOString().slice(0, 7),
+    page: "0",
+    totalPage: "",
+  });
+  const [payrollData, setPayrollData] = useState<PayrollRecord[]>([]);
   
   return (
-    <div className="flex flex-col h-full p-3 box-border">
-      <PayrollToolbar filter={filter} search={search} date={date} index={[page, setPage]} onReload={triggerReload}/>
-      <div className="flex-1 mt-2">
-        {/* Vùng bảng chiếm hết phần còn lại, không cuộn */}
-        <section className="h-full rounded-xl flex flex-col justify-between">
-          <PayrollTable 
-            filter={filter} 
-            search={search} 
-            date={date} 
-            index={[page, setPage]} 
-            reloadFlag={reloadFlag}
-          />
-        </section>
-      </div>
-    </div>
+    <ParamsContext.Provider value={{ payrollParams, setPayrollParams }}>
+      <DataContext.Provider value={{ payrollData, setPayrollData }}>
+        <PayrollToolbar />
+        <PayrollTable />
+      </DataContext.Provider>
+    </ParamsContext.Provider>
   );
 }
