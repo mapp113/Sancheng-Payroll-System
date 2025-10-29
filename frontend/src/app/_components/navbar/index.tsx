@@ -1,18 +1,29 @@
 "use client";
 
+import {useEffect, useState} from "react";
 import {usePathname} from "next/navigation";
 import localFont from "next/font/local";
+import {jwtDecode} from "jwt-decode";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Bell, ChevronDown, CircleChevronDown, Clock} from "lucide-react";
 
 const iceland = localFont({
-    src: "../../../../public/fonts/Iceland-Regular.ttf", // chỉnh lại path theo vị trí file của bạn
+    src: "../../../../public/fonts/Iceland-Regular.ttf",
     variable: "--font-iceland",
 });
+
+// Interface cho token payload
+interface JwtPayload {
+    sub: string; // username trong token
+    full_name: string;
+    exp?: number;
+    iat?: number;
+}
 
 export default function Navbar() {
     const pathname = usePathname();
     const noLayoutRoutes = ["/login", "/register"];
+    const [username, setUsername] = useState<string | null>(null);
 
     // Ẩn navbar ở các route không cần layout
     if (pathname && noLayoutRoutes.includes(pathname)) return null;
@@ -20,6 +31,24 @@ export default function Navbar() {
     const dashboardTitle = pathname?.startsWith("/manager")
         ? "Manager Dashboard"
         : "HR Dashboard";
+
+    useEffect(() => {
+        try {
+            const userStr = window.sessionStorage.getItem("scpm.auth.user");
+            if (!userStr) return;
+
+            const parsed = JSON.parse(userStr);
+            const token = parsed?.token;
+            if (!token) return;
+
+            // Giải mã token để lấy sub
+            const decoded = jwtDecode<JwtPayload>(token);
+            setUsername(decoded.full_name || "Unknown User");
+        } catch (error) {
+            console.error("JWT decode error:", error);
+            setUsername("Unknown User");
+        }
+    }, []);
 
     return (
         <nav
@@ -52,7 +81,7 @@ export default function Navbar() {
             <AvatarImage src="/logo.jpg" alt="User avatar"/>
             <AvatarFallback>Avatar</AvatarFallback>
           </Avatar>
-          <span id="username">Nguyễn Văn A</span>
+          <span id="username">{username || "Loading..."}</span>
         </span>
 
                 <CircleChevronDown/>
