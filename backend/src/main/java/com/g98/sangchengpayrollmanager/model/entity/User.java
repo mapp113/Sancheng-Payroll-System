@@ -45,4 +45,8 @@ public class User {
     @JoinColumn(name = "role_id", nullable = false, foreignKey = @ForeignKey(name = "fk_user_role"))
     private Role role;
 
+    // 1 = Hoạt động, 0 = Tạm khóa
+    @Column(name = "status", nullable = false)
+    private Integer status;
 }
+

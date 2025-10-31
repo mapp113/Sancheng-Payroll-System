@@ -49,8 +49,9 @@ public class JwtService {
             Map<String, Object> claims = new HashMap<>();
             claims.put("username", username);
             claims.put("full_name", fullName);
-            claims.put("role", role);
-            // 👈 thêm full_name vào token
+            // 👇 chỉ cho string + id vào token
+            claims.put("role_name", role.getName());     // "Admin", "HR", ...
+            claims.put("role_id", role.getId());         // 1,2,3,...
 
             log.info("Tạo token cho user: {}", username);
             log.info("Thời gian tạo: {} ({})", now, ZonedDateTime.ofInstant(now, VIETNAM_ZONE));
@@ -82,8 +83,21 @@ public class JwtService {
      * Trích xuất role từ token
      */
     public String extractRole(String token) {
-        Claims claims = extractAllClaims(token);
-        return claims.get("role", String.class);
+        return extractClaim(token, claims -> {
+            Object roleName = claims.get("role_name");
+            if (roleName != null) return roleName.toString();
+
+            // token cũ: "role": {"id":1,"name":"Admin"}
+            Object roleObj = claims.get("role");
+            if (roleObj instanceof Map<?, ?> map) {
+                Object name = map.get("name");
+                return name != null ? name.toString() : null;
+            }
+            if (roleObj instanceof String s) {
+                return s;
+            }
+            return null;
+        });
     }
 
 
@@ -194,4 +208,12 @@ public class JwtService {
     public String getUsernameFromToken(String token) {
         return extractUsername(token);
     }
+
+    /**
+     * Trả access token (JWT) từ thông tin user — tiện gọi nhanh trong AuthService.
+     */
+    public String getAccessToken(String username, String fullName, Role role) {
+        return generateToken(username, fullName, role);
+    }
+
 }

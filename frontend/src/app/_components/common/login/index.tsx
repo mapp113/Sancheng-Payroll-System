@@ -25,9 +25,7 @@ type LoginErrorResponse = {
 type JwtPayload = {
     full_name?: string
     name?: string
-    role?: {
-        name?: string
-    }
+    role_name?: string
 }
 // ánh xạ role → đường dẫn
 const ROLE_REDIRECTS: Record<string, string> = {
@@ -45,6 +43,7 @@ export async function login(payload: LoginPayload): Promise<AuthenticatedUser> {
         body: JSON.stringify(payload),
     })
 
+
     // ❌ Nếu lỗi
     if (!response.ok) {
         let message =
@@ -52,18 +51,22 @@ export async function login(payload: LoginPayload): Promise<AuthenticatedUser> {
         try {
             const data = (await response.json()) as LoginErrorResponse
             if (data?.message?.trim()) message = data.message
+
         } catch {
         }
+
         throw new Error(message)
     }
 
     // ✅ Nếu thành công
     const data = (await response.json()) as LoginSuccessResponse
+    localStorage.setItem("access_token", data.token);
+
     //  const decoded: any = jwtDecode(data.token)
     const decoded = jwtDecode<JwtPayload>(data.token)
 
     const fullName = decoded.full_name ?? decoded.name ?? ""
-    const role = decoded.role?.name?.toUpperCase?.() ?? "EMPLOYEE"
+    const role = decoded.role_name?.toUpperCase?.() ?? "EMPLOYEE"
 
     return {
         fullName,
