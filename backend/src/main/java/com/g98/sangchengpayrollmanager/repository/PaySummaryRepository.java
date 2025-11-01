@@ -61,4 +61,14 @@ public interface PaySummaryRepository extends JpaRepository<PaySummary,Integer> 
     Optional<PaySummary> findByUserEmployeeCodeAndDateAndStatus(String employeeCode,
                                                                 LocalDate date,
                                                                 String status);
+
+    // tìm paysummaryDetail 1 nhân viên trong 1 tháng
+    @Query("""
+        select ps from PaySummary ps
+        left join fetch ps.components c
+        where ps.user.employeeCode = :employeeCode
+          and ps.date = :month
+    """)
+    Optional<PaySummary> findWithComponentsByEmployeeAndMonth(@Param("employeeCode") String employeeCode,
+                                                              @Param("month") LocalDate month);
 }

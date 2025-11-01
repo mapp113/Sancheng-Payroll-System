@@ -1,6 +1,8 @@
 package com.g98.sangchengpayrollmanager.service;
 
+import com.g98.sangchengpayrollmanager.model.dto.payroll.response.PaySummaryDto;
 import com.g98.sangchengpayrollmanager.model.dto.payroll.response.PaySummaryResponse;
+import com.g98.sangchengpayrollmanager.model.entity.PaySummary;
 import com.g98.sangchengpayrollmanager.repository.PaySummaryRepository;
 import com.g98.sangchengpayrollmanager.util.PaySummarySorts;
 import lombok.RequiredArgsConstructor;
@@ -19,12 +21,40 @@ public class PaySummaryService {
     private final PaySummaryRepository repo;
 
     public Page<PaySummaryResponse> getPaySummariesByDate(LocalDate date, String keyword,String sortBy, String sortDir, int page, int size) {
-        String sortField = PaySummarySorts.MAP.getOrDefault(sortBy, "si.user.employeeCode");
+        String sortField = PaySummarySorts.MAP.getOrDefault(sortBy.toLowerCase(), "si.user.employeeCode");
         Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
         String searchValue = (keyword == null || keyword.isBlank()) ? "" : keyword.trim();
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
 
 
         return repo.findSummariesByDate(date, searchValue,pageable);
+    }
+
+    public PaySummaryDto getEmployeePayroll(String employeeCode, LocalDate month) {
+        PaySummary ps = repo
+                .findWithComponentsByEmployeeAndMonth(employeeCode, month)
+                .orElseThrow(() -> new IllegalArgumentException("Không có paysummary tháng này"));
+
+        return new PaySummaryDto(
+                employeeCode,
+                ps.getDate(),
+                ps.getGrossIncome(),
+                ps.getAssessableIncome(),
+                ps.getTaxableIncome(),
+                ps.getTaxAmount(),
+                ps.getBhAmount(),
+                ps.getNetSalary(),
+                ps.getOtHour(),
+                ps.getOtAmount(),
+                ps.getBaseSalaryAmt(),
+                ps.getComponents().stream().map(c ->
+                        new PaySummaryComponentDto(
+                                c.getComponentName(),
+                                c.getComponentType(),
+                                c.getAmount(),
+                                c.getNote()
+                        )
+                ).toList()
+        );
     }
 }

@@ -1,6 +1,5 @@
 package com.g98.sangchengpayrollmanager.controller;
 
-import com.g98.sangchengpayrollmanager.model.dto.payroll.response.PaySummaryDto;
 import com.g98.sangchengpayrollmanager.model.dto.payroll.response.PaySummaryResponse;
 import com.g98.sangchengpayrollmanager.service.PaySummaryService;
 import lombok.RequiredArgsConstructor;
@@ -33,14 +32,5 @@ public class PaySummaryController {
                                               @RequestParam(defaultValue = "asc") String sortDir
     ) {
         return service.getPaySummariesByDate(date, keyword, sortBy, sortDir, page, size);
-    }
-
-    @GetMapping("/detail")
-    public PaySummaryDto getDetail(
-            @RequestParam String employeeCode,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate month
-    ) {
-        // gọi đúng hàm bạn đã viết trong service
-        return service.getEmployeePayroll(employeeCode, month);
     }
 }

@@ -1,6 +1,9 @@
 package com.g98.sangchengpayrollmanager.service;
 
+import com.g98.sangchengpayrollmanager.model.dto.payroll.response.PaySummaryComponentDto;
+import com.g98.sangchengpayrollmanager.model.dto.payroll.response.PaySummaryDto;
 import com.g98.sangchengpayrollmanager.model.dto.payroll.response.PaySummaryResponse;
+import com.g98.sangchengpayrollmanager.model.entity.PaySummary;
 import com.g98.sangchengpayrollmanager.repository.PaySummaryRepository;
 import com.g98.sangchengpayrollmanager.util.PaySummarySorts;
 import lombok.RequiredArgsConstructor;
@@ -26,5 +29,33 @@ public class PaySummaryService {
 
 
         return repo.findSummariesByDate(date, searchValue,pageable);
+    }
+
+    public PaySummaryDto getEmployeePayroll(String employeeCode, LocalDate month) {
+        PaySummary ps = repo
+                .findWithComponentsByEmployeeAndMonth(employeeCode, month)
+                .orElseThrow(() -> new IllegalArgumentException("Không có paysummary tháng này"));
+
+        return new PaySummaryDto(
+                employeeCode,
+                ps.getDate(),
+                ps.getGrossIncome(),
+                ps.getAssessableIncome(),
+                ps.getTaxableIncome(),
+                ps.getTaxAmount(),
+                ps.getBhAmount(),
+                ps.getNetSalary(),
+                ps.getOtHour(),
+                ps.getOtAmount(),
+                ps.getBaseSalaryAmt(),
+                ps.getComponents().stream().map(c ->
+                        new PaySummaryComponentDto(
+                                c.getComponentName(),
+                                c.getComponentType(),
+                                c.getAmount(),
+                                c.getNote()
+                        )
+                ).toList()
+        );
     }
 }
