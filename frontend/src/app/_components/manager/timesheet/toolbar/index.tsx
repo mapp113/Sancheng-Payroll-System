@@ -56,7 +56,7 @@ export default function TimesheetToolbar() {
           className="mr-15 py-3 px-10 border rounded-sm text-xs border-black bg-[#9ee87b] text-[#5a896b] hover:bg-[#91d771] transition-all cursor-pointer"
           onClick={backButtonHandler}
         >
-          APPROVE
+          Create DRAFT
         </button>
       </div>
     </div>
