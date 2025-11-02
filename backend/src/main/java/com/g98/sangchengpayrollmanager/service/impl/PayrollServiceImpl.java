@@ -82,6 +82,9 @@ public class PayrollServiceImpl implements PayrollService {
         // 7.assessable_income
         int nonTaxableOtAmount = otService.getTotalOtExtraPort(adsList, salaryInformationList);
         int assessableIncome = grossIncome - nonTaxableAddition - nonTaxableOtAmount;
+        System.out.println("grossIncome: " + grossIncome);
+        System.out.println("nonTaxableOtAmount: " + nonTaxableOtAmount);
+        System.out.println("nonTaxableAddition: " + nonTaxableAddition);
 
         // 8.taxable_income = assessableIncome - personalDeduction - dependentsDeduction - 7.BHXH,BHYT,BHTN;
         // 9.tax_amount
@@ -124,25 +127,6 @@ public class PayrollServiceImpl implements PayrollService {
         summary.setNetSalary(netSalary);
         summary.setPayslipUrl("");
         summary.setBaseSalaryAmt(baseSalaryAmount);
-
-
-//        PaySummary summary = PaySummary.builder()
-//                .salaryInformation(salaryInformationList.get(0))
-//                .date(month)
-//                .grossIncome(grossIncome)
-//                .assessableIncome(assessableIncome)
-//                .taxableIncome(taxableIncome)
-//                .taxAmount(taxAmount)
-//                .bhAmount(employeeInsurance)
-//                .status("draft")
-//                .otHour(ams.getOtHours())
-//                .otAmount(otAmount)
-//                .netSalary(netSalary)
-//                .payslipUrl("")
-//                .baseSalaryAmt(baseSalaryAmount)
-//                .user(salaryInformationList.get(0).getUser())
-//                .components(new ArrayList<>())
-//                .build();
 
         // convert snapshot -> entity
         for (PaySummaryComponentItem item : snapshot) {
