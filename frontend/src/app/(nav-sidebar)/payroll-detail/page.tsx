@@ -74,7 +74,7 @@ type PaySummaryPageResponse = {
     content?: PaySummaryListItemResponse[];
 };
 
-const FALLBACK_PAYROLL_MONTH = "2025-09-01";
+const FALLBACK_PAYROLL_MONTH = "2025-10-01";
 
 const monthFormatter = new Intl.DateTimeFormat("en-US", {
     month: "long",
