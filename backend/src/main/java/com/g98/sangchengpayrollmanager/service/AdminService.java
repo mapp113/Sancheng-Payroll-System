@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,9 @@ public class AdminService {
 
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^0\\d{9,10}$");
 
     public List<RoleSummaryDTO> getRoleSummary() {
         List<RoleCountProjection> rows = adminRepository.countUsersGroupByRole();
@@ -52,6 +56,31 @@ public class AdminService {
     }
 
     public ApiResponse<?> createAccount(CreateAccountRequest req) {
+        String username = normalize(req.getUsername());
+        String email = normalize(req.getEmail());
+        String phoneNo = normalize(req.getPhoneNo());
+
+        // -1. validate dữ liệu đầu vào
+        if (!hasMinimumLength(username, 6)) {
+            return ApiResponse.builder()
+                    .status(400)
+                    .message("Username phải có ít nhất 6 ký tự")
+                    .build();
+        }
+
+        if (!isValidEmail(email)) {
+            return ApiResponse.builder()
+                    .status(400)
+                    .message("Email không hợp lệ")
+                    .build();
+        }
+
+        if (!isValidPhone(phoneNo)) {
+            return ApiResponse.builder()
+                    .status(400)
+                    .message("Số điện thoại không hợp lệ")
+                    .build();
+        }
 
         // 0. check trùng employee_code (PK)
         if (adminRepository.existsById(req.getEmployeeCode())) {
@@ -62,7 +91,8 @@ public class AdminService {
         }
 
         // 1. check trùng username
-        if (adminRepository.existsByUsername(req.getUsername())) {
+
+        if (adminRepository.existsByUsername(username)) {
             return ApiResponse.builder()
                     .status(400)
                     .message("Username đã tồn tại")
@@ -70,7 +100,8 @@ public class AdminService {
         }
 
         // 2. check trùng email
-        if (adminRepository.existsByEmail(req.getEmail())) {
+
+        if (adminRepository.existsByEmail(email)) {
             return ApiResponse.builder()
                     .status(400)
                     .message("Email đã tồn tại")
@@ -85,13 +116,17 @@ public class AdminService {
         var user = User.builder()
                 .employeeCode(req.getEmployeeCode())
                 .fullName(req.getFullName())
-                .username(req.getUsername())
+
+                .username(username)
                 .password(passwordEncoder.encode(req.getPassword()))
-                .email(req.getEmail())
+
+                .email(email)
                 .dob(req.getDob() != null && !req.getDob().isBlank()
-                        ? java.time.LocalDate.parse(req.getDob())
+
+                        ? java.time.LocalDate.parse(req.getDob().trim())
                         : java.time.LocalDate.of(2000, 1, 1))
-                .phoneNo(req.getPhoneNo())
+
+                .phoneNo(phoneNo)
                 .role(role)
                 .status(req.getStatus() != null ? req.getStatus() : 1)
                 .build();
@@ -116,20 +151,37 @@ public class AdminService {
         }
 
         if (req.getEmail() != null) {
+            String newEmail = normalize(req.getEmail());
+            if (!isValidEmail(newEmail)) {
+                return ApiResponse.builder()
+                        .status(400)
+                        .message("Email không hợp lệ")
+                        .build();
+            }
             // check trùng email (trừ chính nó)
-            boolean emailExists = adminRepository.existsByEmail(req.getEmail())
-                    && !req.getEmail().equalsIgnoreCase(user.getEmail());
+
+            boolean emailExists = adminRepository.existsByEmail(newEmail)
+                    && !newEmail.equalsIgnoreCase(user.getEmail());
             if (emailExists) {
                 return ApiResponse.builder()
                         .status(400)
                         .message("Email đã được sử dụng")
                         .build();
             }
-            user.setEmail(req.getEmail());
+
+            user.setEmail(newEmail);
         }
 
         if (req.getPhoneNo() != null) {
-            user.setPhoneNo(req.getPhoneNo());
+          
+            String newPhoneNo = normalize(req.getPhoneNo());
+            if (!isValidPhone(newPhoneNo)) {
+                return ApiResponse.builder()
+                        .status(400)
+                        .message("Số điện thoại không hợp lệ")
+                        .build();
+            }
+            user.setPhoneNo(newPhoneNo);
         }
 
         if (req.getStatus() != null) {
@@ -151,6 +203,20 @@ public class AdminService {
                 .build();
     }
 
+    private boolean hasMinimumLength(String value, int length) {
+        return value != null && value.length() >= length;
+    }
+
+    private boolean isValidEmail(String email) {
+        return email != null && EMAIL_PATTERN.matcher(email).matches();
+    }
+
+    private boolean isValidPhone(String phone) {
+        return phone != null && PHONE_PATTERN.matcher(phone).matches();
+    }
+
+    private String normalize(String value) {
+        return value != null ? value.trim() : null;
+    }
 
 }
-

@@ -5,7 +5,8 @@ import {usePathname} from "next/navigation";
 import localFont from "next/font/local";
 import {jwtDecode} from "jwt-decode";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
-import {Bell, ChevronDown, CircleChevronDown, Clock} from "lucide-react";
+import {Bell, ChevronDown, CircleChevronDown, Clock, Languages} from "lucide-react";
+import {useLanguage} from "@/lib/language-context";
 
 const iceland = localFont({
     src: "../../../../public/fonts/Iceland-Regular.ttf",
@@ -49,8 +50,8 @@ export default function Navbar() {
     const [username, setUsername] = useState<string | null>(null);
 
     // Ẩn navbar ở các route không cần layout
-    if (pathname && noLayoutRoutes.includes(pathname)) return null;
-
+    // if (pathname && noLayoutRoutes.includes(pathname)) return null;
+    const {language, toggleLanguage} = useLanguage();
     // const dashboardTitle = pathname?.startsWith("/manager")
     //     ? "Manager Dashboard"
     //     : "HR Dashboard";
@@ -111,6 +112,15 @@ export default function Navbar() {
 
             {/* phải: chuông, đồng hồ, user */}
             <div className="flex items-center gap-4">
+                <button
+                    type="button"
+                    onClick={toggleLanguage}
+                    className="flex items-center gap-2 rounded-full bg-white/40 px-3 py-1 text-sm font-semibold text-[#345EA8] transition hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#345EA8]"
+                    aria-label={`Switch to ${language === "vi" ? "English" : "Vietnamese"}`}
+                >
+                    <Languages className="h-4 w-4" aria-hidden="true"/>
+                    <span>{language === "vi" ? "Tiếng Việt" : "English"}</span>
+                </button>
                 <button id="notification" className="flex items-center gap-1">
                     <Bell/>
                     <ChevronDown/>
