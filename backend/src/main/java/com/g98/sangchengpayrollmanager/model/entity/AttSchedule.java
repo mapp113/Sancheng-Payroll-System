@@ -25,21 +25,13 @@ public class AttSchedule {
     @JoinColumn(name = "shift_id", nullable = false)
     private Shift shift;
 
-    @Column(nullable = false)
-    private LocalDate date;
+    @Column(name = "day_of_week")
+    private String dayOfWeek;
 
     @Column(length = 50, nullable = false)
     private String status;
 
     @Column(name = "worked_hour")
     private Integer workedHour;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "check_in_recordID")
-    private AttRecord checkInRecord;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "check_out_recordID")
-    private AttRecord checkOutRecord;
 }
 

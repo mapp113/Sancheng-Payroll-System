@@ -27,15 +27,8 @@ public class Shift {
     @Column(name = "end_time")
     private LocalTime endTime;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "day_type_id")
-    private DayType dayType;
-
     @Column(name = "is_night_shift", length = 10)
     private String isNightShift;
-
-    @Column(precision = 3, scale = 2)
-    private BigDecimal rate;
 
     @Column(name = "is_ot")
     private Boolean isOt;
