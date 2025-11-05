@@ -1,10 +1,16 @@
 package com.g98.sangchengpayrollmanager.repository;
 
 import com.g98.sangchengpayrollmanager.model.entity.LeaveRequest;
-import com.g98.sangchengpayrollmanager.model.entity.User;
+import com.g98.sangchengpayrollmanager.model.enums.LeaveStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDate;
 import java.util.List;
 
+@Repository
 public interface LeaveRequestRespository extends JpaRepository<LeaveRequest, Integer> {
+
     List<LeaveRequest> findByUser_EmployeeCode(String employeeCode);
+    List<LeaveRequest> findByStatus(LeaveStatus status);
 }

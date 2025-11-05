@@ -45,7 +45,7 @@ public class LeaveRequest {
     @Column(length = 500)
     private String description;
 
-    @Column(length = 10, nullable = false)
+    @Enumerated(EnumType.STRING)
     private String status;
 
     @Column(name = "created_date", nullable = false)
@@ -53,6 +53,9 @@ public class LeaveRequest {
 
     @Column(name = "approved_date")
     private LocalDateTime approvedDate;
+
+    @Column(length = 500)
+    private String reason;
 
 
 }

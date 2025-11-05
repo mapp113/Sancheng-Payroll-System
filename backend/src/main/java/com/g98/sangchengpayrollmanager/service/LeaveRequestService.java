@@ -1,19 +1,25 @@
 package com.g98.sangchengpayrollmanager.service;
 
-import com.g98.sangchengpayrollmanager.model.entity.LeaveRequest;
-import com.g98.sangchengpayrollmanager.model.enums.LeaveStatus;
-import com.g98.sangchengpayrollmanager.repository.LeaveRequestRespository;
+import com.g98.sangchengpayrollmanager.model.dto.LeaveRequestDTO;
+import com.g98.sangchengpayrollmanager.model.dto.leave.LeaveRequestResponse;
 
-public class LeaveRequestService {
+import java.util.List;
 
-    private final LeaveRequestRespository leaveRequestRespository;
 
-    public LeaveRequestService(LeaveRequestRespository leaveRequestRespository) {
-        this.leaveRequestRespository = leaveRequestRespository;
-    }
+public interface LeaveRequestService {
 
-    public LeaveRequest submitLeaveRequest(LeaveRequest leaveRequest) {
-        leaveRequest.setStatus(String.valueOf(LeaveStatus.PENDING));
-        return leaveRequest;
-    }
+    // Nhân viên gửi yêu cầu nghỉ
+    LeaveRequestResponse submitLeaveRequest(LeaveRequestDTO leaveRequest);
+
+    // Lấy toàn bộ các yêu cầu cho HR
+    List<LeaveRequestResponse> getAllLeaveRequests();
+
+    // Lấy toàn bộ các yêu cầu đang chờ
+    List<LeaveRequestResponse> getPendingLeaveRequests();
+
+    //HR duyệt yêu cầu
+    LeaveRequestResponse approveLeaveRequest(Integer id, String reason);
+
+    // HR từ chối yêu cầu
+    LeaveRequestResponse rejectLeaveRequest(Integer id, String reason);
 }
