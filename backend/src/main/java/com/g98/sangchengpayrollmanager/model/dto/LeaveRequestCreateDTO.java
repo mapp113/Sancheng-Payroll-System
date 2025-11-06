@@ -9,7 +9,7 @@ import java.time.LocalDate;
 
 @Data
 
-public class LeaveRequestDTO {
+public class LeaveRequestCreateDTO {
 
     private String employeeCode;
     private String fullName;

@@ -1,6 +1,6 @@
 package com.g98.sangchengpayrollmanager.service;
 
-import com.g98.sangchengpayrollmanager.model.dto.LeaveRequestDTO;
+import com.g98.sangchengpayrollmanager.model.dto.LeaveRequestCreateDTO;
 import com.g98.sangchengpayrollmanager.model.dto.leave.LeaveRequestResponse;
 
 import java.util.List;
@@ -9,7 +9,7 @@ import java.util.List;
 public interface LeaveRequestService {
 
     // Nhân viên gửi yêu cầu nghỉ
-    LeaveRequestResponse submitLeaveRequest(LeaveRequestDTO leaveRequest);
+    LeaveRequestResponse submitLeaveRequest(LeaveRequestCreateDTO leaveRequest);
 
     // Lấy toàn bộ các yêu cầu cho HR
     List<LeaveRequestResponse> getAllLeaveRequests();

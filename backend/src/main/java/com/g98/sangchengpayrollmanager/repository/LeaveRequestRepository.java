@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-public interface LeaveRequestRespository extends JpaRepository<LeaveRequest, Integer> {
+public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Integer> {
 
     List<LeaveRequest> findByUser_EmployeeCode(String employeeCode);
     List<LeaveRequest> findByStatus(LeaveStatus status);

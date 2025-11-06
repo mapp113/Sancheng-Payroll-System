@@ -1,7 +1,7 @@
 package com.g98.sangchengpayrollmanager.controller;
 
 
-import com.g98.sangchengpayrollmanager.model.dto.LeaveRequestDTO;
+import com.g98.sangchengpayrollmanager.model.dto.LeaveRequestCreateDTO;
 import com.g98.sangchengpayrollmanager.model.dto.LeaveRequestUpdateDTO;
 import com.g98.sangchengpayrollmanager.model.dto.leave.LeaveRequestResponse;
 import com.g98.sangchengpayrollmanager.model.entity.LeaveRequest;
@@ -24,7 +24,7 @@ public class LeaveRequestController {
 
     // Submit
     @PostMapping("/submit")
-    public ResponseEntity<LeaveRequestResponse> submitLeaveRequest(@RequestBody @Validated LeaveRequestDTO requestDTO) {
+    public ResponseEntity<LeaveRequestResponse> submitLeaveRequest(@RequestBody @Validated LeaveRequestCreateDTO requestDTO) {
         LeaveRequestResponse response = leaveRequestService.submitLeaveRequest(requestDTO);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }

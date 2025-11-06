@@ -1,6 +1,7 @@
 package com.g98.sangchengpayrollmanager.model.entity;
 
 import com.g98.sangchengpayrollmanager.model.enums.DurationType;
+import com.g98.sangchengpayrollmanager.model.enums.LeaveStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.Duration;
@@ -46,7 +47,8 @@ public class LeaveRequest {
     private String description;
 
     @Enumerated(EnumType.STRING)
-    private String status;
+    @Column(name = "status")
+    private LeaveStatus status;
 
     @Column(name = "created_date", nullable = false)
     private LocalDateTime createdDate;
