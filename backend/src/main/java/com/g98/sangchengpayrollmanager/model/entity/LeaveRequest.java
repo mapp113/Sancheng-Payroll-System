@@ -40,11 +40,9 @@ public class LeaveRequest {
     @Column(name = "duration_type", nullable = false, length = 20)
     private DurationType durationType;
 
-    @Column(length = 100)
-    private String title;
 
     @Column(length = 500)
-    private String description;
+    private String reason;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
@@ -56,9 +54,14 @@ public class LeaveRequest {
     @Column(name = "approved_date")
     private LocalDateTime approvedDate;
 
-    @Column(length = 500)
-    private String reason;
+    @Column(name = "note", length = 500)
+    private String note;
 
+    @Column(name = "link_url", length = 500)
+    private String linkUrl;
+
+    @Column(name = "is_paid_leave", nullable = false)
+    private Boolean isPaidLeave = Boolean.TRUE;
 
 }
 

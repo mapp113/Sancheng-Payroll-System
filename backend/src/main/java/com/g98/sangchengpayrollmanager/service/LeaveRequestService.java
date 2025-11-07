@@ -18,8 +18,8 @@ public interface LeaveRequestService {
     List<LeaveRequestResponse> getPendingLeaveRequests();
 
     //HR duyệt yêu cầu
-    LeaveRequestResponse approveLeaveRequest(Integer id, String reason);
+    LeaveRequestResponse approveLeaveRequest(Integer id, String note);
 
     // HR từ chối yêu cầu
-    LeaveRequestResponse rejectLeaveRequest(Integer id, String reason);
+    LeaveRequestResponse rejectLeaveRequest(Integer id, String note);
 }

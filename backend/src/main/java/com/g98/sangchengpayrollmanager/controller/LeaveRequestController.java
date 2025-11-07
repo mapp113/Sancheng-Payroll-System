@@ -35,11 +35,17 @@ public class LeaveRequestController {
         return ResponseEntity.ok(responseList);
     }
 
+    @GetMapping("/all{staus}")
+    public ResponseEntity<List<LeaveRequestResponse>> getAllPendingLeaveRequests() {
+        List<LeaveRequestResponse> responseList = leaveRequestService.getPendingLeaveRequests();
+        return ResponseEntity.ok(responseList);
+    }
+
     @PutMapping("/approve/{id}")
     public ResponseEntity<LeaveRequestResponse> approveLeaveRequest
             (@PathVariable Integer id,
              @RequestBody @Validated LeaveRequestUpdateDTO updateDTO) {
-        LeaveRequestResponse response = leaveRequestService.approveLeaveRequest(id, updateDTO.getReason());
+        LeaveRequestResponse response = leaveRequestService.approveLeaveRequest(id, updateDTO.getNote());
         return ResponseEntity.ok(response);
     }
 
@@ -47,7 +53,7 @@ public class LeaveRequestController {
     public ResponseEntity<LeaveRequestResponse> rejectLeaveRequest
             (@PathVariable Integer id,
              @RequestBody @Validated LeaveRequestUpdateDTO updateDTO) {
-        LeaveRequestResponse response = leaveRequestService.rejectLeaveRequest(id, updateDTO.getReason());
+        LeaveRequestResponse response = leaveRequestService.rejectLeaveRequest(id, updateDTO.getNote());
         return ResponseEntity.ok(response);
     }
 

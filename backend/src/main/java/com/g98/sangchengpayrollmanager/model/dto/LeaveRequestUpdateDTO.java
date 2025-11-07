@@ -5,5 +5,5 @@ import lombok.Data;
 @Data
 public class LeaveRequestUpdateDTO {
     private String status;
-    private String reason;
+    private String note;
 }

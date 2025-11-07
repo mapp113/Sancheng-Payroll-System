@@ -1,5 +1,6 @@
 package com.g98.sangchengpayrollmanager.model.dto;
 
+import com.g98.sangchengpayrollmanager.model.entity.LeaveType;
 import com.g98.sangchengpayrollmanager.model.enums.DurationType;
 import lombok.*;
 import org.antlr.v4.runtime.misc.NotNull;
@@ -12,19 +13,24 @@ import java.time.LocalDate;
 public class LeaveRequestCreateDTO {
 
     private String employeeCode;
-    private String fullName;
+   // private String fullName;
 
     @NotNull
-    private LocalDate fromdate;
+    private LocalDate fromDate;
 
     @NotNull
-    private LocalDate todate;
+    private LocalDate toDate;
+
+    private String leaveType;
 
     @NotNull
-    private DurationType duration;
+    private String duration;
 
+    private boolean isPaidLeave;
     @NotNull
-    private String title;
-    private String description;
+    private String reason;
+
+    private String link;
+
 
 }
