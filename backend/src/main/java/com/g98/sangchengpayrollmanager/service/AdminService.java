@@ -1,3 +1,4 @@
+// com.g98.sangchengpayrollmanager.service.AdminService
 package com.g98.sangchengpayrollmanager.service;
 
 import com.g98.sangchengpayrollmanager.model.dto.CreateAccountRequest;
@@ -29,7 +30,6 @@ public class AdminService {
     private final AdminRepository adminRepository;
     private final BiometricSyncService biometricSyncService;
 
-
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -38,15 +38,9 @@ public class AdminService {
 
     public List<RoleSummaryDTO> getRoleSummary() {
         List<RoleCountProjection> rows = adminRepository.countUsersGroupByRole();
-
         Map<Long, String> roleNameMap = Map.of(
-                1L, "Admin",
-                2L, "HR",
-                3L, "Employee",
-                4L, "Manager",
-                5L, "Accountant"
+                1L, "Admin", 2L, "HR", 3L, "Employee", 4L, "Manager", 5L, "Accountant"
         );
-
         return rows.stream()
                 .map(r -> new RoleSummaryDTO(roleNameMap.get(r.getRoleId()), r.getTotal()))
                 .toList();
@@ -68,70 +62,63 @@ public class AdminService {
         }
     }
 
-
     public ApiResponse<?> createAccount(CreateAccountRequest req) {
         String username = normalize(req.getUsername());
         String email = normalize(req.getEmail());
         String phoneNo = normalize(req.getPhoneNo());
+        String userId = normalize(req.getUserId()); // NEW
 
         // -1. Validate dữ liệu đầu vào
+        if (userId == null || userId.isBlank()) {
+            return ApiResponse.builder().status(400).message("userId không được trống").build();
+        }
         if (!hasMinimumLength(username, 6)) {
-            return ApiResponse.builder()
-                    .status(400)
-                    .message("Username phải có ít nhất 6 ký tự")
-                    .build();
+            return ApiResponse.builder().status(400).message("Username phải có ít nhất 6 ký tự").build();
         }
-
         if (!isValidEmail(email)) {
-            return ApiResponse.builder()
-                    .status(400)
-                    .message("Email không hợp lệ")
-                    .build();
+            return ApiResponse.builder().status(400).message("Email không hợp lệ").build();
         }
-
         if (!isValidPhone(phoneNo)) {
-            return ApiResponse.builder()
-                    .status(400)
-                    .message("Số điện thoại không hợp lệ")
-                    .build();
+            return ApiResponse.builder().status(400).message("Số điện thoại không hợp lệ").build();
         }
 
         // 0. Check trùng employee_code (PK)
         if (adminRepository.existsById(req.getEmployeeCode())) {
-            return ApiResponse.builder()
-                    .status(400)
-                    .message("Mã nhân viên đã tồn tại")
-                    .build();
+            return ApiResponse.builder().status(400).message("Mã nhân viên đã tồn tại").build();
         }
-
+        // 0.1 Check trùng userId (máy chấm công)
+        if (adminRepository.existsByUserId(userId)) {
+            return ApiResponse.builder().status(400).message("UserID đã tồn tại").build();
+        }
         // 1. Check trùng username
         if (adminRepository.existsByUsername(username)) {
-            return ApiResponse.builder()
-                    .status(400)
-                    .message("Username đã tồn tại")
-                    .build();
+            return ApiResponse.builder().status(400).message("Username đã tồn tại").build();
         }
-
         // 2. Check trùng email
         if (adminRepository.existsByEmail(email)) {
-            return ApiResponse.builder()
-                    .status(400)
-                    .message("Email đã tồn tại")
-                    .build();
+            return ApiResponse.builder().status(400).message("Email đã tồn tại").build();
         }
 
-        var role = roleRepository.findById(req.getRoleId())
+        Role role = roleRepository.findById(req.getRoleId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy role id = " + req.getRoleId()));
 
-        var user = User.builder()
+        LocalDate dob = LocalDate.of(2000, 1, 1);
+        if (req.getDob() != null && !req.getDob().isBlank()) {
+            try {
+                dob = LocalDate.parse(req.getDob().trim());
+            } catch (DateTimeParseException e) {
+                return ApiResponse.builder().status(400).message("Định dạng ngày sinh không hợp lệ (yyyy-MM-dd)").build();
+            }
+        }
+
+        User user = User.builder()
                 .employeeCode(req.getEmployeeCode())
+                .userId(userId) // NEW
                 .fullName(req.getFullName())
                 .username(username)
                 .password(passwordEncoder.encode(req.getPassword()))
                 .email(email)
-                .dob(req.getDob() != null && !req.getDob().isBlank()
-                        ? java.time.LocalDate.parse(req.getDob().trim())
-                        : java.time.LocalDate.of(2000, 1, 1))
+                .dob(dob)
                 .phoneNo(phoneNo)
                 .role(role)
                 .status(req.getStatus() != null ? req.getStatus() : 1)
@@ -143,15 +130,12 @@ public class AdminService {
 
         // Pre-check TCP để fail nhanh khi máy offline (2s)
         if (!portOpen(ip, 4370, 2000)) {
-            return ApiResponse.builder()
-                    .status(502)
-                    .message("Thiết bị offline (port 4370 không mở)")
-                    .build();
+            return ApiResponse.builder().status(502).message("Thiết bị offline (port 4370 không mở)").build();
         }
 
-        // Push user với timeout 30s
+        // Push user với timeout 30s (dùng userId)
         boolean pushed = biometricSyncService.pushUserBlocking(
-                user.getEmployeeCode(),
+                user.getUserId(),
                 user.getFullName(),
                 devicePin,
                 isAdmin,
@@ -159,16 +143,12 @@ public class AdminService {
         );
 
         if (!pushed) {
-            return ApiResponse.builder()
-                    .status(502)
-                    .message("Không thể đồng bộ với thiết bị (timeout hoặc lỗi)")
-                    .build();
+            return ApiResponse.builder().status(502).message("Không thể đồng bộ với thiết bị (timeout hoặc lỗi)").build();
         }
 
         // Lưu user vào DB
         adminRepository.save(user);
 
-        // TRẢ RESPONSE NGAY - cleanup ZK đang chạy background
         return ApiResponse.builder()
                 .status(200)
                 .message("Tạo tài khoản thành công & đã đồng bộ máy chấm công")
@@ -181,7 +161,7 @@ public class AdminService {
         User user = adminRepository.findById(employeeCode)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user với mã: " + employeeCode));
 
-        // 2. cập nhật các field được phép sửa
+        // 2. cập nhật các field được phép sửa (KHÔNG đổi userId ở đây)
         if (req.getFullName() != null) {
             user.setFullName(req.getFullName());
         }
@@ -189,33 +169,19 @@ public class AdminService {
         if (req.getEmail() != null) {
             String newEmail = normalize(req.getEmail());
             if (!isValidEmail(newEmail)) {
-                return ApiResponse.builder()
-                        .status(400)
-                        .message("Email không hợp lệ")
-                        .build();
+                return ApiResponse.builder().status(400).message("Email không hợp lệ").build();
             }
-            // check trùng email (trừ chính nó)
-
-            boolean emailExists = adminRepository.existsByEmail(newEmail)
-                    && !newEmail.equalsIgnoreCase(user.getEmail());
+            boolean emailExists = adminRepository.existsByEmail(newEmail) && !newEmail.equalsIgnoreCase(user.getEmail());
             if (emailExists) {
-                return ApiResponse.builder()
-                        .status(400)
-                        .message("Email đã được sử dụng")
-                        .build();
+                return ApiResponse.builder().status(400).message("Email đã được sử dụng").build();
             }
-
             user.setEmail(newEmail);
         }
 
         if (req.getPhoneNo() != null) {
-
             String newPhoneNo = normalize(req.getPhoneNo());
             if (!isValidPhone(newPhoneNo)) {
-                return ApiResponse.builder()
-                        .status(400)
-                        .message("Số điện thoại không hợp lệ")
-                        .build();
+                return ApiResponse.builder().status(400).message("Số điện thoại không hợp lệ").build();
             }
             user.setPhoneNo(newPhoneNo);
         }
@@ -254,5 +220,4 @@ public class AdminService {
     private String normalize(String value) {
         return value != null ? value.trim() : null;
     }
-
 }

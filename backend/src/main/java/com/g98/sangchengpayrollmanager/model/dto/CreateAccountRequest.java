@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class CreateAccountRequest {
+    private String userId;
 
     private String employeeCode;
 

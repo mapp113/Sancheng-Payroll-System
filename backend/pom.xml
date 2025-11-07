@@ -55,7 +55,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- JACOB (Java-COM). Có nhiều groupId ngoài kia; bạn có thể dùng bản này: -->
+        <!-- JACOB (Java-COM) -->
         <dependency>
             <groupId>io.github.osobolev</groupId>
             <artifactId>jacob</artifactId>

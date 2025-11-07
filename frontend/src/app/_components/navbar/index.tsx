@@ -3,7 +3,6 @@
 import {useEffect, useState} from "react";
 import {usePathname} from "next/navigation";
 import localFont from "next/font/local";
-import {jwtDecode} from "jwt-decode";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Bell, ChevronDown, CircleChevronDown, Clock, Languages} from "lucide-react";
 import {useLanguage} from "@/lib/language-context";

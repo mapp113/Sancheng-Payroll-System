@@ -17,14 +17,10 @@ public class BiometricSyncService {
     @Qualifier("zkExecutor")
     private final ExecutorService exec;
 
-    /**
-     * Push user với timeout, trả về ngay khi xong (không đợi cleanup)
-     */
     public boolean pushUserBlocking(String emp, String name, String pin, boolean admin, long timeoutMs) {
         int priv = admin ? 14 : 0;
 
         try {
-            // Chạy trong executor với timeout
             Boolean result = CompletableFuture
                     .supplyAsync(() -> {
                         try {
@@ -36,22 +32,20 @@ public class BiometricSyncService {
                     }, exec)
                     .orTimeout(timeoutMs, TimeUnit.MILLISECONDS)
                     .exceptionally(ex -> {
-                        System.err.println("⚠️ Timeout or error: " + ex.getMessage());
+                        System.err.println("⚠️ Timeout: " + ex.getMessage());
                         return null;
                     })
-                    .join(); // Đợi kết quả (hoặc timeout)
+                    .join();
 
-            // Nếu thành công -> trả về true ngay
             if (Boolean.TRUE.equals(result)) {
                 return true;
             }
 
-            // Nếu thất bại -> verify bằng existsUser (có thể đã tạo được)
-            System.out.println("🔍 Verifying user existence...");
+            // Fallback: check if user exists
             return zkClient.existsUser(emp);
 
         } catch (Exception e) {
-            System.err.println("❌ pushUserBlocking exception: " + e.getMessage());
+            System.err.println("❌ Exception: " + e.getMessage());
             return false;
         }
     }

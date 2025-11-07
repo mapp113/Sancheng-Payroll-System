@@ -33,7 +33,7 @@ const ROLE_REDIRECTS: Record<string, string> = {
     HR: "/payroll",
     MANAGER: "/payroll",
     ACCOUNTANT: "/home",
-    EMPLOYEE: "/employee",
+    EMPLOYEE: "/employees",
 }
 
 export async function login(payload: LoginPayload): Promise<AuthenticatedUser> {
