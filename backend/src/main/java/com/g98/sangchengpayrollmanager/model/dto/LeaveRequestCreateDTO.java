@@ -30,7 +30,7 @@ public class LeaveRequestCreateDTO {
     @NotNull
     private String reason;
 
-    private String link;
+    private String file;
 
 
 }

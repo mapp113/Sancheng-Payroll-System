@@ -2,7 +2,7 @@ package com.g98.sangchengpayrollmanager.model.dto.leave;
 
 import com.g98.sangchengpayrollmanager.model.entity.LeaveType;
 import com.g98.sangchengpayrollmanager.model.enums.DurationType;
-import com.g98.sangchengpayrollmanager.model.enums.LeaveStatus;
+import com.g98.sangchengpayrollmanager.model.enums.LeaveandOTStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.*;
@@ -26,9 +26,9 @@ public class LeaveRequestResponse {
     private LocalDate toDate;
     private DurationType duration;
     private boolean isPaidLeave;
-    private LeaveStatus status;
+    private LeaveandOTStatus status;
     private LocalDate approvalDate;
     private String note;
-    private String link;
+    private String file;
 
 }

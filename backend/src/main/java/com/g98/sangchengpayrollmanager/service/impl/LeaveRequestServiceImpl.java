@@ -7,7 +7,7 @@ import com.g98.sangchengpayrollmanager.model.entity.LeaveRequest;
 import com.g98.sangchengpayrollmanager.model.entity.LeaveType;
 import com.g98.sangchengpayrollmanager.model.entity.User;
 import com.g98.sangchengpayrollmanager.model.enums.DurationType;
-import com.g98.sangchengpayrollmanager.model.enums.LeaveStatus;
+import com.g98.sangchengpayrollmanager.model.enums.LeaveandOTStatus;
 import com.g98.sangchengpayrollmanager.repository.LeaveBalanceRepository;
 import com.g98.sangchengpayrollmanager.repository.LeaveRequestRepository;
 import com.g98.sangchengpayrollmanager.repository.LeaveTypeRepository;
@@ -75,7 +75,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
     @Override
     public List<LeaveRequestResponse> getPendingLeaveRequests() {
-        return LeaveRequestRepository.findByStatus(LeaveStatus.valueOf(LeaveStatus.PENDING.name()))
+        return LeaveRequestRepository.findByStatus(LeaveandOTStatus.valueOf(LeaveandOTStatus.PENDING.name()))
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -85,7 +85,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     public LeaveRequestResponse approveLeaveRequest(Integer id, String reason) {
         LeaveRequest leaveRequest = LeaveRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Leave request not found"));
-        leaveRequest.setStatus(LeaveStatus.valueOf(LeaveStatus.APPROVED.name()));
+        leaveRequest.setStatus(String.valueOf(LeaveandOTStatus.APPROVED));
         leaveRequest.setReason(reason);
         leaveRequest.setApprovedDate(LocalDateTime.now());
 
@@ -98,7 +98,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     public LeaveRequestResponse rejectLeaveRequest(Integer id, String reason) {
         LeaveRequest leaveRequest = LeaveRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Leave request not found"));
-        leaveRequest.setStatus(LeaveStatus.valueOf(LeaveStatus.REJECTED.name()));
+        leaveRequest.setStatus(String.valueOf(LeaveandOTStatus.REJECTED));
         leaveRequest.setReason(reason);
         leaveRequest.setApprovedDate(LocalDateTime.now());
 
@@ -115,7 +115,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         entity.setDurationType(DurationType.valueOf(dto.getDuration()));
         entity.setIsPaidLeave(false);
         entity.setReason(dto.getReason());
-        entity.setStatus(LeaveStatus.valueOf(LeaveStatus.PENDING.name()));
+        entity.setStatus(String.valueOf(LeaveandOTStatus.PENDING));
         entity.setCreatedDate(LocalDateTime.now());
         return entity;
     }
@@ -131,7 +131,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                 .reason(entity.getReason())
                 .duration(entity.getDurationType())
                 .isPaidLeave(entity.getIsPaidLeave())
-                .status(entity.getStatus())
+                .status(LeaveandOTStatus.valueOf(entity.getStatus()))
                 .approvalDate(entity.getApprovedDate() != null ?
                         entity.getApprovedDate().toLocalDate() : null)
                 .note(entity.getReason())
