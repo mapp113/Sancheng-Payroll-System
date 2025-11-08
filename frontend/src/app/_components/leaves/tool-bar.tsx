@@ -1,7 +1,7 @@
 export default function LeavesToolBar() {
   return (
     <div className="flex flex-row w-full items-center">
-      <button className="w-fit h-fit border border-black bg-[#8acefd] text-[#4577a0] hover:bg-[#66befc] py-2 px-4 rounded cursor-pointer">Back</button>
+      <a href="./" className="w-fit h-fit border border-black bg-[#8acefd] text-[#4577a0] hover:bg-[#66befc] py-2 px-4 rounded cursor-pointer">Back</a>
       <div className="flex flex-row items-center w-full h-fit px-4 py-2 ml-10 bg-[#c0f2fd] rounded-2xl">
         <div>
           <span className="font-bold text-2xl mr-3">Nhân viên:</span>

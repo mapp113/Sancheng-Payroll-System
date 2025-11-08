@@ -1,14 +1,8 @@
 "use client";
 
 import LeavesToolBar from "@/app/_components/leaves/tool-bar";
-import { useState } from "react";
 
 export default function LeavesPage() {
-  const [isMultipleDays, setIsMultipleDays] = useState(false);
-
-  const handleLeaveTimeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setIsMultipleDays(event.target.value === "multiple");
-  };
 
   return (
     <div className="flex flex-col items-center justify-center h-full p-5">
@@ -19,27 +13,26 @@ export default function LeavesPage() {
           <label htmlFor="leave-type">Loại nghỉ:</label>
           <select id="leave-type" className="ml-5 border border-black rounded px-2 py-1">
             <option value="annual">Nghỉ hằng năm</option>
-            <option value="sick">Nghỉ ốm</option>
-            <option value="unpaid">Nghỉ không lương</option>
             <option value="other">Khác</option>
           </select>
         </div>
         <div className="my-2">
-          Ngày bắt đầu:
-          <input type="date" className="ml-5 border border-black rounded px-2 py-1" />
+          Sử dụng ngày phép:
+          <select id="leave-request-used-days" className="ml-5 border border-black rounded px-2 py-1">
+            <option value="true">Có</option>
+            <option value="false">Không</option>
+          </select>
         </div>
         <div className="my-2">
-          Thời gian nghỉ:
-          <select id="leave-time" className="mx-5 border border-black rounded px-2 py-1" onChange={handleLeaveTimeChange}>
-            <option value="morning">Sáng</option>
-            <option value="afternoon">Buổi chiều</option>
-            <option value="full-day">Cả ngày</option>
-            <option value="multiple">Nhiều ngày</option>
-          </select>
-          <span className={`${isMultipleDays ? "" : "hidden"}`}>
-            Số ngày:
-            <input type="number" min="0" className="ml-2 w-16 border border-black rounded px-2 py-1" />
-          </span>
+          Ngày bắt đầu:
+          <input id="leave-request-start-date" type="date" className="ml-5 border border-black rounded px-2 py-1" />
+        </div>
+        <div className="my-2 flex flex-row">
+          <div>
+            <div>Ngày kết thúc:</div>
+            <div>(Nếu chọn nhiều)</div>
+          </div>
+          <input id="leave-request-end-date" type="date" className="ml-5 border border-black rounded px-2 py-1" />
         </div>
         <div className="my-2 flex">
           <span className="pt-1">Lý do:</span>
