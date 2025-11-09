@@ -16,11 +16,11 @@ import java.time.LocalDate;
 @Builder
 
 public class LeaveRequestResponse {
-
     private Integer id;
     private String employeeCode;
     private String fullName;
-    private LeaveType leaveType;
+    private String leaveTypeCode;
+    private String leaveTypeName;
     private String reason;
     private LocalDate fromDate;
     private LocalDate toDate;
@@ -30,5 +30,4 @@ public class LeaveRequestResponse {
     private LocalDate approvalDate;
     private String note;
     private String file;
-
 }

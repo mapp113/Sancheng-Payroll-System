@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 @Transactional
 public class LeaveRequestServiceImpl implements LeaveRequestService {
 
+
     private final UserRepository userRepository;
     private final LeaveRequestRepository LeaveRequestRepository;
     private final LeaveTypeRepository leaveTypeRepository;
@@ -34,39 +35,60 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
     @Override
     public LeaveRequestResponse submitLeaveRequest(LeaveRequestCreateDTO leaveRequestDTO) {
-        User user = userRepository.findByEmployeeCode(leaveRequestDTO.getEmployeeCode())
-                .orElseThrow(() -> new RuntimeException("User not found: " + leaveRequestDTO.getEmployeeCode()));
+     try {
+         User user = userRepository.findByEmployeeCode(leaveRequestDTO.getEmployeeCode())
+                 .orElseThrow(() -> new RuntimeException("User not found: " + leaveRequestDTO.getEmployeeCode()));
 
-        LeaveType leaveType = leaveTypeRepository.findByCode(leaveRequestDTO.getLeaveType())
-                .orElseThrow(() -> new RuntimeException("Leave type not found: " + leaveRequestDTO.getLeaveType()));
-
-
-        if (Boolean.TRUE.equals(leaveType.getIsCountedAsLeave())) {
-            LeaveBalance balance = leaveBalanceRepository.findByEmployeeCode(user.getEmployeeCode())
-                    .orElseThrow(() -> new RuntimeException("Leave balance not found: " + user.getEmployeeCode()));
-            double requestedDays = calculateLeaveDays(leaveRequestDTO.getFromDate(), leaveRequestDTO.getToDate(), leaveRequestDTO.getDuration());
-
-            if (balance.getBalance() < requestedDays) {
-                throw new IllegalArgumentException(
-                        + balance.getBalance() + "ngày còn lại, không đủ" + requestedDays + "ngày.");
-            }
+         LeaveType leaveType = leaveTypeRepository.findByCode(leaveRequestDTO.getLeaveType())
+                 .orElseThrow(() -> new RuntimeException("Leave type not found: " + leaveRequestDTO.getLeaveType()));
 
 
-            balance.setBalance((int) (balance.getBalance() - requestedDays));
+         if (Boolean.TRUE.equals(leaveType.getIsCountedAsLeave())) {
+             LeaveBalance balance = leaveBalanceRepository.findByEmployeeCode(user.getEmployeeCode())
+                     .orElseThrow(() -> new RuntimeException("Leave balance not found: " + user.getEmployeeCode()));
+             double requestedDays = calculateLeaveDays(leaveRequestDTO.getFromDate(), leaveRequestDTO.getToDate(), leaveRequestDTO.getDuration());
 
-            leaveBalanceRepository.save(balance);
-        }
+             if (balance.getBalance() < requestedDays) {
+                 throw new IllegalArgumentException(balance.getBalance() + " ngày còn lại, không đủ " + requestedDays + " ngày.");
+             }
+
+             // nếu balance là integer days: làm tròn “banker” hợp lý
+             balance.setBalance((int) Math.round(balance.getBalance() - requestedDays));
+             leaveBalanceRepository.save(balance);
+         }
 
 
-        LeaveRequest leaveRequest = mapToEntity(leaveRequestDTO, user, leaveType);
-        LeaveRequest savedLeaveRequest = LeaveRequestRepository.save(leaveRequest);
 
-        return mapToResponse(savedLeaveRequest);
+         LeaveRequest leaveRequest = mapToEntity(leaveRequestDTO, user, leaveType);
+         LeaveRequest savedLeaveRequest = LeaveRequestRepository.save(leaveRequest);
+
+         return mapToResponse(savedLeaveRequest);
+     } catch (Exception e) {
+         throw new RuntimeException(e.getMessage());
+     }
     }
 
     private double calculateLeaveDays(LocalDate fromDate, LocalDate toDate, String duration) {
-        return 0;
+        DurationType type = DurationType.valueOf(duration);
+//        switch (d) {
+//            case FULL_DAY -> {
+//                long days = java.time.temporal.ChronoUnit.DAYS.between(fromDate, toDate) + 1; // inclusive
+//                return Math.max(days, 1);
+//            }
+//            case HALF_DAY_AM, HALF_DAY_PM -> {
+//                return 0.5;
+//            }
+//            default -> throw new IllegalArgumentException("Unsupported duration: " + duration);
+//        }
+
+        long days = 0;
+        for (LocalDate d = fromDate; !d.isAfter(toDate); d = d.plusDays(1)) {
+            days++;
+        }
+
+        return (double) days;
     }
+
 
 
     @Override
@@ -94,11 +116,11 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     }
 
     @Override
-    public LeaveRequestResponse approveLeaveRequest(Integer id, String reason) {
+    public LeaveRequestResponse approveLeaveRequest(Integer id, String note) {
         LeaveRequest leaveRequest = LeaveRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Leave request not found"));
         leaveRequest.setStatus(LeaveandOTStatus.APPROVED.name());
-        leaveRequest.setReason(reason);
+        leaveRequest.setNote(note);
         leaveRequest.setApprovedDate(LocalDateTime.now());
 
 
@@ -107,11 +129,11 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     }
 
     @Override
-    public LeaveRequestResponse rejectLeaveRequest(Integer id, String reason) {
+    public LeaveRequestResponse rejectLeaveRequest(Integer id, String note) {
         LeaveRequest leaveRequest = LeaveRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Leave request not found"));
         leaveRequest.setStatus(LeaveandOTStatus.REJECTED.name());
-        leaveRequest.setReason(reason);
+        leaveRequest.setNote(note);
         leaveRequest.setApprovedDate(LocalDateTime.now());
 
         return mapToResponse(LeaveRequestRepository.save(leaveRequest));
@@ -138,7 +160,8 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                 .id(entity.getId())
                 .employeeCode(entity.getUser().getEmployeeCode())
                 .fullName(entity.getUser().getFullName())
-                .leaveType(entity.getLeaveType())
+                .leaveTypeCode(entity.getLeaveType().getCode())
+                .leaveTypeName(entity.getLeaveType().getName())
                 .fromDate(entity.getFromDate())
                 .toDate(entity.getToDate())
                 .reason(entity.getReason())
@@ -147,7 +170,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                 .status(LeaveandOTStatus.valueOf(entity.getStatus()))
                 .approvalDate(entity.getApprovedDate() != null ?
                         entity.getApprovedDate().toLocalDate() : null)
-                .note(entity.getReason())
+                .note(entity.getNote())
                 .build();
     }
 }

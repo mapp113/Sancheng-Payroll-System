@@ -24,7 +24,7 @@ public class LeaveRequestController {
 
     // Submit
     @PostMapping("/submit")
-    public ResponseEntity<LeaveRequestResponse> submitLeaveRequest(@RequestBody @Validated LeaveRequestCreateDTO requestDTO) {
+    public ResponseEntity<LeaveRequestResponse> submitLeaveRequest(@RequestBody LeaveRequestCreateDTO requestDTO) {
         LeaveRequestResponse response = leaveRequestService.submitLeaveRequest(requestDTO);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
@@ -35,13 +35,13 @@ public class LeaveRequestController {
         return ResponseEntity.ok(responseList);
     }
 
-    @GetMapping("/all{staus}")
+    @GetMapping("/all/{staus}")
     public ResponseEntity<List<LeaveRequestResponse>> getAllPendingLeaveRequests() {
         List<LeaveRequestResponse> responseList = leaveRequestService.getPendingLeaveRequests();
         return ResponseEntity.ok(responseList);
     }
 
-    @GetMapping("/detail{id}")
+    @GetMapping("/detail/{id}")
     public ResponseEntity<LeaveRequestResponse> getLeaveRequestDetail(@PathVariable Integer id) {
         LeaveRequestResponse response = leaveRequestService.getLeaveRequestDetail(id);
         return new ResponseEntity<>(response, HttpStatus.OK);

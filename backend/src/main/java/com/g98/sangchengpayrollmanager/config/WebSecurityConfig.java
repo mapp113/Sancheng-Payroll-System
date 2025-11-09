@@ -41,6 +41,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/paysummaries/**").permitAll()
                         .requestMatchers("/api/attsummary/**").permitAll()
                         .requestMatchers("/api/employees/**").permitAll()
+                        .requestMatchers("/api/leave/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
