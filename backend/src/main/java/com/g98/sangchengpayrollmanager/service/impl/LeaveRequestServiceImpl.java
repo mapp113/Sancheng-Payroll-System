@@ -148,7 +148,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         entity.setFromDate(dto.getFromDate());
         entity.setToDate(dto.getToDate());
         entity.setDurationType(DurationType.valueOf(dto.getDuration()));
-        entity.setIsPaidLeave(Boolean.TRUE.equals(leaveType.getIsPaid()));
+        entity.setIsPaidLeave(leaveType.getIsPaid());
         entity.setReason(dto.getReason());
         entity.setStatus(LeaveandOTStatus.PENDING.name());
         entity.setCreatedDate(LocalDateTime.now());
