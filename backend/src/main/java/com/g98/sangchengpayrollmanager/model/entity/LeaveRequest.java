@@ -59,7 +59,7 @@ public class LeaveRequest {
     private String linkUrl;
 
     @Column(name = "is_paid_leave", nullable = false)
-    private Boolean isPaidLeave = Boolean.TRUE;
+    private Boolean isPaidLeave ;
 
 }
 

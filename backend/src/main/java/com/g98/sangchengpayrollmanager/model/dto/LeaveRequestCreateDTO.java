@@ -26,7 +26,7 @@ public class LeaveRequestCreateDTO {
     @NotNull
     private String duration;
 
-    private boolean isPaidLeave;
+    private Boolean isPaidLeave;
     @NotNull
     private String reason;
 

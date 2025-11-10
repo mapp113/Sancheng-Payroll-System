@@ -40,15 +40,14 @@ public class LeaveQuota {
     private Double entitledDays;
 
     @Column(name = "carried_over", nullable = false)
-    private Double carriedOver = 0.0;
+    private Double carriedOver ;
 
     @Column(name = "used_days", nullable = false)
-    private Double usedDays = 0.0;
+    private Double usedDays  ;
 
-    /** Tiện cho việc tính nhanh */
     @Transient
     public Double getRemainingDays() {
-        if (entitledDays == null) return null; // không giới hạn
+        if (entitledDays == null) return null;
         return entitledDays + carriedOver - usedDays;
     }
 }

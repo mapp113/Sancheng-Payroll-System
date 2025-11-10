@@ -17,8 +17,10 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -43,10 +45,13 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
 
          LocalDate fromDate = leaveRequestDTO.getFromDate();
-         LocalDate toDate = leaveRequestDTO.getToDate() != null ? leaveRequestDTO.getToDate() : fromDate;
+         LocalDate toDate = (leaveRequestDTO.getToDate() != null) ? leaveRequestDTO.getToDate() : leaveRequestDTO.getFromDate();
          double requestedDays = calculateLeaveDays(fromDate, toDate, leaveRequestDTO.getDuration());
 
-         if (Boolean.TRUE.equals(leaveType.getIsCountedAsLeave())) {
+         boolean requestedPaid = Boolean.TRUE.equals(leaveType.getIsPaid()) && leaveRequestDTO.getIsPaidLeave();
+         boolean effectivePaid = Boolean.TRUE.equals(leaveType.getIsPaid()) && requestedPaid;
+
+         if (Boolean.TRUE.equals(leaveType.getIsCountedAsLeave()) && effectivePaid) {
              int year = fromDate.getYear();
              String emp = user.getEmployeeCode();
              String typeCode = leaveType.getCode();
@@ -65,10 +70,12 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                  }
              }
          }
-         LeaveRequest leaveRequest = mapToEntity(leaveRequestDTO, user, leaveType);
-         LeaveRequest savedLeaveRequest = LeaveRequestRepository.save(leaveRequest);
+         LeaveRequest entity = mapToEntity(leaveRequestDTO, user, leaveType);
+         entity.setToDate(toDate);
+         LeaveRequest savedLeaveRequest = LeaveRequestRepository.save(entity);
 
          return mapToResponse(savedLeaveRequest);
+
      } catch (Exception e) {
          throw new RuntimeException(e.getMessage());
      }
@@ -76,10 +83,9 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
     private double calculateLeaveDays(LocalDate fromDate, LocalDate toDate, String duration) {
        DurationType durationType = DurationType.valueOf(duration.trim().toUpperCase());
-       long days = 0;
        switch (durationType) {
            case FULL_DAY -> {
-               days = (fromDate.toEpochDay() - toDate.toEpochDay()) + 1;
+               long days = ChronoUnit.DAYS.between(fromDate, toDate) + 1;
                return (double) days;
            }
            case HALF_DAY_AM, HALF_DAY_PM -> {
@@ -115,18 +121,30 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     }
 
     @Override
-    public LeaveRequestResponse approveLeaveRequest(Integer id, String reason) {
+    public LeaveRequestResponse approveLeaveRequest(Integer id, String note) {
 
         LeaveRequest leaveRequest = LeaveRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Leave request not found"));
 
+//        if (LeaveandOTStatus.APPROVED.name().equals(leaveRequest.getStatus())) {
+//            return mapToResponse(leaveRequest);
+//        }
+
+        LocalDate fromDate = leaveRequest.getFromDate();
+        LocalDate toDate = (leaveRequest.getToDate() != null) ? leaveRequest.getToDate() : leaveRequest.getFromDate();
+        double requestedDays = calculateLeaveDays(fromDate, toDate, leaveRequest.getDurationType().name());
+
         LeaveType leaveType = leaveRequest.getLeaveType();
-        if (Boolean.TRUE.equals(leaveType.getIsCountedAsLeave())) {
-            double requestedDays = calculateLeaveDays(leaveRequest.getFromDate(),
-                    leaveRequest.getToDate(), String.valueOf(leaveRequest.getDurationType()));
+
+        boolean counted = Boolean.TRUE.equals(leaveType.getIsCountedAsLeave());
+        boolean paidByRequest = Boolean.TRUE.equals(leaveRequest.getIsPaidLeave());
+
+        if (counted && paidByRequest) {
+
             int year = leaveRequest.getFromDate().getYear();
             String emp = leaveRequest.getUser().getEmployeeCode();
             String typeCode = leaveType.getCode();
+
 
             LeaveQuota quota = leaveQuotaRepository
                     .findByEmployeeCodeAndLeaveTypeCodeAndYear(emp, typeCode, year)
@@ -147,20 +165,18 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         }
 
         leaveRequest.setStatus(LeaveandOTStatus.APPROVED.name());
-        leaveRequest.setReason(reason);
+        leaveRequest.setNote(note);
         leaveRequest.setApprovedDate(LocalDateTime.now());
-
-
 
         return mapToResponse(LeaveRequestRepository.save(leaveRequest));
     }
 
     @Override
-    public LeaveRequestResponse rejectLeaveRequest(Integer id, String reason) {
+    public LeaveRequestResponse rejectLeaveRequest(Integer id, String note) {
         LeaveRequest leaveRequest = LeaveRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Leave request not found"));
         leaveRequest.setStatus(LeaveandOTStatus.REJECTED.name());
-        leaveRequest.setReason(reason);
+        leaveRequest.setNote(note);
         leaveRequest.setApprovedDate(LocalDateTime.now());
 
         return mapToResponse(LeaveRequestRepository.save(leaveRequest));
@@ -174,8 +190,8 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         entity.setLeaveType(leaveType);
         entity.setFromDate(dto.getFromDate());
         entity.setToDate(dto.getToDate());
-        entity.setDurationType(DurationType.valueOf(dto.getDuration()));
-        entity.setIsPaidLeave(Boolean.TRUE.equals(leaveType.getIsPaid()));
+        entity.setDurationType(DurationType.valueOf(dto.getDuration()));;
+        entity.setIsPaidLeave(dto.getIsPaidLeave());
         entity.setReason(dto.getReason());
         entity.setStatus(LeaveandOTStatus.PENDING.name());
         entity.setCreatedDate(LocalDateTime.now());
