@@ -24,6 +24,11 @@ export default function PayrollToolbar() {
 
     const data = await PayrollQuery(newParams);
     payrollData.setPayrollData(data.content);
+
+    params.setPayrollParams((prev) => ({
+      ...prev,
+      totalPage: data.size.toString(),
+    }));
   };
 
   const dateInputHandler = async (e: FormEvent<HTMLInputElement>) => {

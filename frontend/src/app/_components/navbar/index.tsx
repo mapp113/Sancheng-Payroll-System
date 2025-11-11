@@ -58,7 +58,9 @@ export default function Navbar() {
         ? "Admin Dashboard"
         : pathname?.startsWith("/manager")
             ? "Manager Dashboard"
-            : "HR Dashboard";
+            : pathname?.startsWith("/employee")
+                ? "Employee Dashboard"
+                : "HR Dashboard";
 
     useEffect(() => {
         // try {
