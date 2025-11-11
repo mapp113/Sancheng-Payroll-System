@@ -17,7 +17,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -48,10 +47,10 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
          LocalDate toDate = (leaveRequestDTO.getToDate() != null) ? leaveRequestDTO.getToDate() : leaveRequestDTO.getFromDate();
          double requestedDays = calculateLeaveDays(fromDate, toDate, leaveRequestDTO.getDuration());
 
-         boolean requestedPaid = Boolean.TRUE.equals(leaveType.getIsPaid()) && leaveRequestDTO.getIsPaidLeave();
-         boolean effectivePaid = Boolean.TRUE.equals(leaveType.getIsPaid()) && requestedPaid;
+         boolean isPaidByType = Boolean.TRUE.equals(leaveType.getIsPaid());
 
-         if (Boolean.TRUE.equals(leaveType.getIsCountedAsLeave()) && effectivePaid) {
+
+         if (Boolean.TRUE.equals(leaveType.getIsCountedAsLeave()) && isPaidByType) {
              int year = fromDate.getYear();
              String emp = user.getEmployeeCode();
              String typeCode = leaveType.getCode();
@@ -70,7 +69,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                  }
              }
          }
-         LeaveRequest entity = mapToEntity(leaveRequestDTO, user, leaveType);
+         LeaveRequest entity = mapToEntity(leaveRequestDTO, user, leaveType, isPaidByType);
          entity.setToDate(toDate);
          LeaveRequest savedLeaveRequest = LeaveRequestRepository.save(entity);
 
@@ -184,14 +183,14 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
 
 
-    private LeaveRequest mapToEntity(LeaveRequestCreateDTO dto, User user, LeaveType leaveType) {
+    private LeaveRequest mapToEntity(LeaveRequestCreateDTO dto, User user, LeaveType leaveType, boolean isPaidByType) {
         LeaveRequest entity = new LeaveRequest();
         entity.setUser(user);
         entity.setLeaveType(leaveType);
         entity.setFromDate(dto.getFromDate());
         entity.setToDate(dto.getToDate());
         entity.setDurationType(DurationType.valueOf(dto.getDuration()));;
-        entity.setIsPaidLeave(dto.getIsPaidLeave());
+        entity.setIsPaidLeave(isPaidByType);
         entity.setReason(dto.getReason());
         entity.setStatus(LeaveandOTStatus.PENDING.name());
         entity.setCreatedDate(LocalDateTime.now());
