@@ -1,0 +1,26 @@
+# curl -i -X POST http://localhost:8080/api/leave/submit
+#  -H "Content-Type: application/json"
+#  -d '{
+#    "employeeCode": "EMP001",
+#    "leaveType": "annual",
+#    "fromDate": "2025-11-09",
+#    "toDate": "2025-11-09",
+#    "duration": "FULL_DAY",
+#    "reason": "Có việc riêng",
+#    "isPaidLeave": false
+#  }'
+POST http://localhost:8080/api/leave/submit
+Content-Type: application/json
+
+{
+  "employeeCode": "EMP001",
+  "leaveType": "wedding_child",
+  "fromDate": "2025-11-12",
+  "toDate": "2025-11-12",
+  "duration": "FULL_DAY",
+  "reason": "Con cưới",
+  "isPaidLeave": false
+}
+
+###
+
