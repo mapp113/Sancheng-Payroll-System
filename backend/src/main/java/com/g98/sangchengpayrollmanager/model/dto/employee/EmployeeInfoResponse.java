@@ -18,7 +18,7 @@ public record EmployeeInfoResponse(
         // --- Thông tin từ bảng EmployeeInformation ---
         String taxNo,
         String socialNo,
-        Integer bankNumber,
+        String bankNumber,
         Integer dependentsNo,
 
         // --- Thông tin từ bảng Position ---

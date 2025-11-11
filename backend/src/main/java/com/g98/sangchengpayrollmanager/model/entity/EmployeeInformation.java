@@ -35,8 +35,8 @@ public class EmployeeInformation {
     @Column(name = "social_no", length = 50, nullable = false)
     private String socialNo;
 
-    @Column(name = "bank_number")
-    private Integer bankNumber;
+    @Column(name = "bank_number", length = 50)
+    private String bankNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
