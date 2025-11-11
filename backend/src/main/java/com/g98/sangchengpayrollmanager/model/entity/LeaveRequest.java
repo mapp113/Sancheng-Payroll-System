@@ -1,5 +1,7 @@
 package com.g98.sangchengpayrollmanager.model.entity;
 
+import com.g98.sangchengpayrollmanager.model.enums.DurationType;
+import com.g98.sangchengpayrollmanager.model.enums.LeaveandOTStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
@@ -26,9 +28,6 @@ public class LeaveRequest {
     @JoinColumn(name = "leave_type_id", nullable = false)
     private LeaveType leaveType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "schedule_id")
-    private AttSchedule schedule;
 
     @Column(name = "from_date", nullable = false)
     private LocalDate fromDate;
@@ -36,16 +35,31 @@ public class LeaveRequest {
     @Column(name = "to_date")
     private LocalDate toDate;
 
-    @Column(length = 100)
-    private String title;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "duration_type", nullable = false, length = 20)
+    private DurationType durationType;
+
 
     @Column(length = 500)
-    private String description;
+    private String reason;
 
-    @Column(length = 10, nullable = false)
+    @Column(name = "status")
     private String status;
 
     @Column(name = "created_date", nullable = false)
     private LocalDateTime createdDate;
+
+    @Column(name = "approved_date")
+    private LocalDateTime approvedDate;
+
+    @Column(name = "note", length = 500)
+    private String note;
+
+    @Column(name = "link_url", length = 500)
+    private String linkUrl;
+
+    @Column(name = "is_paid_leave", nullable = false)
+    private Boolean isPaidLeave ;
+
 }
 
