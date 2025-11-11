@@ -22,7 +22,7 @@ public class AttDailySummary {
     @JoinColumn(name = "employee_code", nullable = false)
     private User user;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private LocalDate date;
 
     @Column(name = "work_hours", nullable = false)
