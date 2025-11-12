@@ -20,4 +20,6 @@ public interface UserRepository extends JpaRepository<User, String> {
     // ✅ Thêm mới: trả về employeeCode theo userId
     @Query("SELECT u.employeeCode FROM User u WHERE u.userId = :userId")
     String findEmployeeCodeByUserId(@Param("userId") String userId);
+
+    Optional<User> findByEmployeeCode(String employeeCode);
 }

@@ -52,18 +52,14 @@ export default function Navbar() {
     // Ẩn navbar ở các route không cần layout
     // if (pathname && noLayoutRoutes.includes(pathname)) return null;
     const {language, toggleLanguage} = useLanguage();
-    const t = useTranslations();
     // const dashboardTitle = pathname?.startsWith("/manager")
     //     ? "Manager Dashboard"
     //     : "HR Dashboard";
     const dashboardTitle = pathname?.startsWith("/admin")
-        //  ? "Admin Dashboard"
-        ? t("navbar.adminDashboard")
+        ? "Admin Dashboard"
         : pathname?.startsWith("/manager")
-            //          ? "Manager Dashboard"
-            //         : "HR Dashboard";
-            ? t("navbar.managerDashboard")
-            : t("navbar.hrDashboard");
+            ? "Manager Dashboard"
+            : "HR Dashboard";
 
     useEffect(() => {
         // try {
@@ -120,12 +116,10 @@ export default function Navbar() {
                     type="button"
                     onClick={toggleLanguage}
                     className="flex items-center gap-2 rounded-full bg-white/40 px-3 py-1 text-sm font-semibold text-[#345EA8] transition hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#345EA8]"
-                    // aria-label={`Switch to ${language === "vi" ? "English" : "Vietnamese"}`}
-                    aria-label={language === "vi" ? t("navbar.switchToEnglish") : t("navbar.switchToVietnamese")}
+                    aria-label={`Switch to ${language === "vi" ? "English" : "Vietnamese"}`}
                 >
                     <Languages className="h-4 w-4" aria-hidden="true"/>
-                    {/*//           <span>{language === "vi" ? "Tiếng Việt" : "English"}</span>*/}
-                    <span>{language === "vi" ? t("navbar.language.vi") : t("navbar.language.en")}</span>
+                    <span>{language === "vi" ? "Tiếng Việt" : "English"}</span>
                 </button>
                 <button id="notification" className="flex items-center gap-1">
                     <Bell/>
