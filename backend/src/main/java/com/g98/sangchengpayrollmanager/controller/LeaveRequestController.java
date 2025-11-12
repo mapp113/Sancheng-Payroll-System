@@ -5,9 +5,14 @@ import com.g98.sangchengpayrollmanager.model.dto.LeaveRequestCreateDTO;
 import com.g98.sangchengpayrollmanager.model.dto.LeaveandOTRequestUpdateDTO;
 import com.g98.sangchengpayrollmanager.model.dto.leave.LeaveRequestResponse;
 import com.g98.sangchengpayrollmanager.model.entity.LeaveRequest;
+import com.g98.sangchengpayrollmanager.model.enums.LeaveandOTStatus;
 import com.g98.sangchengpayrollmanager.service.LeaveRequestService;
 import com.g98.sangchengpayrollmanager.service.validator.LeaveRequestValidator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -37,19 +42,48 @@ public class LeaveRequestController {
         return ResponseEntity.created(location).build();
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<List<LeaveRequestResponse>> getAllLeaveRequests() {
-        List<LeaveRequestResponse> responseList = leaveRequestService.getAllLeaveRequests();
-        return ResponseEntity.ok(responseList);
+    @GetMapping("/all") // Manager xem trang
+    public ResponseEntity<Page<LeaveRequestResponse>> getAllLeaveRequests(@RequestParam(defaultValue = "0") int page,
+                                                                          @RequestParam(defaultValue = "20") int size,
+                                                                          @RequestParam(defaultValue = "createdDate,desc") String sort
+    ) {
+        Pageable pageable = toPageable(page, size, sort);
+        Page<LeaveRequestResponse> result = leaveRequestService.getAllLeaveRequests(pageable);
+        return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/all/{staus}")
-    public ResponseEntity<List<LeaveRequestResponse>> getAllPendingLeaveRequests() {
-        List<LeaveRequestResponse> responseList = leaveRequestService.getPendingLeaveRequests();
-        return ResponseEntity.ok(responseList);
+    @GetMapping("/user/{userId}")  // Employee xem trang
+    public ResponseEntity<Page<LeaveRequestResponse>> getByUser(@PathVariable Long userId,
+                                                                @RequestParam(defaultValue = "0") int page,
+                                                                @RequestParam(defaultValue = "20") int size,
+                                                                @RequestParam(defaultValue = "createdDate,desc") String sort
+    ) {
+        Pageable pageable = toPageable(page, size, sort);
+        Page<LeaveRequestResponse> result = leaveRequestService.findByUser_Id(userId, pageable);
+        return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/detail/{id}")
+
+    @GetMapping("/status")
+    public ResponseEntity<Page<LeaveRequestResponse>> getByStatus(@RequestParam String status,
+                                                                  @RequestParam(defaultValue = "0") int page,
+                                                                  @RequestParam(defaultValue = "20") int size,
+                                                                  @RequestParam(defaultValue = "createdDate,desc") String sort
+    ) {
+        String[] parts = sort.split(",");
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.fromString(parts[1].trim()), parts[0].trim())
+        );
+        LeaveandOTStatus st = LeaveandOTStatus.valueOf(status.trim().toUpperCase());
+        Page<LeaveRequestResponse> result = leaveRequestService.findByStatus(st, pageable);
+        return ResponseEntity.ok(result);
+    }
+
+
+
+        @GetMapping("/detail/{id}")
     public ResponseEntity<LeaveRequestResponse> getLeaveRequestDetail(@PathVariable Integer id) {
         LeaveRequestResponse response = leaveRequestService.getLeaveRequestDetail(id);
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -59,16 +93,23 @@ public class LeaveRequestController {
     public ResponseEntity<LeaveRequestResponse> approveLeaveRequest
             (@PathVariable Integer id,
              @RequestBody @Validated LeaveandOTRequestUpdateDTO updateDTO) {
-        LeaveRequestResponse response = leaveRequestService.approveLeaveRequest(id, updateDTO.getNote());
-        return ResponseEntity.ok(response);
+        leaveRequestService.approveLeaveRequest(id, updateDTO.getNote());
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/reject/{id}")
     public ResponseEntity<LeaveRequestResponse> rejectLeaveRequest
             (@PathVariable Integer id,
              @RequestBody @Validated LeaveandOTRequestUpdateDTO updateDTO) {
-        LeaveRequestResponse response = leaveRequestService.rejectLeaveRequest(id, updateDTO.getNote());
-        return ResponseEntity.ok(response);
+        leaveRequestService.rejectLeaveRequest(id, updateDTO.getNote());
+        return ResponseEntity.noContent().build();
+    }
+
+    private Pageable toPageable(Integer page, Integer size, String sort) {
+        String[] parts = sort.split(",");
+        String field = parts[0].trim();
+        Sort.Direction dir = (parts.length > 1) ? Sort.Direction.fromString(parts[1]) : Sort.Direction.DESC;
+        return PageRequest.of(page, size, Sort.by(dir, field));
     }
 
 

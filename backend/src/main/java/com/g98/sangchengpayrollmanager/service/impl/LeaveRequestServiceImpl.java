@@ -15,8 +15,14 @@ import com.g98.sangchengpayrollmanager.repository.UserRepository;
 import com.g98.sangchengpayrollmanager.service.LeaveRequestService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -70,7 +76,23 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
              }
          }
          LeaveRequest entity = mapToEntity(leaveRequestDTO, user, leaveType, isPaidByType);
-         entity.setToDate(toDate);
+
+         // thêm file sau này sẽ thêm
+//         if (leaveRequestDTO.getAttachment() != null && !leaveRequestDTO.getAttachment().isEmpty()) {
+//             String fileName = leaveRequestDTO.getAttachment().getOriginalFilename();
+//             Path uploadPath = Paths.get(System.getProperty("user.dir"), fileName);
+//
+//             try {
+//                 Files.createDirectories(uploadPath.getParent());
+//                 Path filePath = uploadPath.resolve(fileName);
+//                 leaveRequestDTO.getAttachment().transferTo(filePath.toFile());
+//                 entity.setAttachmentPath(fileName.toString());
+//             } catch (IOException e ) {
+//                 throw new RuntimeException(e);
+//             }
+//         }
+
+             entity.setToDate(toDate);
          LeaveRequest savedLeaveRequest = LeaveRequestRepository.save(entity);
 
          return mapToResponse(savedLeaveRequest);
@@ -95,27 +117,40 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     }
 
 
+    // ấy cho Manager xem
     @Override
-    public List<LeaveRequestResponse> getAllLeaveRequests() {
-        return LeaveRequestRepository.findAll().stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public Page<LeaveRequestResponse> getAllLeaveRequests(Pageable pageable) {
+        return LeaveRequestRepository
+                .findAll(pageable)
+                .map(this::mapToResponse);
+    }
+
+
+    // Laays cho Employee xem của người ta
+    @Override
+    public Page<LeaveRequestResponse> findByUser_Id(Long userId, Pageable pageable) {
+        return LeaveRequestRepository
+                .findByUser_Id(userId, pageable)
+                .map(this::mapToResponse);
     }
 
     @Override
-    public List<LeaveRequestResponse> getPendingLeaveRequests() {
-        return LeaveRequestRepository.findByStatus(LeaveandOTStatus.valueOf(LeaveandOTStatus.PENDING.name()))
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public Page<LeaveRequestResponse> findByStatus(LeaveandOTStatus status, Pageable pageable) {
+        return LeaveRequestRepository
+                .findByStatus(String.valueOf(status), pageable)
+                .map(this::mapToResponse);
+
     }
+
+
+
 
     @Override
     public LeaveRequestResponse getLeaveRequestDetail(Integer id) {
         LeaveRequest leaveRequest = LeaveRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Leave request not found: " + id));
 
-        User user = leaveRequest.getUser();
+        // Còn phải codephanafn quyền chỉ Manager xem được của tất cả. với Employee thì chỉ xem được của chính minhd
         return mapToResponse(leaveRequest);
     }
 
