@@ -12,6 +12,7 @@ import {
 } from "@app/_components/common/auth-card"
 
 import {login, resolveRedirectPath} from "@app/_components/common/login"
+import {useTranslations} from "@/lib/translations"
 
 export default function LoginPage() {
     const [username, setUsername] = useState("")

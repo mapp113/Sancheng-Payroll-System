@@ -4,6 +4,7 @@ import com.g98.sangchengpayrollmanager.device.AttendanceLog;
 import com.g98.sangchengpayrollmanager.device.ZKTecoClient;
 import com.g98.sangchengpayrollmanager.model.entity.AttRecord;
 import com.g98.sangchengpayrollmanager.repository.AttRecordRepository;
+import com.g98.sangchengpayrollmanager.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -19,6 +20,7 @@ import java.util.List;
 public class AttendanceSyncService {
     private final ZKTecoClient zkClient;
     private final AttRecordRepository recordRepo;
+    private final UserRepository userRepository;
 
     /**
      * ĐỒNG BỘ TOÀN BỘ - Lấy tất cả logs
@@ -98,12 +100,14 @@ public class AttendanceSyncService {
                     continue;
                 }
 
-                // Save new record
+                // Save new record to db
                 AttRecord record = AttRecord.builder()
                         .userId(log.getUserId())
                         .checkTime(log.getCheckTime())
                         .attDeviceId(1)
+                        .employeeCode(userRepository.findEmployeeCodeByUserId(log.getUserId()))
                         .build();
+
 
                 recordRepo.save(record);
                 saved++;

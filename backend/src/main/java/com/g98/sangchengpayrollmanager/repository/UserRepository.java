@@ -16,4 +16,8 @@ public interface UserRepository extends JpaRepository<User, String> {
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.role WHERE u.username = :username")
     Optional<User> findByUsernameWithRole(@Param("username") String username);
 
+
+    // ✅ Thêm mới: trả về employeeCode theo userId
+    @Query("SELECT u.employeeCode FROM User u WHERE u.userId = :userId")
+    String findEmployeeCodeByUserId(@Param("userId") String userId);
 }

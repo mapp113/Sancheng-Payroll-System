@@ -6,6 +6,7 @@ import localFont from "next/font/local";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Bell, ChevronDown, CircleChevronDown, Clock, Languages} from "lucide-react";
 import {useLanguage} from "@/lib/language-context";
+import {useTranslations} from "@/lib/translations";
 
 const iceland = localFont({
     src: "../../../../public/fonts/Iceland-Regular.ttf",
@@ -51,14 +52,18 @@ export default function Navbar() {
     // Ẩn navbar ở các route không cần layout
     // if (pathname && noLayoutRoutes.includes(pathname)) return null;
     const {language, toggleLanguage} = useLanguage();
+    const t = useTranslations();
     // const dashboardTitle = pathname?.startsWith("/manager")
     //     ? "Manager Dashboard"
     //     : "HR Dashboard";
     const dashboardTitle = pathname?.startsWith("/admin")
-        ? "Admin Dashboard"
+        //  ? "Admin Dashboard"
+        ? t("navbar.adminDashboard")
         : pathname?.startsWith("/manager")
-            ? "Manager Dashboard"
-            : "HR Dashboard";
+            //          ? "Manager Dashboard"
+            //         : "HR Dashboard";
+            ? t("navbar.managerDashboard")
+            : t("navbar.hrDashboard");
 
     useEffect(() => {
         // try {
@@ -115,10 +120,12 @@ export default function Navbar() {
                     type="button"
                     onClick={toggleLanguage}
                     className="flex items-center gap-2 rounded-full bg-white/40 px-3 py-1 text-sm font-semibold text-[#345EA8] transition hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#345EA8]"
-                    aria-label={`Switch to ${language === "vi" ? "English" : "Vietnamese"}`}
+                    // aria-label={`Switch to ${language === "vi" ? "English" : "Vietnamese"}`}
+                    aria-label={language === "vi" ? t("navbar.switchToEnglish") : t("navbar.switchToVietnamese")}
                 >
                     <Languages className="h-4 w-4" aria-hidden="true"/>
-                    <span>{language === "vi" ? "Tiếng Việt" : "English"}</span>
+                    {/*//           <span>{language === "vi" ? "Tiếng Việt" : "English"}</span>*/}
+                    <span>{language === "vi" ? t("navbar.language.vi") : t("navbar.language.en")}</span>
                 </button>
                 <button id="notification" className="flex items-center gap-1">
                     <Bell/>

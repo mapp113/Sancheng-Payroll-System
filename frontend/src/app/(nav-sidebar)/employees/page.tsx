@@ -140,33 +140,33 @@ export default function EmployeesDashboardPage() {
                             </div>
                         </div>
 
-                        {/* Phải: TẠO YÊU CẦU (thu nhỏ) */}
-                        <div className="flex flex-col gap-3 rounded-3xl bg-white p-4 shadow-sm text-sm">
-                            <h3 className="text-base font-semibold text-[#1F2A44]">Tạo Yêu Cầu</h3>
-                            <p className="text-xs text-[#1F2A44]/70">
-                                Theo dõi và tạo yêu cầu khi cần.
-                            </p>
+                        {/*              /!* Phải: TẠO YÊU CẦU (thu nhỏ) *!/*/}
+                        {/*              <div className="flex flex-col gap-3 rounded-3xl bg-white p-4 shadow-sm text-sm">*/}
+                        {/*                  <h3 className="text-base font-semibold text-[#1F2A44]">Tạo Yêu Cầu</h3>*/}
+                        {/*                  <p className="text-xs text-[#1F2A44]/70">*/}
+                        {/*                      Theo dõi và tạo yêu cầu khi cần.*/}
+                        {/*                  </p>*/}
 
-                            <div className="space-y-3">
-                                {requestSummary.map((item) => (
-                                    <div
-                                        key={item.label}
-                                        className="flex items-center justify-between rounded-xl border border-dashed border-[#CCE1F0] p-3"
-                                    >
-                                        <p className="text-[11px] font-medium text-[#1F2A44]">{item.label}</p>
-                                        <span
-                                            className="rounded-full bg-[#FBF6EF] px-3 py-1 text-[13px] font-semibold text-[#1F2A44]">
-            {item.value}
-          </span>
-                                    </div>
-                                ))}
-                            </div>
+                        {/*                  <div className="space-y-3">*/}
+                        {/*                      {requestSummary.map((item) => (*/}
+                        {/*                          <div*/}
+                        {/*                              key={item.label}*/}
+                        {/*                              className="flex items-center justify-between rounded-xl border border-dashed border-[#CCE1F0] p-3"*/}
+                        {/*                          >*/}
+                        {/*                              <p className="text-[11px] font-medium text-[#1F2A44]">{item.label}</p>*/}
+                        {/*                              <span*/}
+                        {/*                                  className="rounded-full bg-[#FBF6EF] px-3 py-1 text-[13px] font-semibold text-[#1F2A44]">*/}
+                        {/*  {item.value}*/}
+                        {/*</span>*/}
+                        {/*                          </div>*/}
+                        {/*                      ))}*/}
+                        {/*                  </div>*/}
 
-                            <button type="button"
-                                    className="mt-2 inline-flex items-center justify-center gap-1.5 rounded-full bg-[#4AB4DE] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#3d9fc5]">
-                                <PlusCircle className="h-3 w-3"/> Tạo yêu cầu
-                            </button>
-                        </div>
+                        {/*                  <button type="button"*/}
+                        {/*                          className="mt-2 inline-flex items-center justify-center gap-1.5 rounded-full bg-[#4AB4DE] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#3d9fc5]">*/}
+                        {/*                      <PlusCircle className="h-3 w-3"/> Tạo yêu cầu*/}
+                        {/*                  </button>*/}
+                        {/*              </div>*/}
                     </div>
 
 
@@ -174,7 +174,7 @@ export default function EmployeesDashboardPage() {
                         <header
                             className="flex flex-col gap-3 border-b border-[#CCE1F0] pb-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
-                                <h3 className="text-xl font-semibold text-[#1F2A44]">Danh sách Timesheet</h3>
+                                <h3 className="text-xl font-semibold text-[#1F2A44]">Danh Sách Chấm Công</h3>
                                 <p className="text-sm text-[#1F2A44]/60">Trạng thái chấm công trong tuần
                                     này</p>
                             </div>

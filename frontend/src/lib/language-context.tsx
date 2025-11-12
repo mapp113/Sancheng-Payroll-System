@@ -3,8 +3,8 @@
 //test
 import {createContext, useContext, useEffect, useMemo, useState} from "react";
 
-type Language = "vi" | "en";
-
+//type Language = "vi" | "en";
+export type Language = "vi" | "en";
 type LanguageContextValue = {
     language: Language;
     setLanguage: (language: Language) => void;

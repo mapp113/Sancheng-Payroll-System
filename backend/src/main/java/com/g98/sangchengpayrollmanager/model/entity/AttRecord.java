@@ -35,4 +35,8 @@ public class AttRecord {
             date = checkTime.toLocalDate();
         }
     }
+
+    @Column(name = "employee_code", length = 50)
+    private String employeeCode;
+
 }

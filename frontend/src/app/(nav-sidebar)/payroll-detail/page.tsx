@@ -250,11 +250,11 @@ function buildGeneralInformation(
 ): PayrollInfoField[] {
     const values: PayrollInfoField[] = [
         {
-            label: "Employee Code",
+            label: "Mã Nhân Viên",
             value: employee?.employeeCode ?? paySummary.employeeCode,
         },
         {
-            label: "Position",
+            label: "Chức Vụ",
             value: employee?.positionName ?? "—",
         },
         {
@@ -262,29 +262,29 @@ function buildGeneralInformation(
             value: employee?.email ?? "—",
         },
         {
-            label: "Phone",
+            label: "Số Điện Thoại",
             value: employee?.phoneNo ?? "—",
         },
         {
-            label: "Tax Number",
+            label: "Mã Số Thuế",
             value: employee?.taxNo ?? "—",
         },
         {
-            label: "Social Insurance No",
+            label: "Số Bảo Hiểm Xã Hội",
             value: employee?.socialNo ?? "—",
         },
     ];
 
     if (employee?.dob) {
         values.push({
-            label: "Date of Birth",
+            label: "Ngày sinh",
             value: formatDate(employee.dob),
         });
     }
 
     if (employee?.dependentsNo != null) {
         values.push({
-            label: "Dependents",
+            label: "Người Phụ Thuộc",
             value: String(employee.dependentsNo),
         });
     }
@@ -305,12 +305,12 @@ function splitComponentItems(
     const backPayItems: PayrollLineItem[] = [];
 
     if (paySummary.baseSalaryAmt != null) {
-        incomeItems.push({label: "Base Salary", value: paySummary.baseSalaryAmt});
+        incomeItems.push({label: "Lương Cơ Bản", value: paySummary.baseSalaryAmt});
     }
 
     if (paySummary.otAmount != null) {
         incomeItems.push({
-            label: "Overtime Pay",
+            label: "Tiền Tăng Ca",
             value: paySummary.otAmount,
             description: paySummary.otHour ? `${paySummary.otHour} hours` : undefined,
         });
@@ -323,12 +323,12 @@ function splitComponentItems(
             case "ADDITION":
                 incomeItems.push(item);
                 break;
-            case "INSURANCE":
-            case "DEDUCTION":
-            case "TAX":
+            case "Bảo Hiểm":
+            case "Tiền Trừ":
+            case "Thuế":
                 deductionItems.push(item);
                 break;
-            case "TAX_DEDUCTION":
+            case "Khấu Trừ Thuế":
                 backPayItems.push(item);
                 break;
             default:
@@ -339,14 +339,14 @@ function splitComponentItems(
 
     if (paySummary.taxAmount) {
         deductionItems.push({
-            label: "Personal Income Tax",
+            label: "Thuế Thu Nhập",
             value: Math.abs(paySummary.taxAmount),
         });
     }
 
     if (!deductionItems.length && paySummary.bhAmount) {
         deductionItems.push({
-            label: "Insurance Contributions",
+            label: "Đóng Bảo Hiểm",
             value: Math.abs(paySummary.bhAmount),
         });
     }
