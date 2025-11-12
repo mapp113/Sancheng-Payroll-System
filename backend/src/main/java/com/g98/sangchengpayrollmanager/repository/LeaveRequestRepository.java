@@ -13,6 +13,6 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Inte
 
     Page<LeaveRequest> findByStatus(LeaveandOTStatus status, Pageable pageable);
 
-    Page<LeaveRequest> findByUser_Id(Long userId, Pageable pageable);
+    Page<LeaveRequest> findByUser_EmployeeCode(String employeeCode, Pageable pageable);
 
 }

@@ -53,13 +53,13 @@ public class LeaveRequestController {
     }
 
     @GetMapping("/user/{userId}")  // Employee xem trang
-    public ResponseEntity<Page<LeaveRequestResponse>> getByUser(@PathVariable Long userId,
+    public ResponseEntity<Page<LeaveRequestResponse>> getByUser(@PathVariable String employeeCode,
                                                                 @RequestParam(defaultValue = "0") int page,
                                                                 @RequestParam(defaultValue = "20") int size,
                                                                 @RequestParam(defaultValue = "createdDate,desc") String sort
     ) {
         Pageable pageable = toPageable(page, size, sort);
-        Page<LeaveRequestResponse> result = leaveRequestService.findByUser_Id(userId, pageable);
+        Page<LeaveRequestResponse> result = leaveRequestService.findByUser_Id(employeeCode, pageable);
         return ResponseEntity.ok(result);
     }
 

@@ -18,7 +18,7 @@ public interface LeaveRequestService {
     Page<LeaveRequestResponse> getAllLeaveRequests(Pageable pageable);
 
     // Lấy toàn bộ yêu cầu theo user ( cho employee xem )
-    Page<LeaveRequestResponse> findByUser_Id(Long userId, Pageable pageable);
+    Page<LeaveRequestResponse> findByUser_Id(String employeeCode, Pageable pageable);
 
     // Lấy toàn bộ các yêu cầu theo trạng thái
     Page<LeaveRequestResponse> findByStatus(LeaveandOTStatus status, Pageable pageable);

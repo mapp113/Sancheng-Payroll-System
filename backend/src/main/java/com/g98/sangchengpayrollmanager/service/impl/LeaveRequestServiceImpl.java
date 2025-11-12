@@ -128,9 +128,9 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
     // Laays cho Employee xem của người ta
     @Override
-    public Page<LeaveRequestResponse> findByUser_Id(Long userId, Pageable pageable) {
+    public Page<LeaveRequestResponse> findByUser_Id(String employeeCode, Pageable pageable) {
         return LeaveRequestRepository
-                .findByUser_Id(userId, pageable)
+                .findByUser_EmployeeCode(employeeCode, pageable)
                 .map(this::mapToResponse);
     }
 
