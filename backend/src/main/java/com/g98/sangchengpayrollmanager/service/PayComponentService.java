@@ -131,6 +131,11 @@ public class PayComponentService {
             String groupPolicyCode = entry.getKey();
             List<Integer> memberTypeIds = entry.getValue();
 
+            System.out.println("groupPolicyCode = " + groupPolicyCode );
+            for(Integer typeId : memberTypeIds) {
+                System.out.println("componentTypeId = " + typeId);
+            }
+
             long groupTotalEligible = 0L;
 
             // Cộng eligibleForGroup của tất cả component thuộc group này
@@ -141,9 +146,12 @@ public class PayComponentService {
                 }
             }
 
+            System.out.println("groupTotalEligible = " + groupTotalEligible);
+
             // Lấy policy GROUP (cap/tỷ lệ nhóm)
             // lấy ra policy loại group với effective_from <= periodEnd <= effective_to của policy
             LegalPolicy groupPolicy = legalPolicyRepository.findActiveByCode(groupPolicyCode, periodEnd); //
+            System.out.println("groupPolicy = " + groupPolicy.getCode());
             if (groupPolicy == null) {
                 continue;
             }
@@ -164,9 +172,9 @@ public class PayComponentService {
             taxableFromGroup += taxableGroupPart;
         }
         taxableAddition = taxableImmediateSum + taxableFromGroup;
-//        System.out.println("taxableAddition: " + taxableAddition);
-//        System.out.println("taxableImmediateSum: " + taxableImmediateSum);
-//        System.out.println("taxableFromGroup: " + taxableFromGroup);
+        System.out.println("taxableAddition: " + taxableAddition);
+        System.out.println("taxableImmediateSum: " + taxableImmediateSum);
+        System.out.println("taxableFromGroup: " + taxableFromGroup);
         nonTaxableAddition = totalAddition - taxableAddition;
 
         // 4. Build result

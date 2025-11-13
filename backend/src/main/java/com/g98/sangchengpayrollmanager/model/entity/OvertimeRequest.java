@@ -23,6 +23,9 @@ public class OvertimeRequest {
     @Column(name = "to_time")
     private LocalDateTime toTime;
 
+    @Column(name = "worked_time")
+    private Integer workedTime;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_code")
     private User user;
@@ -31,9 +34,14 @@ public class OvertimeRequest {
     private String status;
 
     @Column(name = "created_date")
-    private LocalDateTime createdDate;
+    private LocalDateTime createdDateOT;
 
-    @Column(name = "worked_time")
-    private Integer workedTime;
+    @Column(name = "approved_date")
+    private LocalDateTime approvedDateOT;
+
+    @Column(name = "note", length = 500)
+    private String noteOT;
+
+
 }
 

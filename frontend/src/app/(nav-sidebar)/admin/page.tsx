@@ -6,17 +6,17 @@ import {Pencil, Plus, Search, X} from "lucide-react";
 type Role = "HR" | "EMPLOYEE" | "ADMIN" | "MANAGER" | "ACCOUNTANT";
 
 type UserItem = {
-    employeeCode: string;   // = id trong bảng của bạn
+    userId: string;          // NEW: ID dùng cho máy chấm công
+    employeeCode: string;    // PK trong DB
     fullName: string;
     username: string;
     email: string;
     dob?: string;
     phoneNo: string;
-    status: number | string;  // 1 / 0 hoặc "Hoạt động"
+    status: number | string;
     roleId?: number;
     roleName?: string;
 };
-
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
@@ -30,12 +30,8 @@ export default function AdminPage() {
     const [search, setSearch] = useState("");
 
     const [roleSummaries, setRoleSummaries] = useState<
-        {
-            name: string;
-            roleName: string; total: number
-        }[]
+        { name: string; roleName: string; total: number }[]
     >([]);
-
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -47,7 +43,13 @@ export default function AdminPage() {
                     },
                 });
                 const json = await res.json();
-                setUsers(json.data ?? []);
+
+                // Chuẩn hóa để tương thích tên field từ BE
+                const data: UserItem[] = (json.data ?? []).map((u: any) => ({
+                    ...u,
+                    userId: u.userId ?? u.userID ?? "", // fallback nếu BE trả tên khác
+                }));
+                setUsers(data);
             } catch (e) {
                 console.error("fetch users error", e);
             } finally {
@@ -63,7 +65,6 @@ export default function AdminPage() {
                     },
                 });
                 const json = await res.json();
-                // 👇 backend trả name thay vì roleName
                 setRoleSummaries(json.data ?? []);
             } catch (e) {
                 console.error("fetch role summary error", e);
@@ -74,15 +75,10 @@ export default function AdminPage() {
         fetchRoleSummary();
     }, []);
 
-
     const filteredUsers = useMemo(() => {
         let list = users;
         if (filterRole !== "all") {
-            list = list.filter((u) => {
-                const uiRole = u.roleName ?? "";
-                // filterRole là Admin/HR/Manager/... nên so sánh theo label
-                return uiRole.toLowerCase() === filterRole.toLowerCase();
-            });
+            list = list.filter((u) => (u.roleName ?? "").toLowerCase() === filterRole.toLowerCase());
         }
         if (search.trim() !== "") {
             const s = search.toLowerCase();
@@ -99,7 +95,11 @@ export default function AdminPage() {
                 },
             });
             const json = await res.json();
-            setUsers(json.data ?? []);
+            const data: UserItem[] = (json.data ?? []).map((u: any) => ({
+                ...u,
+                userId: u.userId ?? u.userID ?? "",
+            }));
+            setUsers(data);
         } catch (e) {
             console.error(e);
         }
@@ -115,7 +115,7 @@ export default function AdminPage() {
                         className="inline-flex items-center gap-2 self-start rounded-full bg-[#4AB4DE] px-4 py-2 text-white transition hover:bg-[#3c9ec3]"
                     >
                         <Plus className="h-4 w-4"/>
-                        Create Account
+                        Tạo Tài Khoản
                     </button>
                 </div>
             </header>
@@ -123,27 +123,19 @@ export default function AdminPage() {
             <section className="grid grid-cols-5 gap-4">
                 {roleSummaries.map((item) => (
                     <article
+                        key={item.name}
                         className="rounded-2xl bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
                     >
                         <div className="mt-2 flex items-end justify-between">
                             <h3 className="text-xl font-semibold">{item.name}</h3>
-                            <span className="text-3xl font-bold text-[#4AB4DE]">
-          {item.total}
-        </span>
+                            <span className="text-3xl font-bold text-[#4AB4DE]">{item.total}</span>
                         </div>
                     </article>
                 ))}
-
-                {/* Nếu thiếu Accountant → thêm ô 0 cho đủ 5 */}
                 {["Admin", "HR", "Employee", "Manager", "Accountant"]
-                    .filter(
-                        (r) => !roleSummaries.some((item) => item.name === r)
-                    )
+                    .filter((r) => !roleSummaries.some((item) => item.name === r))
                     .map((missingRole) => (
-                        <article
-                            key={missingRole}
-                            className="rounded-2xl bg-white p-4 shadow-sm opacity-70"
-                        >
+                        <article key={missingRole} className="rounded-2xl bg-white p-4 shadow-sm opacity-70">
                             <div className="mt-2 flex items-end justify-between">
                                 <h3 className="text-xl font-semibold">{missingRole}</h3>
                                 <span className="text-3xl font-bold text-[#94A3B8]">0</span>
@@ -151,7 +143,6 @@ export default function AdminPage() {
                         </article>
                     ))}
             </section>
-
 
             <div className="flex flex-1 flex-col gap-4 xl:flex-row xl:overflow-hidden">
                 <section className="flex-1 overflow-hidden rounded-2xl bg-white p-4 shadow-sm">
@@ -186,7 +177,8 @@ export default function AdminPage() {
                         <table className="min-w-full divide-y divide-[#E2E8F0] text-sm">
                             <thead className="bg-[#F8FAFC] text-left">
                             <tr>
-                                <th className="px-4 py-3 font-medium">ID</th>
+                                <th className="px-4 py-3 font-medium">UserID</th>
+                                <th className="px-4 py-3 font-medium">EmployeeCode</th>
                                 <th className="px-4 py-3 font-medium">Name</th>
                                 <th className="px-4 py-3 font-medium">Position</th>
                                 <th className="px-4 py-3 font-medium">Status</th>
@@ -197,22 +189,17 @@ export default function AdminPage() {
                             <tbody className="divide-y divide-[#E2E8F0]">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500">
+                                    <td colSpan={7} className="px-4 py-6 text-center text-sm text-slate-500">
                                         Đang tải...
                                     </td>
                                 </tr>
                             ) : (
                                 filteredUsers.map((user) => (
-                                    <tr key={user.employeeCode} className="hover:bg-[#F1F5F9]">
-                                        <td className="whitespace-nowrap px-4 py-3 font-medium">
-                                            {user.employeeCode}
-                                        </td>
-                                        <td className="whitespace-nowrap px-4 py-3 font-medium">
-                                            {user.fullName}
-                                        </td>
-                                        <td className="whitespace-nowrap px-4 py-3">
-                                            {user.roleName}
-                                        </td>
+                                    <tr key={`${user.employeeCode}-${user.userId}`} className="hover:bg-[#F1F5F9]">
+                                        <td className="whitespace-nowrap px-4 py-3 font-medium">{user.userId}</td>
+                                        <td className="whitespace-nowrap px-4 py-3 font-medium">{user.employeeCode}</td>
+                                        <td className="whitespace-nowrap px-4 py-3 font-medium">{user.fullName}</td>
+                                        <td className="whitespace-nowrap px-4 py-3">{user.roleName}</td>
                                         <td className="whitespace-nowrap px-4 py-3">
                         <span
                             className={`rounded-full px-3 py-1 text-xs font-semibold ${
@@ -221,14 +208,10 @@ export default function AdminPage() {
                                     : "bg-[#FEE2E2] text-[#B91C1C]"
                             }`}
                         >
-                          {user.status === 1 || user.status === "Hoạt động"
-                              ? "Hoạt động"
-                              : "Tạm khóa"}
+                          {user.status === 1 || user.status === "Hoạt động" ? "Hoạt động" : "Tạm khóa"}
                         </span>
                                         </td>
-                                        <td className="whitespace-nowrap px-4 py-3 text-[#557099]">
-                                            {user.phoneNo}
-                                        </td>
+                                        <td className="whitespace-nowrap px-4 py-3 text-[#557099]">{user.phoneNo}</td>
                                         <td className="whitespace-nowrap px-4 py-3">
                                             <div className="flex items-center justify-end gap-2">
                                                 <button
@@ -254,16 +237,7 @@ export default function AdminPage() {
             {openCreate && (
                 <CreateAccountModal
                     onClose={() => setOpenCreate(false)}
-                    onSubmit={async (data) => {
-                        // gọi API tạo
-                        await fetch(`${API_BASE}/api/v1/admin/users`, {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
-                            },
-                            body: JSON.stringify(data),
-                        });
+                    onSubmit={async () => {
                         setOpenCreate(false);
                         await reloadUsers();
                     }}
@@ -277,7 +251,6 @@ export default function AdminPage() {
                     onSubmit={async (data) => {
                         const token = localStorage.getItem("access_token") ?? "";
 
-                        // map FE -> BE
                         const roleMap: Record<string, number> = {
                             Admin: 1,
                             HR: 2,
@@ -287,7 +260,8 @@ export default function AdminPage() {
                         };
 
                         const payload = {
-                            employeeCode: data.id,
+                            employeeCode: editingUser.employeeCode, // PK
+                            userId: editingUser.userId,            // giữ nguyên ID máy chấm công
                             fullName: data.name,
                             email: data.email,
                             phoneNo: data.phone,
@@ -295,7 +269,7 @@ export default function AdminPage() {
                             roleId: roleMap[data.role] ?? 3,
                         };
 
-                        const res = await fetch(`${API_BASE}/api/v1/admin/users/${data.id}`, {
+                        const res = await fetch(`${API_BASE}/api/v1/admin/users/${editingUser.employeeCode}`, {
                             method: "PUT",
                             headers: {
                                 "Content-Type": "application/json",
@@ -313,7 +287,6 @@ export default function AdminPage() {
                         setOpenEdit(false);
                         await reloadUsers();
                     }}
-
                 />
             )}
         </div>
@@ -326,17 +299,10 @@ function CreateAccountModal({
                                 onSubmit,
                             }: {
     onClose: () => void;
-    onSubmit: (data: {
-        id: string;
-        username: string;
-        name: string;
-        password: string;
-        role: Role;
-        email: string;
-        phone: string;
-    }) => void;
+    onSubmit: () => void;
 }) {
-    const [id, setId] = useState("");
+    const [employeeCode, setEmployeeCode] = useState("");
+    const [userId, setUserId] = useState(""); // NEW
     const [username, setUsername] = useState("");
     const [name, setName] = useState("");
     const [password, setPassword] = useState("");
@@ -346,30 +312,19 @@ function CreateAccountModal({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
         try {
-            const token = localStorage.getItem("access_token"); // lấy token từ local
-            const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
-
+            const token = localStorage.getItem("access_token");
             const payload = {
-                employeeCode: id,
+                employeeCode, // PK
+                userId,       // NEW: ID máy chấm công
                 fullName: name,
                 username,
                 password,
                 email,
                 phoneNo: phone,
-                roleId:
-                    role === "ADMIN"
-                        ? 1
-                        : role === "HR"
-                            ? 2
-                            : role === "EMPLOYEE"
-                                ? 3
-                                : role === "MANAGER"
-                                    ? 4
-                                    : 5,
+                roleId: role === "ADMIN" ? 1 : role === "HR" ? 2 : role === "EMPLOYEE" ? 3 : role === "MANAGER" ? 4 : 5,
                 status: 1,
-                dob: "2000-01-01" // tạm set default vì backend đang yêu cầu
+                dob: "2000-01-01",
             };
 
             const res = await fetch(`${API_BASE}/api/v1/admin/create-account`, {
@@ -382,30 +337,19 @@ function CreateAccountModal({
             });
 
             const json = await res.json();
-
             if (!res.ok || json.status !== 200) {
                 alert(json.message || "Tạo tài khoản thất bại!");
                 return;
             }
 
             alert("✅ Tạo tài khoản thành công!");
-            onSubmit({
-                id,
-                username,
-                name,
-                password,
-                role,
-                email,
-                phone,
-            });
+            onSubmit();
             onClose();
-
         } catch (err) {
             console.error("Lỗi khi tạo tài khoản:", err);
             alert("Đã xảy ra lỗi khi tạo tài khoản!");
         }
     };
-
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -421,35 +365,41 @@ function CreateAccountModal({
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4">
+                    {/* UserID (máy chấm công) */}
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">
-                            ID
-                        </label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">UserID</label>
                         <input
-                            value={id}
-                            onChange={(e) => setId(e.target.value)}
+                            value={userId}
+                            onChange={(e) => setUserId(e.target.value)}
                             className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
-                            placeholder="VD: EMP-001"
+                            placeholder="VD: 51"
+                        />
+                    </div>
+
+                    {/* EmployeeCode (PK) */}
+                    <div>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">EmployeeCode</label>
+                        <input
+                            value={employeeCode}
+                            onChange={(e) => setEmployeeCode(e.target.value)}
+                            className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
+                            placeholder="VD: SC0001"
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">
-                            Name
-                        </label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Name</label>
                         <input
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             required
                             className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
-                            placeholder="vd: an.nguyen"
+                            placeholder="vd: Nguyễn Văn A"
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">
-                            Username
-                        </label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Username</label>
                         <input
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
@@ -459,11 +409,8 @@ function CreateAccountModal({
                         />
                     </div>
 
-
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">
-                            Password
-                        </label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Password</label>
                         <input
                             type="password"
                             value={password}
@@ -475,9 +422,7 @@ function CreateAccountModal({
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">
-                            Role
-                        </label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Role</label>
                         <select
                             value={role}
                             onChange={(e) => setRole(e.target.value as Role)}
@@ -492,9 +437,7 @@ function CreateAccountModal({
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">
-                            Email
-                        </label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Email</label>
                         <input
                             type="email"
                             value={email}
@@ -505,9 +448,7 @@ function CreateAccountModal({
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">
-                            Phone
-                        </label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Phone</label>
                         <input
                             type="text"
                             value={phone}
@@ -566,7 +507,7 @@ function EditUserModal({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSubmit({
-            id: user.employeeCode,
+            id: user.employeeCode, // dùng PK để update ở FE cha
             name,
             role,
             status,
@@ -579,9 +520,7 @@ function EditUserModal({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
             <div className="w-full max-w-lg rounded-2xl bg-white shadow-lg">
                 <div className="flex items-center justify-between border-b px-5 py-4">
-                    <h2 className="text-lg font-semibold text-[#1F2A44]">
-                        Chỉnh sửa tài khoản
-                    </h2>
+                    <h2 className="text-lg font-semibold text-[#1F2A44]">Chỉnh sửa tài khoản</h2>
                     <button
                         onClick={onClose}
                         className="rounded-full p-1 text-[#94A3B8] hover:bg-[#F8FAFC] hover:text-[#1F2A44]"
@@ -591,11 +530,19 @@ function EditUserModal({
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4">
-                    {/* ID - chỉ xem */}
+                    {/* UserID (view only) */}
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">
-                            ID
-                        </label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">UserID</label>
+                        <input
+                            value={user.userId}
+                            disabled
+                            className="w-full cursor-not-allowed rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-sm text-[#64748B]"
+                        />
+                    </div>
+
+                    {/* EmployeeCode (view only) */}
+                    <div>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">EmployeeCode (PK)</label>
                         <input
                             value={user.employeeCode}
                             disabled
@@ -603,11 +550,8 @@ function EditUserModal({
                         />
                     </div>
 
-                    {/* Name */}
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">
-                            Name
-                        </label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Name</label>
                         <input
                             value={name}
                             onChange={(e) => setName(e.target.value)}
@@ -616,11 +560,8 @@ function EditUserModal({
                         />
                     </div>
 
-                    {/* Position */}
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">
-                            Position
-                        </label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Position</label>
                         <select
                             value={role}
                             onChange={(e) => setRole(e.target.value)}
@@ -634,11 +575,8 @@ function EditUserModal({
                         </select>
                     </div>
 
-                    {/* Status */}
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">
-                            Status
-                        </label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Status</label>
                         <select
                             value={status}
                             onChange={(e) => setStatus(e.target.value as "Hoạt động" | "Tạm khóa")}
@@ -649,11 +587,8 @@ function EditUserModal({
                         </select>
                     </div>
 
-                    {/* Phone */}
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">
-                            Phone
-                        </label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Phone</label>
                         <input
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
@@ -662,11 +597,8 @@ function EditUserModal({
                         />
                     </div>
 
-                    {/* Email */}
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">
-                            Email
-                        </label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Email</label>
                         <input
                             type="email"
                             value={email}

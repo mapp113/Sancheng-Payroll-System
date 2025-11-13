@@ -22,7 +22,7 @@ public class AttMonthSummary {
     @JoinColumn(name = "employee_code", nullable = false)
     private User user;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private LocalDate month;
 
     @Column(name = "day_standard", precision = 10, scale = 2, nullable = false)

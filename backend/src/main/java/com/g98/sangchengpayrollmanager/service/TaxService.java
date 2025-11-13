@@ -105,22 +105,16 @@ public class TaxService {
         // để chắc kèo thì sort theo toValue tăng dần
         levels.sort(Comparator.comparing(TaxLevel::getToValue));
 
-        int remaining = taxableIncome;
         int totalTax = 0;
 
         for (TaxLevel level : levels) {
             int to = level.getToValue();       // ví dụ: 5_000_000; 10_000_000 ...
             double percent = level.getPercentage().doubleValue(); // ví dụ 0.05, 0.1 ...
-
-            int slabAmount = Math.min(remaining, to);
-            if (slabAmount <= 0) {
+            int from = level.getFromValue();    // ví dụ: 0; 5_000_000; 10_000_000 ...
+            if(taxableIncome <= to && taxableIncome >= from) {
+                totalTax = (int) Math.ceil(taxableIncome * percent);
                 break;
             }
-
-            int taxForSlab = (int) Math.round(slabAmount * percent);
-            totalTax += taxForSlab;
-            remaining -= slabAmount;
-
             // nếu muốn snapshot từng bậc thì add ở đây (optional)
             // items.add(...)
         }

@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class CreateAccountRequest {
+    private String userId;
 
     private String employeeCode;
 
@@ -27,6 +28,8 @@ public class CreateAccountRequest {
     private String phoneNo;
 
     private Long roleId; // map sang bảng hrm.role
+
+    private String devicePin;
 
     // 1 = hoạt động, 0 = tạm khóa
     @Builder.Default

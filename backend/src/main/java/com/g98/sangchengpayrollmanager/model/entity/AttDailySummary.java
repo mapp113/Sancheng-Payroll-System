@@ -3,6 +3,7 @@ package com.g98.sangchengpayrollmanager.model.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "att_daily_summary")
@@ -21,7 +22,7 @@ public class AttDailySummary {
     @JoinColumn(name = "employee_code", nullable = false)
     private User user;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private LocalDate date;
 
     @Column(name = "work_hours", nullable = false)
@@ -39,10 +40,17 @@ public class AttDailySummary {
     @Column(name = "is_payable_day")
     private Boolean isPayableDay;
 
+    @Column(name = "is_count_payable_day")
+    private Boolean isCountPayableDay;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "day_type_id")
     private DayType dayType;
 
+    @Column(name = "check_in_time", nullable = false)
+    private LocalDateTime checkInTime;
 
+    @Column(name = "check_out_time")
+    private LocalDateTime checkOutTime;
 }
 

@@ -18,3 +18,12 @@ spring:
 jwt:
   secret: cd1a3133c39ce3eadab3bc8089ec59f7242afa3ffcc890ece7c4f66a15ada29b
   expiration: 3600000
+
+zkteco:
+  enabled: true
+  ip: 192.168.0.2
+  port: 4370
+  machine-no: 1
+  # Password giao tiếp SDK nếu có, nếu không thì để rỗng
+  password:
+

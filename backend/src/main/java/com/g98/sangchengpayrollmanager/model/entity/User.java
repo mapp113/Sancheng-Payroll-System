@@ -48,5 +48,10 @@ public class User {
     // 1 = Hoạt động, 0 = Tạm khóa
     @Column(name = "status", nullable = false)
     private Integer status;
+
+    @Column(name = "user_id")
+    private String userId;
+
+
 }
 

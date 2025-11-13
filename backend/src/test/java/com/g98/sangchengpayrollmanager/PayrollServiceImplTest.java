@@ -23,7 +23,7 @@ class PayrollServiceImplTest {
                 "EMP001",
                 LocalDate.of(2025, 10, 1),   // tháng tính lương để lấy monthSumary
                 LocalDate.of(2025, 9, 15), //monthStart
-                LocalDate.of(2025, 10, 31)  //monthEnd
+                LocalDate.of(2025, 10, 15)  //monthEnd
         );
 
 

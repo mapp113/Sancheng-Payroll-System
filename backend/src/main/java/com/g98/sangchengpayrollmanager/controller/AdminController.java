@@ -9,6 +9,7 @@ import com.g98.sangchengpayrollmanager.model.entity.User;
 import com.g98.sangchengpayrollmanager.repository.AdminRepository;
 import com.g98.sangchengpayrollmanager.service.AdminService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,7 +20,7 @@ import java.util.List;
 public class AdminController {
 
     private final AdminService adminService;
-    
+
 
     @GetMapping("/users")
     public ApiResponse<List<UserDTO>> getUsers() {
@@ -41,7 +42,10 @@ public class AdminController {
                 .build();
     }
 
-    @PostMapping("/create-account")
+    @PostMapping(value = "/create-account",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+
     public ApiResponse<?> createAccount(@RequestBody CreateAccountRequest request) {
         return adminService.createAccount(request);
     }
