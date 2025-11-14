@@ -122,6 +122,22 @@ export default function LeavesPage() {
           />
         </div>
         <div className="my-2 flex">
+          <span className="">Thời gian nghỉ: </span>
+          <span className="ml-2 font-semibold">
+            {formData.fromDate && formData.toDate
+              ? (() => {
+                const start = new Date(formData.fromDate);
+                const end = new Date(formData.toDate);
+                const diffTime = Math.abs(end.getTime() - start.getTime());
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                return `${diffDays} ngày`;
+              })()
+              : formData.fromDate
+                ? "1 ngày"
+                : "Không xác định"}
+          </span>
+        </div>
+        <div className="my-2 flex">
           <span className="pt-1">Lý do:</span>
           <textarea
             className="ml-5 border border-black rounded px-2 py-1 max-h-md w-md resize-y"
