@@ -42,15 +42,33 @@ public class LeaveRequestController {
         return ResponseEntity.created(location).build();
     }
 
-    @GetMapping("/all") // Manager xem trang
-    public ResponseEntity<Page<LeaveRequestResponse>> getAllLeaveRequests(@RequestParam(defaultValue = "0") int page,
-                                                                          @RequestParam(defaultValue = "20") int size,
-                                                                          @RequestParam(defaultValue = "createdDate,desc") String sort
+    @GetMapping("/all")
+    public ResponseEntity<Page<LeaveRequestResponse>> getAllOrSearch(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdDate,desc") String sort
     ) {
         Pageable pageable = toPageable(page, size, sort);
-        Page<LeaveRequestResponse> result = leaveRequestService.getAllLeaveRequests(pageable);
+
+        Page<LeaveRequestResponse> result;
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            result = leaveRequestService.searchLeaveRequests(keyword, pageable);
+        }
+        else if (month != null || year != null) {
+            result = leaveRequestService.getAllLeaveRequests(month, year, pageable);
+        }
+        else {
+            result = leaveRequestService.getAllLeaveRequests(pageable);
+        }
+
         return ResponseEntity.ok(result);
     }
+
+
 
     @GetMapping("/user/{userId}")  // Employee xem trang
     public ResponseEntity<Page<LeaveRequestResponse>> getByUser(@PathVariable String employeeCode,
@@ -72,20 +90,6 @@ public class LeaveRequestController {
 
         Pageable pageable = PageRequest.of(page, size);
         Page<LeaveRequestResponse> response = leaveRequestService.searchLeaveRequests(employeeCode, pageable);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/search")
-    public ResponseEntity<Page<LeaveRequestResponse>> searchLeaveRequest(
-            @RequestParam String keyword,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        Pageable pageable = PageRequest.of(page, size);
-
-        Page<LeaveRequestResponse> response =
-                leaveRequestService.searchLeaveRequests(keyword, pageable);
-
         return ResponseEntity.ok(response);
     }
 

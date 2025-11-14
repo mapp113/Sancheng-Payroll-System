@@ -21,11 +21,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -153,6 +151,13 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                 LeaveRequestRepository.searchByEmployeeCodeOrName(keyword, pageable);
 
         return pageResult.map(this::mapToResponse);
+    }
+
+    @Override
+    public Page<LeaveRequestResponse> getAllLeaveRequests(Integer month, Integer year, Pageable pageable) {
+        Page<LeaveRequest> page = LeaveRequestRepository
+                .filterByMonthYear(month, year, pageable);
+        return page.map(this::mapToResponse);
     }
 
 

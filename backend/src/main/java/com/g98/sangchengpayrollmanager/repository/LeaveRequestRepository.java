@@ -25,4 +25,12 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Inte
         """)
     Page<LeaveRequest> searchByEmployeeCodeOrName(@Param("keyword") String keyword, Pageable pageable);
 
+
+    @Query("""
+       SELECT lr FROM LeaveRequest lr
+       WHERE (:month IS NULL OR MONTH(lr.createdDate) = :month)
+         AND (:year IS NULL OR YEAR(lr.createdDate) = :year)
+       """)
+    Page<LeaveRequest> filterByMonthYear(
+            @Param("month") Integer month, @Param("year") Integer year, Pageable pageable);
 }

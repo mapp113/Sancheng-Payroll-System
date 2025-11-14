@@ -27,6 +27,8 @@ public interface LeaveRequestService {
     Page<LeaveRequestResponse> searchLeaveRequests(String keyword, Pageable pageable);
 
 
+    Page<LeaveRequestResponse> getAllLeaveRequests(Integer month, Integer year, Pageable pageable);
+
     //Lấy chi tiết yêu cầu
     LeaveRequestResponse getLeaveRequestDetail(Integer id);
 
