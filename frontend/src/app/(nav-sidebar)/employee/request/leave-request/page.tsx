@@ -99,18 +99,6 @@ export default function LeavesPage() {
           </select>
         </div>
         <div className="my-2">
-          Sử dụng ngày phép:
-          <select
-            id="leave-request-used-days"
-            className="ml-5 border border-black rounded px-2 py-1"
-            value={formData.isPaidLeave.toString()}
-            onChange={(e) => handleSelectChange("isPaidLeave", e.target.value === "true")}
-          >
-            <option value="true">Có</option>
-            <option value="false">Không</option>
-          </select>
-        </div>
-        <div className="my-2">
           Ngày bắt đầu:
           <input
             id="leave-request-start-date"
