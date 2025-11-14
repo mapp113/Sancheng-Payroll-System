@@ -38,14 +38,14 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     @Override
     public LeaveRequestResponse submitLeaveRequest(LeaveRequestCreateDTO leaveRequestDTO) {
 
-        String employeeCode = getCurrenUserName();
+        String username = getCurrentUsername();
 
 
-     try {
-         User user = userRepository.findByEmployeeCode(employeeCode)
-                 .orElseThrow(() -> new RuntimeException("User not found: " + employeeCode));
+        try {
+            User user = userRepository.findByUsernameWithRole(username)
+                    .orElseThrow(() -> new RuntimeException("User not found: " + username));
 
-         LeaveType leaveType = leaveTypeRepository.findByCode(leaveRequestDTO.getLeaveType())
+            LeaveType leaveType = leaveTypeRepository.findByCode(leaveRequestDTO.getLeaveType())
                  .orElseThrow(() -> new RuntimeException("Leave type not found: " + leaveRequestDTO.getLeaveType()));
 
 
@@ -233,9 +233,9 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     }
 
 
-    public static String getCurrenUserName() {
+    public static String getCurrentUsername() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) {
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
             throw new RuntimeException("ko co nguoi dung");
         }
         return auth.getName();
