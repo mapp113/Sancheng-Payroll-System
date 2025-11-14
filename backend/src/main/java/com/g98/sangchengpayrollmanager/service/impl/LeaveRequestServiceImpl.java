@@ -41,58 +41,66 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         String username = getCurrentUsername();
 
 
-        try {
-            User user = userRepository.findByUsernameWithRole(username)
-                    .orElseThrow(() -> new RuntimeException("User not found: " + username));
+        LocalDate today = LocalDate.now();
 
-            LeaveType leaveType = leaveTypeRepository.findByCode(leaveRequestDTO.getLeaveType())
-                 .orElseThrow(() -> new RuntimeException("Leave type not found: " + leaveRequestDTO.getLeaveType()));
-
-            LocalDate fromDate = leaveRequestDTO.getFromDate();
-            LocalDate toDate = (leaveRequestDTO.getToDate() != null) ? leaveRequestDTO.getToDate() : leaveRequestDTO.getFromDate();
-
-            boolean overlap = LeaveRequestRepository.existsOverlappingLeave(
-                    user.getEmployeeCode(), fromDate, toDate
-            );
-            if (overlap) {
-                throw new IllegalArgumentException("Đã tồn tại đơn nghỉ trùng khoảng thời gian này.");
-            }
-
-            double requestedDays = calculateLeaveDays(fromDate, toDate, leaveRequestDTO.getDuration());
-            boolean isPaidByType = Boolean.TRUE.equals(leaveType.getIsPaid());
-
-
-            if (Boolean.TRUE.equals(leaveType.getIsCountedAsLeave()) && isPaidByType) {
-             int year = fromDate.getYear();
-             String emp = user.getEmployeeCode();
-             String typeCode = leaveType.getCode();
-
-             LeaveQuota quota = leaveQuotaRepository
-                     .findByEmployeeCodeAndLeaveTypeCodeAndYear(emp,typeCode, year)
-                     .orElseThrow(() -> new RuntimeException("Chưa tạo quota cho thành viên này trong năm nay"));
-
-             if (quota.getEntitledDays() != null){
-                 double limit = quota.getEntitledDays() + quota.getCarriedOver();
-                 double used =  quota.getUsedDays()  == null ? 0.0 : quota.getUsedDays();
-                 double remain = limit - used;
-
-                 if (requestedDays > remain) {
-                     throw  new IllegalArgumentException(" Không đủ số ngày nghỉ còn lại. Vui lòng tạo 2 yêu cầu khác nhau ");
-                 }
-             }
-            }
-            LeaveRequest entity = mapToEntity(leaveRequestDTO, user, leaveType, isPaidByType);
-
-
-             entity.setToDate(toDate);
-             LeaveRequest savedLeaveRequest = LeaveRequestRepository.save(entity);
-
-             return mapToResponse(savedLeaveRequest);
-
-        } catch (Exception e) {
-         throw new RuntimeException(e.getMessage());
+        if (leaveRequestDTO.getFromDate().isBefore(today)) {
+            throw new IllegalArgumentException("Ngày bắt đầu nghỉ phải từ hôm nay ");
         }
+
+        if (leaveRequestDTO.getToDate().isBefore(leaveRequestDTO.getFromDate())) {
+            throw new IllegalArgumentException("Ngày kết thúc không được nhỏ hơn ngày bắt đầu.");
+        }
+
+        User user = userRepository.findByUsernameWithRole(username)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+
+        LeaveType leaveType = leaveTypeRepository.findByCode(leaveRequestDTO.getLeaveType())
+                .orElseThrow(() -> new RuntimeException("Leave type not found: " + leaveRequestDTO.getLeaveType()));
+
+        LocalDate fromDate = leaveRequestDTO.getFromDate();
+        LocalDate toDate = (leaveRequestDTO.getToDate() != null) ? leaveRequestDTO.getToDate() : leaveRequestDTO.getFromDate();
+
+        boolean overlap = LeaveRequestRepository.existsOverlappingLeave(
+                user.getEmployeeCode(), fromDate, toDate
+        );
+        if (overlap) {
+            throw new IllegalArgumentException("Đã tồn tại đơn nghỉ trùng khoảng thời gian này.");
+        }
+
+        double requestedDays = calculateLeaveDays(fromDate, toDate, leaveRequestDTO.getDuration());
+        boolean isPaidByType = Boolean.TRUE.equals(leaveType.getIsPaid());
+
+
+        if (Boolean.TRUE.equals(leaveType.getIsCountedAsLeave()) && isPaidByType) {
+            int year = fromDate.getYear();
+            String emp = user.getEmployeeCode();
+            String typeCode = leaveType.getCode();
+
+            LeaveQuota quota = leaveQuotaRepository
+                    .findByEmployeeCodeAndLeaveTypeCodeAndYear(emp, typeCode, year)
+                    .orElseThrow(() -> new RuntimeException("Chưa tạo quota cho thành viên này trong năm nay"));
+
+            if (quota.getEntitledDays() != null) {
+                double limit = quota.getEntitledDays() + quota.getCarriedOver();
+                double used = quota.getUsedDays() == null ? 0.0 : quota.getUsedDays();
+                double remain = limit - used;
+
+                if (requestedDays > remain) {
+                    throw new IllegalArgumentException(" Không đủ số ngày nghỉ còn lại. Vui lòng tạo 2 yêu cầu khác nhau ");
+                }
+            }
+        }
+        LeaveRequest entity = mapToEntity(leaveRequestDTO, user, leaveType, isPaidByType);
+
+
+        entity.setToDate(toDate);
+        LeaveRequest savedLeaveRequest = LeaveRequestRepository.save(entity);
+
+        return mapToResponse(savedLeaveRequest);
     }
+
+
+
 
     private double calculateLeaveDays(LocalDate fromDate, LocalDate toDate, String duration) {
        DurationType durationType = DurationType.valueOf(duration.trim().toUpperCase());
