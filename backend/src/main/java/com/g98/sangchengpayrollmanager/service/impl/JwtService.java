@@ -41,7 +41,7 @@ public class JwtService {
     /**
      * Tạo token với claims tùy chỉnh
      */
-    public String generateToken(String username, String fullName, Role role) {
+    public String generateToken(String username, String fullName, Role role, String employeeCode) {
         try {
             Instant now = Instant.now();
             Instant expiryDate = now.plusMillis(jwtExpiration);
@@ -49,9 +49,9 @@ public class JwtService {
             Map<String, Object> claims = new HashMap<>();
             claims.put("username", username);
             claims.put("full_name", fullName);
-            // 👇 chỉ cho string + id vào token
-            claims.put("role_name", role.getName());     // "Admin", "HR", ...
-            claims.put("role_id", role.getId());         // 1,2,3,...
+            claims.put("role_name", role.getName());
+            claims.put("role_id", role.getId());
+            claims.put("employee_code", employeeCode); // ➕ Thêm employeeCode vào token
 
             log.info("Tạo token cho user: {}", username);
             log.info("Thời gian tạo: {} ({})", now, ZonedDateTime.ofInstant(now, VIETNAM_ZONE));
@@ -107,6 +107,13 @@ public class JwtService {
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
+    }
+
+    public String extractEmployeeCode(String token) {
+        return extractClaim(token, claims -> {
+            Object employeeCode = claims.get("employee_code");
+            return employeeCode != null ? employeeCode.toString() : null;
+        });
     }
 
     /**
@@ -212,8 +219,9 @@ public class JwtService {
     /**
      * Trả access token (JWT) từ thông tin user — tiện gọi nhanh trong AuthService.
      */
-    public String getAccessToken(String username, String fullName, Role role) {
-        return generateToken(username, fullName, role);
+    public String getAccessToken(String username, String fullName, Role role, String employeeCode) {
+        return generateToken(username, fullName, role, employeeCode);
     }
+
 
 }
