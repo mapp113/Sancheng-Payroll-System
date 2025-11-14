@@ -15,6 +15,18 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
 
+  mail:
+    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:ngolhhe163179@fpt.edu.vn}
+    password: ${SPRING_MAIL_PASSWORD:lupq yctf rewq csxu}
+    properties:
+      mail:
+        smtp:
+          auth: ${SPRING_MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${SPRING_MAIL_SMTP_STARTTLS_ENABLE:true}
+
 jwt:
   secret: cd1a3133c39ce3eadab3bc8089ec59f7242afa3ffcc890ece7c4f66a15ada29b
   expiration: 3600000
@@ -27,3 +39,10 @@ zkteco:
   # Password giao tiếp SDK nếu có, nếu không thì để rỗng
   password:
 
+app:
+  password-reset:
+    code-length: ${APP_PASSWORD_RESET_CODE_LENGTH:6}
+    expiry-minutes: ${APP_PASSWORD_RESET_EXPIRY_MINUTES:10}
+    mail:
+      from: ${APP_PASSWORD_RESET_MAIL_FROM:noreply@sangcheng-payroll.com}
+      enabled: ${APP_PASSWORD_RESET_MAIL_ENABLED:true}
