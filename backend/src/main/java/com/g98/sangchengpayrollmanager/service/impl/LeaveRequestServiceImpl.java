@@ -187,23 +187,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                 .map(this::mapToResponse);
     }
 
-    // Xem chi tiết yêu câầu ccuar người
-    @Override
-    public LeaveRequestResponse getMyLeaveRequestDetail(Integer id) {
-        String username = LeaveRequestServiceImpl.getCurrentUsername();
-
-        User user = userRepository.findByUsernameWithRole(username)
-                .orElseThrow(() -> new RuntimeException("Người không tồn tại" + username));
-
-        LeaveRequest request = LeaveRequestRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn nghỉ"));
-
-        if (!request.getUser().getEmployeeCode().equals(user.getEmployeeCode())) {
-            throw new RuntimeException("Bạn không có quyền xem đơn nghỉ của người khác");
-        }
-
-        return mapToResponse(request);
-    }
+    // Xem chi tiết yêu câầu của chính người gửi
 
 
     @Override
@@ -228,12 +212,25 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
     @Override
     public LeaveRequestResponse getLeaveRequestDetail(Integer id) {
-        LeaveRequest leaveRequest = LeaveRequestRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Leave request not found: " + id));
+        String username = getCurrentUsername();
 
-        // Còn phải codephanafn quyền chỉ Manager xem được của tất cả. với Employee thì chỉ xem được của chính minhd
-        return mapToResponse(leaveRequest);
+        User user = userRepository.findByUsernameWithRole(username)
+                .orElseThrow(() -> new RuntimeException("Người không tồn tại: " + username));
+
+        LeaveRequest request = LeaveRequestRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn nghỉ"));
+
+        boolean isManager = user.getRole().getName().equalsIgnoreCase("MANAGER")
+                || user.getRole().getName().equalsIgnoreCase("HR");
+
+        // Employee chỉ xem đơn của chính họ
+        if (!isManager && !request.getUser().getEmployeeCode().equals(user.getEmployeeCode())) {
+            throw new RuntimeException("Bạn không có quyền xem đơn nghỉ của người khác.");
+        }
+
+        return mapToResponse(request);
     }
+
 
     @Override
     public LeaveRequestResponse approveLeaveRequest(Integer id, String note) {
@@ -244,7 +241,6 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 //        if (LeaveandOTStatus.APPROVED.name().equals(leaveRequest.getStatus())) {
 //            return mapToResponse(leaveRequest);
 //        }
-
         LocalDate fromDate = leaveRequest.getFromDate();
         LocalDate toDate = (leaveRequest.getToDate() != null) ? leaveRequest.getToDate() : leaveRequest.getFromDate();
         double requestedDays = calculateLeaveDays(fromDate, toDate, leaveRequest.getDurationType().name());

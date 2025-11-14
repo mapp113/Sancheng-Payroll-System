@@ -17,7 +17,7 @@ public interface LeaveRequestService {
     Page<LeaveRequestResponse> getMyLeaveRequests(Pageable pageable);
 
     // Lay chi tiết các yêu cầu của nhân viên đó
-    LeaveRequestResponse getMyLeaveRequestDetail(Integer id);
+    // LeaveRequestResponse getMyLeaveRequestDetail(Integer id);
 
     // Lấy toàn bộ các yêu cầu theo trạng thái
     Page<LeaveRequestResponse> findByStatus(LeaveandOTStatus status, Pageable pageable);

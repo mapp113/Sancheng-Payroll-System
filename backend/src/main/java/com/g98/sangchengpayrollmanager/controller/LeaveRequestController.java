@@ -90,11 +90,11 @@ public class LeaveRequestController {
     }
 
     // xem chi tiết yêu cầu ( của mình )
-    @GetMapping("/myrequest/{id}")
-    public ResponseEntity<LeaveRequestResponse> getMyLeaveRequestDetail(@PathVariable Integer id) {
-        LeaveRequestResponse response = leaveRequestService.getMyLeaveRequestDetail(id);
-        return ResponseEntity.ok(response);
-    }
+//    @GetMapping("/myrequest/{id}")
+//    public ResponseEntity<LeaveRequestResponse> getMyLeaveRequestDetail(@PathVariable Integer id) {
+//        LeaveRequestResponse response = leaveRequestService.getMyLeaveRequestDetail(id);
+//        return ResponseEntity.ok(response);
+//    }
 
     // xóa yêu cầu trước khi được duyệt
     @DeleteMapping("/myrequest/{id}")
