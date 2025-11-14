@@ -48,15 +48,21 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
             LeaveType leaveType = leaveTypeRepository.findByCode(leaveRequestDTO.getLeaveType())
                  .orElseThrow(() -> new RuntimeException("Leave type not found: " + leaveRequestDTO.getLeaveType()));
 
+            LocalDate fromDate = leaveRequestDTO.getFromDate();
+            LocalDate toDate = (leaveRequestDTO.getToDate() != null) ? leaveRequestDTO.getToDate() : leaveRequestDTO.getFromDate();
 
-         LocalDate fromDate = leaveRequestDTO.getFromDate();
-         LocalDate toDate = (leaveRequestDTO.getToDate() != null) ? leaveRequestDTO.getToDate() : leaveRequestDTO.getFromDate();
-         double requestedDays = calculateLeaveDays(fromDate, toDate, leaveRequestDTO.getDuration());
+            boolean overlap = LeaveRequestRepository.existsOverlappingLeave(
+                    user.getEmployeeCode(), fromDate, toDate
+            );
+            if (overlap) {
+                throw new IllegalArgumentException("Đã tồn tại đơn nghỉ trùng khoảng thời gian này.");
+            }
 
-         boolean isPaidByType = Boolean.TRUE.equals(leaveType.getIsPaid());
+            double requestedDays = calculateLeaveDays(fromDate, toDate, leaveRequestDTO.getDuration());
+            boolean isPaidByType = Boolean.TRUE.equals(leaveType.getIsPaid());
 
 
-         if (Boolean.TRUE.equals(leaveType.getIsCountedAsLeave()) && isPaidByType) {
+            if (Boolean.TRUE.equals(leaveType.getIsCountedAsLeave()) && isPaidByType) {
              int year = fromDate.getYear();
              String emp = user.getEmployeeCode();
              String typeCode = leaveType.getCode();
@@ -74,32 +80,18 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                      throw  new IllegalArgumentException(" Không đủ số ngày nghỉ còn lại. Vui lòng tạo 2 yêu cầu khác nhau ");
                  }
              }
-         }
-         LeaveRequest entity = mapToEntity(leaveRequestDTO, user, leaveType, isPaidByType);
+            }
+            LeaveRequest entity = mapToEntity(leaveRequestDTO, user, leaveType, isPaidByType);
 
-         // thêm file sau này sẽ thêm
-//         if (leaveRequestDTO.getAttachment() != null && !leaveRequestDTO.getAttachment().isEmpty()) {
-//             String fileName = leaveRequestDTO.getAttachment().getOriginalFilename();
-//             Path uploadPath = Paths.get(System.getProperty("user.dir"), fileName);
-//
-//             try {
-//                 Files.createDirectories(uploadPath.getParent());
-//                 Path filePath = uploadPath.resolve(fileName);
-//                 leaveRequestDTO.getAttachment().transferTo(filePath.toFile());
-//                 entity.setAttachmentPath(fileName.toString());
-//             } catch (IOException e ) {
-//                 throw new RuntimeException(e);
-//             }
-//         }
 
              entity.setToDate(toDate);
-         LeaveRequest savedLeaveRequest = LeaveRequestRepository.save(entity);
+             LeaveRequest savedLeaveRequest = LeaveRequestRepository.save(entity);
 
-         return mapToResponse(savedLeaveRequest);
+             return mapToResponse(savedLeaveRequest);
 
-     } catch (Exception e) {
+        } catch (Exception e) {
          throw new RuntimeException(e.getMessage());
-     }
+        }
     }
 
     private double calculateLeaveDays(LocalDate fromDate, LocalDate toDate, String duration) {

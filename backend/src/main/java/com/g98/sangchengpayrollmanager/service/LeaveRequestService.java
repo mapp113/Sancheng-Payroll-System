@@ -6,13 +6,13 @@ import com.g98.sangchengpayrollmanager.model.enums.LeaveandOTStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 
 
 public interface LeaveRequestService {
 
     // Nhân viên gửi yêu cầu nghỉ
     LeaveRequestResponse submitLeaveRequest(LeaveRequestCreateDTO leaveRequest);
+
 
     // Lấy toàn bộ các yêu cầu cho HR
     Page<LeaveRequestResponse> getAllLeaveRequests(Pageable pageable);

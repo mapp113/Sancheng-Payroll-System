@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
+
 
 @Repository
 public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Integer> {
@@ -24,6 +26,18 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Inte
            OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
         """)
     Page<LeaveRequest> searchByEmployeeCodeOrName(@Param("keyword") String keyword, Pageable pageable);
+
+
+    @Query("""
+    SELECT COUNT(l) > 0
+    FROM LeaveRequest l
+    WHERE l.user.employeeCode = :empCode
+      AND l.fromDate <= :toDate
+      AND COALESCE(l.toDate, l.fromDate) >= :fromDate
+      AND l.status <> ''
+    """)
+    boolean existsOverlappingLeave(@Param("empCode") String employeeCode,
+                                   @Param("fromDate") LocalDate fromDate, @Param("toDate") LocalDate toDate);
 
 
     @Query("""
