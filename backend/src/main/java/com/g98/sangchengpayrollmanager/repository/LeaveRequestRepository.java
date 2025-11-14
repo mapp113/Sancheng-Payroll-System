@@ -5,6 +5,8 @@ import com.g98.sangchengpayrollmanager.model.enums.LeaveandOTStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 
@@ -14,5 +16,13 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Inte
     Page<LeaveRequest> findByStatus(LeaveandOTStatus status, Pageable pageable);
 
     Page<LeaveRequest> findByUser_EmployeeCode(String employeeCode, Pageable pageable);
+
+    @Query("""
+        SELECT lr FROM LeaveRequest lr
+        JOIN lr.user u
+        WHERE LOWER(u.employeeCode) LIKE LOWER(CONCAT('%', :keyword, '%'))
+           OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        """)
+    Page<LeaveRequest> searchByEmployeeCodeOrName(@Param("keyword") String keyword, Pageable pageable);
 
 }

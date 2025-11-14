@@ -64,6 +64,18 @@ public class LeaveRequestController {
     }
 
 
+    @GetMapping("/employee/{code}")
+    public ResponseEntity<Page<LeaveRequestResponse>> getByEmployeeCode(
+            @PathVariable("code") String employeeCode,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<LeaveRequestResponse> response = leaveRequestService.findByEmployeeCode(employeeCode, pageable);
+        return ResponseEntity.ok(response);
+    }
+
+
     @GetMapping("/status")
     public ResponseEntity<Page<LeaveRequestResponse>> getByStatus(@RequestParam String status,
                                                                   @RequestParam(defaultValue = "0") int page,

@@ -20,14 +20,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -127,6 +123,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
 
     // Laays cho Employee xem của người ta
+
     @Override
     public Page<LeaveRequestResponse> findByUser_Id(String employeeCode, Pageable pageable) {
         return LeaveRequestRepository
@@ -140,6 +137,16 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                 .findByStatus(LeaveandOTStatus.valueOf(String.valueOf(status)), pageable)
                 .map(this::mapToResponse);
 
+    }
+
+    @Override
+    public Page<LeaveRequestResponse> searchLeaveRequests(String keyword, Pageable pageable) {
+        keyword = (keyword == null) ? "" : keyword.trim();
+
+        Page<LeaveRequest> pageResult =
+                LeaveRequestRepository.searchByEmployeeCodeOrName(keyword, pageable);
+
+        return pageResult.map(this::mapToResponse);
     }
 
 

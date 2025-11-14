@@ -24,6 +24,9 @@ public interface LeaveRequestService {
     Page<LeaveRequestResponse> findByStatus(LeaveandOTStatus status, Pageable pageable);
 
 
+    Page<LeaveRequestResponse> searchLeaveRequests(String keyword, Pageable pageable);
+
+
     //Lấy chi tiết yêu cầu
     LeaveRequestResponse getLeaveRequestDetail(Integer id);
 
