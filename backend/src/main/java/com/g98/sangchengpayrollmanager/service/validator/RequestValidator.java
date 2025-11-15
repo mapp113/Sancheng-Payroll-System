@@ -58,7 +58,7 @@ public class RequestValidator {
         return new ValidatedLeaveInputs(leaveType, durationType);
     }
 
-    public static LocalDate validateOvertime(OvertimeRequestCreateDTO overtimeRequestDTO) {
+    public LocalDate validateOvertime(OvertimeRequestCreateDTO overtimeRequestDTO) {
 
         LocalDate otDate = (overtimeRequestDTO.getOtDate() != null)
                 ? overtimeRequestDTO.getOtDate()

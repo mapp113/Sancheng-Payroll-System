@@ -34,7 +34,7 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Inte
     WHERE l.user.employeeCode = :empCode
       AND l.fromDate <= :toDate
       AND COALESCE(l.toDate, l.fromDate) >= :fromDate
-      AND l.status <> ''
+      AND l.status <> 'REJECTED'
     """)
     boolean existsOverlappingLeave(@Param("empCode") String employeeCode,
                                    @Param("fromDate") LocalDate fromDate, @Param("toDate") LocalDate toDate);

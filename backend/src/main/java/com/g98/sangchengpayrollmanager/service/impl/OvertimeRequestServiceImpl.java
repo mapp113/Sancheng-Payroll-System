@@ -43,7 +43,7 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
         User user = userRepository.findByUsernameWithRole(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user: " + username));
 
-        LocalDate otDate = RequestValidator.validateOvertime(overtimeRequestDTO);
+        LocalDate otDate = requestValidator.validateOvertime(overtimeRequestDTO);
 
 
         OvertimeRequest entity = mapToEntity(overtimeRequestDTO, user, otDate);
