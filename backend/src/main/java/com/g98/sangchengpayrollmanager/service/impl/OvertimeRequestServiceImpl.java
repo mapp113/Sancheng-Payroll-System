@@ -9,8 +9,8 @@ import com.g98.sangchengpayrollmanager.service.OvertimeRequestService;
 import com.g98.sangchengpayrollmanager.service.validator.RequestValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.sql.ast.tree.expression.Over;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -20,9 +20,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.WeekFields;
-import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -83,34 +81,85 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
         OvertimeRequest entity = mapToEntity(overtimeRequestDTO, user, otDate, dayType, (int) workedHours);
        OvertimeRequest savedOvertimeRequest = overtimeRequestRespository.save(entity);
 
-        upsertOvertimeBalance(user, otDate, (int) workedHours, weeklyHours);
 
         return mapToResponse(savedOvertimeRequest);
     }
 
     @Override
-    public Page<OvertimeRequestResponse> getAllOvertimeRequests(int page, int size) {
-        return null;
+    public Page<OvertimeRequestResponse> getMyOvertimeRequest(Pageable pageable) {
+        String username = getCurrentUsername();
+        User user = userRepository.findByUsernameWithRole(username)
+                .orElseThrow(() -> new RuntimeException(" Người không tồn tại " + username));
+
+        return overtimeRequestRespository.findByUser_EmployeeCode(user.getEmployeeCode(), pageable)
+                .map(this::mapToResponse);
     }
 
     @Override
-    public Page<OvertimeRequestResponse> getPendingOvertimeRequests(int page, int size) {
-        return null;
+    public void deleteOvertimeRequest(Integer overtimeRequestId) {
+        String username = getCurrentUsername();
+
+        User user = userRepository.findByUsernameWithRole(username)
+                .orElseThrow(() -> new RuntimeException(" Người không tồn tại " + username));
+
+        OvertimeRequest overtimeRequest = overtimeRequestRespository.findById(overtimeRequestId)
+                .orElseThrow(() -> new RuntimeException("Đơn OT không tồn tại: " + overtimeRequestId));
+
+
+        if(!overtimeRequest.getUser().getEmployeeCode().equals(user.getEmployeeCode())){
+            throw new RuntimeException("Chỉ được xóa đơn của mình");
+        }
+        if(!LeaveandOTStatus.PENDING.name().equals(overtimeRequest.getStatus())){
+            throw new IllegalArgumentException(" Chỉ xóa đơn đang chờ ");
+        }
+
+        overtimeRequestRespository.delete(overtimeRequest);
+    }
+
+    @Override
+    public OvertimeRequestResponse getOvertimeRequestDetail(Integer overtimeRequestId) {
+        String username = getCurrentUsername();
+
+        User user = userRepository.findByUsernameWithRole(username)
+                .orElseThrow(() -> new RuntimeException(" Người không tồn tại " + username));
+
+        OvertimeRequest overtimeRequest = overtimeRequestRespository.findById(overtimeRequestId)
+                .orElseThrow(() -> new RuntimeException("Đơn OT không tồn tại: " + overtimeRequestId));
+
+        boolean isManager = user.getRole().getName().equalsIgnoreCase("MANAGER")
+                || user.getRole().getName().equalsIgnoreCase("HR");
+
+        if(!isManager && !overtimeRequest.getUser().getEmployeeCode().equals(user.getEmployeeCode())){
+            throw new RuntimeException("Bạn ko được xem đơn của người khác");
+        }
+        return mapToResponse(overtimeRequest);
+    }
+
+    @Override
+    public Page<OvertimeRequestResponse> getAllOvertimeRequests(Integer month, Integer year, Pageable pageable) {
+        Page<OvertimeRequest> page = overtimeRequestRespository.filterByMonthYear(month, year, pageable);
+        return page.map(this::mapToResponse);
     }
 
 
     @Override
     public OvertimeRequestResponse approveOvertimeRequest(Integer overtimeRequestId, String note) {
-        OvertimeRequest ot = overtimeRequestRespository.findById(overtimeRequestId)
+        OvertimeRequest overtimeRequest = overtimeRequestRespository.findById(overtimeRequestId)
                 .orElseThrow(() -> new RuntimeException("Đơn xin overtime ko tồn tại: " + overtimeRequestId));
-        if (!LeaveandOTStatus.PENDING.name().equals(ot.getStatus())) {
+        if (!LeaveandOTStatus.PENDING.name().equals(overtimeRequest.getStatus())) {
             throw new IllegalStateException("Chỉ duyệt đơn OT ở trạng thái PENDING");
         }
 
-        ot.setStatus(LeaveandOTStatus.APPROVED.name());
-        ot.setApprovedDateOT(LocalDateTime.now());
-        ot.setNoteOT(note);
-        return mapToResponse(overtimeRequestRespository.save(ot));
+        overtimeRequest.setStatus(LeaveandOTStatus.APPROVED.name());
+        overtimeRequest.setApprovedDateOT(LocalDateTime.now());
+        overtimeRequest.setNoteOT(note);
+
+        OvertimeRequest savedOvertimeRequest = overtimeRequestRespository.save(overtimeRequest);
+        int workHours = ( overtimeRequest.getWorkedTime() == null) ? 0 : overtimeRequest.getWorkedTime();
+        if (workHours > 0) {
+            upsertOvertimeBalance(overtimeRequest.getUser(), overtimeRequest.getOtDate(), workHours);
+        }
+        return mapToResponse(savedOvertimeRequest);
     }
 
     @Override
@@ -129,9 +178,50 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
 
     }
 
+    @Override
+    public Page<OvertimeRequestResponse> searchOvertimeRequests(String keyword, Pageable pageable) {
+
+        keyword = keyword.toUpperCase();
+        keyword = (keyword == null) ? "" : keyword.trim();
+
+        Page<OvertimeRequest> pageResult = overtimeRequestRespository.searchByEmployeeCodeOrName(keyword, pageable);
+        return pageResult.map(this::mapToResponse);
+
+    }
+
+    @Override
+    public Page<OvertimeRequestResponse> findByStatus(LeaveandOTStatus status, Pageable pageable) {
+        return  overtimeRequestRespository
+                .findByStatus(status.name(), pageable)
+                .map(this::mapToResponse);
+    }
+
+
+
+    // Tính thời gian còn lại
+    @Override
+    public Integer getMyRemainingWeeklyOvertime(){
+        String username = getCurrentUsername();
+
+        User user = userRepository.findByUsernameWithRole(username)
+                .orElseThrow(() -> new RuntimeException(" Người không tồn tại " + username));
+
+        LocalDate today = LocalDate.now();
+
+        LocalDate weekStart = today.with(java.time.DayOfWeek.MONDAY);
+        LocalDate weekEnd = today.with(java.time.DayOfWeek.SUNDAY);
+
+        int weeklyHours = overtimeRequestRespository.sumWorkedHoursInWeek(
+                user.getUserId(), weekStart, weekEnd);
+        int maxweeklyHouurs = 10;
+        int remaining = maxweeklyHouurs - weeklyHours;
+
+        return Math.max(0, remaining);
+    }
+
 
     // tạo overtime_balance mới cho tuần đó
-    private void upsertOvertimeBalance(User user, LocalDate otDate, int workedHours, int weeklyHours) {
+    private void upsertOvertimeBalance(User user, LocalDate otDate, int workedHours) {
         WeekFields wf = WeekFields.of(Locale.getDefault());
         int weekOfMonth = otDate.get(wf.weekOfMonth());
         int year  = otDate.getYear();
@@ -148,7 +238,9 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
                         .hourBalance(0)
                         .build()
                 );
-        balance.setHourBalance(weeklyHours + workedHours);
+
+        int currentWorkedHours = (balance.getHourBalance()== null) ? 0 : balance.getHourBalance();
+        balance.setHourBalance(currentWorkedHours + workedHours);
 
         overtimeBalanceRepository.save(balance);
     }
