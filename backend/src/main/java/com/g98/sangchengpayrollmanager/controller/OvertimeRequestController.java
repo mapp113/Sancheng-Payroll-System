@@ -28,7 +28,7 @@ public class OvertimeRequestController {
     }
 
 
-
+    // Nhân viên xem đơn của chính mình
     @GetMapping("/myrequest")
     public ResponseEntity<Page<OvertimeRequestResponse>> getMyOvertime(
             @RequestParam(defaultValue = "0") Integer page,
@@ -40,17 +40,20 @@ public class OvertimeRequestController {
     }
 
 
+    // Nhân viên xóa đơn của chính mình
     @DeleteMapping("/myrequest/{id}")
     public ResponseEntity<Void> deleteMyOvertime(@PathVariable Integer id) {
         overtimeRequestService.deleteOvertimeRequest(id);
         return ResponseEntity.noContent().build();
     }
 
+    // Nhân viên hoặc quản lý xem chi tiết đơn
     @GetMapping("detail/{id}")
     public ResponseEntity<OvertimeRequestResponse> getDetail(@PathVariable Integer id) {
         return ResponseEntity.ok(overtimeRequestService.getOvertimeRequestDetail(id));
     }
 
+    // Quản lý lấy tất cả các đơn
     @GetMapping("/all")
     public ResponseEntity<Page<OvertimeRequestResponse>> getAllOvertime(
             @RequestParam(required = false) Integer month,
@@ -81,6 +84,8 @@ public class OvertimeRequestController {
         return ResponseEntity.ok(overtimeRequestService.rejectOvertimeRequest(id, note));
     }
 
+
+
     @GetMapping("/status")
     public ResponseEntity<Page<OvertimeRequestResponse>> getByStatus( @RequestParam String status,
                                                                       @RequestParam(defaultValue = "0") Integer page,
@@ -95,6 +100,7 @@ public class OvertimeRequestController {
         return ResponseEntity.ok(result);
     }
 
+    // Xem số thời gian ot còn lại
     @GetMapping("/remaining-week")
     public ResponseEntity<Integer> getMyRemainingWeeklyOvertime() {
         return ResponseEntity.ok(overtimeRequestService.getMyRemainingWeeklyOvertime());

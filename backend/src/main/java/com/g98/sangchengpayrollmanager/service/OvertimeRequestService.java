@@ -11,7 +11,7 @@ public interface OvertimeRequestService {
     // Nhân viên gửi đơn
     OvertimeRequestResponse submitOvertimeRequest(OvertimeRequestCreateDTO dto);
 
-    // Lấy đơn cho nhân viên login xem
+    // Nhân viên xem đơn của chính mình
     Page<OvertimeRequestResponse> getMyOvertimeRequest(Pageable pageable);
 
     // xóa đơn đang peniding
