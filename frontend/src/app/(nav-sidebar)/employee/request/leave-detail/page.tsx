@@ -5,59 +5,12 @@ import { useSearchParams } from "next/navigation";
 import { File } from "lucide-react";
 import type { LeaveDetailResponse } from "@/app/_components/employee/request/types";
 
-export default function ManagerApprovalLeavesPage() {
+export default function LeavesDetailPage() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const [leaveData, setLeaveData] = useState<LeaveDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [note, setNote] = useState("");
-
-  const handleApprove = async () => {
-    if (!id) return;
-    
-    try {
-      const response = await fetch(`http://localhost:8080/api/leave/approve/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ note }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Không thể phê duyệt");
-      }
-
-      alert("Đã phê duyệt thành công");
-      window.location.href = "./";
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Đã xảy ra lỗi");
-    }
-  };
-
-  const handleReject = async () => {
-    if (!id) return;
-    
-    try {
-      const response = await fetch(`http://localhost:8080/api/leave/reject/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ note }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Không thể từ chối");
-      }
-
-      alert("Đã từ chối yêu cầu");
-      window.location.href = "./";
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Đã xảy ra lỗi");
-    }
-  };
 
   useEffect(() => {
     if (!id) {
@@ -71,17 +24,16 @@ export default function ManagerApprovalLeavesPage() {
         setLoading(true);
         const token = sessionStorage.getItem("scpm.auth.token");
         const response = await fetch(`http://localhost:8080/api/leave/detail/${id}`, {
-          method: 'GET',
           headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }); // Thay đổi URL API theo backend của bạn
-        
+        });
+
         if (!response.ok) {
           throw new Error("Không thể tải dữ liệu");
         }
-        
+
         const data: LeaveDetailResponse = await response.json();
         setLeaveData(data);
       } catch (err) {
@@ -106,16 +58,80 @@ export default function ManagerApprovalLeavesPage() {
     return <div className="p-4 text-center">Không tìm thấy dữ liệu</div>;
   }
 
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return "Chờ duyệt";
+      case "APPROVED":
+        return "Đã duyệt";
+      case "REJECTED":
+        return "Từ chối";
+      default:
+        return status;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return "text-yellow-600";
+      case "APPROVED":
+        return "text-green-600";
+      case "REJECTED":
+        return "text-red-600";
+      default:
+        return "";
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    
+    if (!confirm("Bạn có chắc chắn muốn xóa yêu cầu này?")) {
+      return;
+    }
+    
+    try {
+      const token = sessionStorage.getItem("scpm.auth.token");
+      const response = await fetch(`http://localhost:8080/api/leave/myrequest/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Không thể xóa yêu cầu");
+      }
+
+      alert("Đã xóa yêu cầu thành công");
+      window.location.href = "../request";
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Đã xảy ra lỗi");
+    }
+  };
+
   return (
     <div className="p-4 flex flex-col gap-4">
-      <a className="w-fit h-fit border border-black bg-[#8acefd] text-[#4577a0] hover:bg-[#66befc] py-2 px-4 rounded cursor-pointer"
-        href="./">
-        Back
-      </a>
+      <div className="flex gap-2">
+        <a className="w-fit h-fit border border-black bg-[#8acefd] text-[#4577a0] hover:bg-[#66befc] py-2 px-4 rounded cursor-pointer"
+          href="../request">
+          Back
+        </a>
+        {leaveData.status === "PENDING" && (
+          <button 
+            onClick={handleDelete}
+            className="w-fit h-fit border border-black bg-red-500 text-white hover:bg-red-600 py-2 px-4 rounded cursor-pointer"
+          >
+            Delete
+          </button>
+        )}
+      </div>
       <div className="flex justify-center">
         <div className="w-[60rem] bg-[#d5f1f5] rounded-2xl py-5 px-10">
-          <h1 className="text-2xl font-bold text-center mb-6">Yêu cầu xin nghỉ</h1>
-          
+          <h1 className="text-2xl font-bold text-center mb-6">Chi tiết yêu cầu xin nghỉ</h1>
+
           <div className="flex flex-col gap-3">
             <div className="flex">
               <div className="w-1/3">
@@ -149,7 +165,7 @@ export default function ManagerApprovalLeavesPage() {
                 <strong>Ngày bắt đầu:</strong>
               </div>
               <div className="w-2/3">
-                {leaveData.fromDate}
+                {new Date(leaveData.fromDate).toLocaleDateString('vi-VN')}
               </div>
             </div>
 
@@ -158,7 +174,7 @@ export default function ManagerApprovalLeavesPage() {
                 <strong>Ngày kết thúc:</strong>
               </div>
               <div className="w-2/3">
-                {leaveData.toDate}
+                {new Date(leaveData.toDate).toLocaleDateString('vi-VN')}
               </div>
             </div>
 
@@ -168,6 +184,15 @@ export default function ManagerApprovalLeavesPage() {
               </div>
               <div className="w-2/3">
                 {leaveData.duration}
+              </div>
+            </div>
+
+            <div className="flex">
+              <div className="w-1/3">
+                <strong>Nghỉ có lương:</strong>
+              </div>
+              <div className="w-2/3">
+                {leaveData.isPaidLeave ? "Có" : "Không"}
               </div>
             </div>
 
@@ -183,10 +208,13 @@ export default function ManagerApprovalLeavesPage() {
             {leaveData.file && (
               <div className="flex">
                 <div className="w-1/3">
-                  <File />
+                  <strong>File đính kèm:</strong>
                 </div>
-                <div className="w-2/3">
-                  <a href={leaveData.file} className="text-blue-600 underline">Xem file</a>
+                <div className="w-2/3 flex items-center gap-2">
+                  <File className="w-5 h-5" />
+                  <a href={leaveData.file} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline hover:text-blue-800">
+                    Xem file
+                  </a>
                 </div>
               </div>
             )}
@@ -195,39 +223,33 @@ export default function ManagerApprovalLeavesPage() {
               <div className="w-1/3">
                 <strong>Trạng thái:</strong>
               </div>
-              <div className="w-2/3 font-semibold">
-                {leaveData.status}
+              <div className={`w-2/3 font-semibold ${getStatusColor(leaveData.status)}`}>
+                {getStatusText(leaveData.status)}
               </div>
             </div>
 
-            <div className="mt-4">
-              <div className="mb-2">
-                <strong>Thông báo:</strong>
+            {leaveData.approvalDate && (
+              <div className="flex">
+                <div className="w-1/3">
+                  <strong>Ngày phê duyệt:</strong>
+                </div>
+                <div className="w-2/3">
+                  {new Date(leaveData.approvalDate).toLocaleDateString('vi-VN')}
+                </div>
               </div>
-              <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                className="w-full bg-[#7adfeb] rounded-2xl px-4 py-3 min-h-[100px] resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
-                placeholder="Nhập ghi chú..."
-              />
-            </div>
-          </div>
-            {leaveData.status !== 'APPROVED' && leaveData.status !== 'REJECTED' && (
-            <div className="flex gap-4 justify-center mt-6">
-              <button 
-              onClick={handleApprove}
-              className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded cursor-pointer"
-              >
-              Đồng ý
-              </button>
-              <button 
-              onClick={handleReject}
-              className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded cursor-pointer"
-              >
-              Từ chối
-              </button>
-            </div>
             )}
+
+            {leaveData.note && (
+              <div className="flex flex-col">
+                <div className="mb-2">
+                  <strong>Thông báo từ quản lý:</strong>
+                </div>
+                <div className="bg-[#7adfeb] rounded-2xl px-4 py-3 min-h-[100px]">
+                  {leaveData.note}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -1,10 +1,11 @@
 export interface LeaveResponseData {
-  levaveId: string;
+  id: string;
   employeeCode: string;
   fromDate: string;
   toDate: string;
-  leaveType: string;
+  leaveTypeCode: string;
   status: string;
+  note?: string;
 }
 
 export interface LeaveDetailResponse {
