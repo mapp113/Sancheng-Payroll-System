@@ -23,7 +23,7 @@ export default function ManagerLeavesPage() {
   };
 
   useEffect(() => {
-      if (getUserMeta("role") !== "Manager" && getUserMeta("role") !== "HR") {
+      if (getUserMeta("role") !== "MANAGER" && getUserMeta("role") !== "HR") {
         window.location.href = "/login";
       }
     }, []);

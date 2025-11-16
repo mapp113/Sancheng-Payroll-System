@@ -6,8 +6,8 @@ import { useState } from "react";
 
 interface OTRequestData {
   otDate: string;
-  fromTime: string;
-  toTime: string;
+  fromTime: number;
+  toTime: number;
   otType: string;
   reason: string;
 }
@@ -15,11 +15,10 @@ interface OTRequestData {
 const leaveTypes = ["Ngày thường", "Thứ 7/Chủ nhật", "Ngày lễ"];
 
 export default function OTRequestsPage() {
-  const [minToTimeBound, setMinToTimeBound] = useState("00:00");
   const [formData, setFormData] = useState<OTRequestData>({
     otDate: "",
-    fromTime: "",
-    toTime: "",
+    fromTime: 0,
+    toTime: 0,
     otType: "",
     reason: "",
   });
@@ -40,7 +39,7 @@ export default function OTRequestsPage() {
     return "Ngày thường";
   };
 
-  const handleInputChange = (field: keyof OTRequestData, value: string) => {
+  const handleInputChange = (field: keyof OTRequestData, value: string | number) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -50,18 +49,23 @@ export default function OTRequestsPage() {
   const handleReset = () => {
     setFormData({
       otDate: "",
-      fromTime: "",
-      toTime: "",
+      fromTime: 0,
+      toTime: 0,
       otType: "",
       reason: "",
     });
-    setMinToTimeBound("00:00");
   };
 
   const handleSubmit = async () => {
     // Validate required fields
-    if (!formData.otDate || !formData.fromTime || !formData.toTime) {
+    if (!formData.otDate || formData.fromTime === undefined || formData.toTime === undefined) {
       alert("Vui lòng điền đầy đủ thông tin ngày làm thêm và thời gian");
+      return;
+    }
+
+    // Validate fromTime < toTime
+    if (formData.fromTime >= formData.toTime) {
+      alert("Giờ bắt đầu phải nhỏ hơn giờ kết thúc");
       return;
     }
 
@@ -72,11 +76,11 @@ export default function OTRequestsPage() {
     formDataToSend.append("otDate", dateSlashToHyphen(formData.otDate));
 
     // fromTime: LocalDateTime (YYYY-MM-DDTHH:mm:ss)
-    const fromDateTime = `${dateSlashToHyphen(formData.otDate)}T${formData.fromTime}:00`;
+    const fromDateTime = `${dateSlashToHyphen(formData.otDate)}T${String(formData.fromTime).padStart(2, '0')}:00:00`;
     formDataToSend.append("fromTime", fromDateTime);
 
     // toTime: LocalDateTime (YYYY-MM-DDTHH:mm:ss)
-    const toDateTime = `${dateSlashToHyphen(formData.otDate)}T${formData.toTime}:00`;
+    const toDateTime = `${dateSlashToHyphen(formData.otDate)}T${String(formData.toTime).padStart(2, '0')}:00:00`;
     formDataToSend.append("toTime", toDateTime);
 
     // reason: String
@@ -96,11 +100,12 @@ export default function OTRequestsPage() {
         alert("Gửi yêu cầu OT thành công");
         handleReset();
       } else {
-        throw new Error(response.statusText);
+        const errorText = await response.text();
+        throw new Error(errorText);
       }
     } catch (error) {
       console.error("Lỗi khi gửi yêu cầu OT:", error);
-      alert("Gửi yêu cầu OT thất bại");
+      alert("Gửi yêu cầu OT thất bại"+ (error instanceof Error ? `: ${error.message}` : ""));
     }
   };
 
@@ -127,47 +132,41 @@ export default function OTRequestsPage() {
         </div>
         <div className="my-2 grid grid-cols-[150px_1fr] items-center">
           <label htmlFor="fromTime">Từ:</label>
-          <input
-            id="fromTime"
-            className="border border-black rounded px-2 py-1 w-fit"
-            type="time"
-            min="00:00"
-            max="23:59"
-            required
-            value={formData.fromTime}
-            onChange={(e) => {
-              setMinToTimeBound(e.target.value);
-              handleInputChange("fromTime", e.target.value);
-            }}
-          />
+          <div className="flex items-center gap-2">
+            <input
+              id="fromTime"
+              className="border border-black rounded px-2 py-1 w-fit"
+              type="number"
+              min="0"
+              max="23"
+              required
+              value={formData.fromTime}
+              onChange={(e) => handleInputChange("fromTime", parseInt(e.target.value) || 0)}
+            />
+            <span>giờ</span>
+          </div>
         </div>
         <div className="my-2 grid grid-cols-[150px_1fr] items-center">
           <label htmlFor="toTime">Đến:</label>
-          <input
-            id="toTime"
-            className="border border-black rounded px-2 py-1 w-fit"
-            type="time"
-            min={minToTimeBound}
-            max="23:59"
-            required
-            value={formData.toTime}
-            onChange={(e) => handleInputChange("toTime", e.target.value)}
-          />
+          <div className="flex items-center gap-2">
+            <input
+              id="toTime"
+              className="border border-black rounded px-2 py-1 w-fit"
+              type="number"
+              min="0"
+              max="23"
+              required
+              value={formData.toTime}
+              onChange={(e) => handleInputChange("toTime", parseInt(e.target.value) || 0)}
+            />
+            <span>giờ</span>
+          </div>
         </div>
         <div className="font-semibold my-2 grid grid-cols-[150px_1fr] items-center">Tổng số giờ OT:
             <span className="text-lg">
-            {formData.fromTime && formData.toTime
-              ? (() => {
-                const [fromHour, fromMinute] = formData.fromTime.split(':').map(Number);
-                const [toHour, toMinute] = formData.toTime.split(':').map(Number);
-                const fromTotalMinutes = fromHour * 60 + fromMinute;
-                const toTotalMinutes = toHour * 60 + toMinute;
-                const diffMinutes = toTotalMinutes - fromTotalMinutes;
-                const hours = Math.floor(diffMinutes / 60);
-                const minutes = diffMinutes % 60;
-                return `${hours} giờ ${minutes} phút`;
-              })()
-              : '0 giờ 0 phút'}
+            {formData.fromTime !== undefined && formData.toTime !== undefined && formData.toTime > formData.fromTime
+              ? `${formData.toTime - formData.fromTime} giờ`
+              : '0 giờ'}
             </span>
         </div>
         <div className="my-2 grid grid-cols-[150px_1fr] items-center">

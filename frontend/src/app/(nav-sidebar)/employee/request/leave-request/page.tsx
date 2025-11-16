@@ -105,12 +105,13 @@ export default function LeavesPage() {
         alert("Gửi yêu cầu thành công");
         handleReset();
       } else {
-        throw new Error(response.statusText);
+        const errorText = await response.text();
+        throw new Error(errorText);
       }
 
     } catch (error) {
       console.error("Lỗi khi gửi yêu cầu:", error);
-      alert("Gửi yêu cầu thất bại");
+      alert("Gửi yêu cầu thất bại" + (error instanceof Error ? `: ${error.message}` : ""));
     }
   };
 

@@ -12,7 +12,7 @@ export default function TimesheetToolbar() {
     });
     const newDate = {
       ...param.timesheetParams,
-      keyword: (e.target as HTMLInputElement).value,
+      date: (e.target as HTMLInputElement).value,
     };
     TimesheetQuery(newDate).then((dataResponse) => {
       data.setTimesheetData(dataResponse.content);

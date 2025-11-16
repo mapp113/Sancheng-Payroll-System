@@ -3,7 +3,7 @@
 import LeavesToolBar from "@/app/_components/employee/request/tool-bar";
 import { useEffect, useState } from "react";
 import { LeaveResponseData, OTResponseData } from "@/app/_components/employee/request/types";
-import { Info } from "lucide-react";
+import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Info } from "lucide-react";
 
 export default function LeavesPage() {
   const [leaveRequests, setLeaveRequests] = useState<LeaveResponseData[]>([]);
@@ -13,13 +13,29 @@ export default function LeavesPage() {
   const [remainingLeave, setRemainingLeave] = useState<number | null>(null);
   const [remainingOT, setRemainingOT] = useState<number | null>(null);
 
+  // Pagination states for leave
+  const [leaveIndexPage, setLeaveIndexPage] = useState(0);
+  const [leaveTotalPages, setLeaveTotalPages] = useState(1);
+  const leaveMaxItems = 10;
+
+  // Pagination states for OT
+  const [otIndexPage, setOtIndexPage] = useState(0);
+  const [otTotalPages, setOtTotalPages] = useState(1);
+  const otMaxItems = 10;
+
   useEffect(() => {
-    async function fetchData() {
+    async function fetchLeaveData() {
+      setLeaveLoading(true);
       try {
         const token = sessionStorage.getItem("scpm.auth.token");
 
-        // Fetch leave requests
-        const requestsResponse = await fetch("http://localhost:8080/api/leave/myrequest", {
+        // Fetch leave requests with pagination
+        const queryParams = new URLSearchParams({
+          page: leaveIndexPage.toString(),
+          size: leaveMaxItems.toString(),
+        });
+
+        const requestsResponse = await fetch(`http://localhost:8080/api/leave/myrequest?${queryParams}`, {
           headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -29,54 +45,81 @@ export default function LeavesPage() {
         if (requestsResponse.ok) {
           const requestsData = await requestsResponse.json();
           setLeaveRequests(requestsData.content);
+          setLeaveTotalPages(requestsData.totalPages || 1);
         }
 
-        // Fetch remaining leave
-        const remainingResponse = await fetch("http://localhost:8080/api/leave/remainingLeave", {
+        // Fetch remaining leave (only once)
+        if (leaveIndexPage === 0) {
+          const remainingResponse = await fetch("http://localhost:8080/api/leave/remainingLeave", {
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (remainingResponse.ok) {
+            const remainingData = await remainingResponse.json();
+            setRemainingLeave(remainingData);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching leave data:", error);
+      } finally {
+        setLeaveLoading(false);
+      }
+    }
+
+    fetchLeaveData();
+  }, [leaveIndexPage]);
+
+  useEffect(() => {
+    async function fetchOTData() {
+      setOtLoading(true);
+      try {
+        const token = sessionStorage.getItem("scpm.auth.token");
+
+        // Fetch OT requests with pagination
+        const queryParams = new URLSearchParams({
+          page: otIndexPage.toString(),
+          size: otMaxItems.toString(),
+        });
+
+        const otRequestsResponse = await fetch(`http://localhost:8080/api/overtime/myrequest?${queryParams}`, {
           headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });
 
-        if (remainingResponse.ok) {
-          const remainingData = await remainingResponse.json();
-          setRemainingLeave(remainingData);
-        }
-
-        // Fetch remaining OT
-        const remainingOTResponse = await fetch("http://localhost:8080/api/overtime/remaining-week", {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-        if (remainingOTResponse.ok) {
-          const remainingOTData = await remainingOTResponse.json();
-          setRemainingOT(remainingOTData);
-        }
-
-        // Fetch OT requests
-        const otRequestsResponse = await fetch("http://localhost:8080/api/overtime/myrequest", {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
         if (otRequestsResponse.ok) {
           const otRequestsData = await otRequestsResponse.json();
           setOtRequests(otRequestsData.content);
+          setOtTotalPages(otRequestsData.totalPages || 1);
+        }
+
+        // Fetch remaining OT (only once)
+        if (otIndexPage === 0) {
+          const remainingOTResponse = await fetch("http://localhost:8080/api/overtime/remaining-week", {
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (remainingOTResponse.ok) {
+            const remainingOTData = await remainingOTResponse.json();
+            setRemainingOT(remainingOTData);
+          }
         }
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching OT data:", error);
       } finally {
-        setLeaveLoading(false);
         setOtLoading(false);
       }
     }
 
-    fetchData();
-  }, []);
+    fetchOTData();
+  }, [otIndexPage]);
 
   const getStatusText = (status: string) => {
     switch (status) {
@@ -102,6 +145,24 @@ export default function LeavesPage() {
       default:
         return "";
     }
+  };
+
+  const changeLeavePageHandler = (dir: "first" | "last" | "next" | "prev") => {
+    let newIndexPage = leaveIndexPage;
+    if (dir === "first") newIndexPage = 0;
+    else if (dir === "last") newIndexPage = leaveTotalPages - 1;
+    else if (dir === "next" && leaveIndexPage < leaveTotalPages - 1) newIndexPage = leaveIndexPage + 1;
+    else if (dir === "prev" && leaveIndexPage > 0) newIndexPage = leaveIndexPage - 1;
+    setLeaveIndexPage(newIndexPage);
+  };
+
+  const changeOTPageHandler = (dir: "first" | "last" | "next" | "prev") => {
+    let newIndexPage = otIndexPage;
+    if (dir === "first") newIndexPage = 0;
+    else if (dir === "last") newIndexPage = otTotalPages - 1;
+    else if (dir === "next" && otIndexPage < otTotalPages - 1) newIndexPage = otIndexPage + 1;
+    else if (dir === "prev" && otIndexPage > 0) newIndexPage = otIndexPage - 1;
+    setOtIndexPage(newIndexPage);
   };
 
   return (
@@ -162,6 +223,13 @@ export default function LeavesPage() {
             )}
           </tbody>
         </table>
+        <div className="flex justify-end align-middle my-3 mr-2">
+          <button className="cursor-pointer" onClick={() => changeLeavePageHandler("first")}><ChevronFirst /></button>
+          <button className="cursor-pointer" onClick={() => changeLeavePageHandler("prev")}><ChevronLeft /></button>
+          <span className="mx-2">Page {leaveIndexPage + 1} of {leaveTotalPages}</span>
+          <button className="cursor-pointer" onClick={() => changeLeavePageHandler("next")}><ChevronRight /></button>
+          <button className="cursor-pointer" onClick={() => changeLeavePageHandler("last")}><ChevronLast /></button>
+        </div>
       </div>
       <div className="flex flex-row w-full my-2">
         <h2 className="font-bold">Yêu cầu Overtime</h2>
@@ -202,10 +270,10 @@ export default function LeavesPage() {
                     {new Date(request.otDate).toLocaleDateString('vi-VN')}
                   </td>
                   <td className="px-4 py-2 text-center">
-                    {request.fromTime.substring(12, 16)}
+                    {request.fromTime.substring(11, 16)}
                   </td>
                   <td className="px-4 py-2 text-center">
-                    {request.toTime.substring(12, 16)}
+                    {request.toTime.substring(11, 16)}
                   </td>
                   <td className="px-4 py-2 text-center">{request.workedTime}</td>
                   <td className={`px-4 py-2 text-left font-semibold ${getStatusColor(request.status)}`}>
@@ -220,6 +288,13 @@ export default function LeavesPage() {
             )}
           </tbody>
         </table>
+        <div className="flex justify-end align-middle my-3 mr-2">
+          <button className="cursor-pointer" onClick={() => changeOTPageHandler("first")}><ChevronFirst /></button>
+          <button className="cursor-pointer" onClick={() => changeOTPageHandler("prev")}><ChevronLeft /></button>
+          <span className="mx-2">Page {otIndexPage + 1} of {otTotalPages}</span>
+          <button className="cursor-pointer" onClick={() => changeOTPageHandler("next")}><ChevronRight /></button>
+          <button className="cursor-pointer" onClick={() => changeOTPageHandler("last")}><ChevronLast /></button>
+        </div>
       </div>
     </div>
   );

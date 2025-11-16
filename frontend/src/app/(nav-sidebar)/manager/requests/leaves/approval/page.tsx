@@ -205,7 +205,7 @@ export default function ManagerApprovalLeavesPage() {
                 <strong>Thông báo:</strong>
               </div>
               <textarea
-                value={leaveData.note}
+                value={leaveData.note ? leaveData.note : note}
                 onChange={(e) => setNote(e.target.value)}
                 className="w-full bg-[#7adfeb] rounded-2xl px-4 py-3 min-h-[100px] resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="Nhập ghi chú..."

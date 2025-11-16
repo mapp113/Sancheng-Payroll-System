@@ -73,14 +73,14 @@ export default function OTDetail({ otData, loading, children }: OTDetailProps) {
                 <input
                   type="time"
                   disabled
-                  value={otData.fromTime.substring(0, 5)}
+                  value={otData.fromTime.substring(11, 16)}
                   className="px-4 py-2 rounded-lg bg-cyan-200/50 border-0"
                 />
                 <span className="font-medium">Đến</span>
                 <input
                   type="time"
                   disabled
-                  value={otData.toTime.substring(0, 5)}
+                  value={otData.toTime.substring(11, 16)}
                   className="px-4 py-2 rounded-lg bg-cyan-200/50 border-0"
                 />
               </div>

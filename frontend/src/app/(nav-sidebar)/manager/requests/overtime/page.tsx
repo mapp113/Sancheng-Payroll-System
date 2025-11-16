@@ -136,7 +136,6 @@ export default function OvertimePage() {
             <thead className="bg-gray-200 sticky top-0">
               <tr>
                 <th className="px-4 py-2 text-left">Họ và tên</th>
-                <th className="px-4 py-2 text-center">Vị trí</th>
                 <th className="px-4 py-2 text-center">Thời gian gửi yêu cầu</th>
                 <th className="px-4 py-2 text-center">Thời gian Overtime</th>
                 <th className="px-4 py-2 text-center">Status</th>
@@ -160,13 +159,15 @@ export default function OvertimePage() {
               ) : (
                 filteredRequests.map((request) => (
                   <tr key={request.id} className="border-b hover:bg-gray-50">
-                    <td className="px-4 py-2 text-left">{request.fullName}</td>
-                    <td className="px-4 py-2 text-center">{request.employeeCode}</td>
+                    <td className="px-4 py-2 text-left">
+                      <div>{request.fullName}</div>
+                      <div>{request.employeeCode}</div>
+                    </td>
                     <td className="px-4 py-2 text-center">
                       {new Date(request.createdDateOT).toLocaleDateString('vi-VN')}
                     </td>
                     <td className="px-4 py-2 text-center">
-                      {request.fromTime.substring(12, 16)} - {request.toTime.substring(12, 16)}
+                      {request.fromTime.substring(11, 16)} - {request.toTime.substring(11, 16)}
                     </td>
                     <td className={`px-4 py-2 text-center font-semibold ${getStatusColor(request.status)}`}>
                       {getStatusText(request.status)}
