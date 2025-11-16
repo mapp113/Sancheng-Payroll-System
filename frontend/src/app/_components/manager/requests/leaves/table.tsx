@@ -132,7 +132,10 @@ export function ManagerLeavesTable() {
                   <td className="px-4 py-2 text-center">{leave.createDate ? new Date(leave.createDate).toLocaleDateString('vi-VN') : '-'}</td>
                   <td className="px-4 py-2 text-center">{new Date(leave.fromDate).toLocaleDateString('vi-VN')}</td>
                   <td className="px-4 py-2 text-center">
-                    {Math.ceil((new Date(leave.toDate).getTime() - new Date(leave.fromDate).getTime()) / (1000 * 60 * 60 * 24))} ngày
+                    {(() => {
+                      const days = Math.ceil((new Date(leave.toDate).getTime() - new Date(leave.fromDate).getTime()) / (1000 * 60 * 60 * 24));
+                      return days === 0 ? 1 : days;
+                    })()} ngày
                   </td>
                   <td className={`px-4 py-2 text-center font-semibold ${getStatusColor(leave.status)}`}>
                     {getStatusText(leave.status)}

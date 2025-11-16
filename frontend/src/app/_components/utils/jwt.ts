@@ -2,6 +2,7 @@ interface JwtPayload {
     sub?: string;
     full_name?: string;
     employee_code?: string;
+    role?: string;
     exp?: number;
     iat?: number;
 }

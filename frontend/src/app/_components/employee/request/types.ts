@@ -27,3 +27,20 @@ export interface LeaveDetailResponse {
 export interface ListOTResponseData {
   stt: number;
 }
+
+export interface OTResponseData{
+  id: string;
+  employeeCode: string;
+  fullName: string;
+  otDate: string;
+  fromTime: string;
+  toTime: string;
+  workedTime: number;
+  reason: "REJECTED" | "APPROVED" | "PENDING";
+  dayTypeId: number;
+  dayTypeName: string;
+  status: string;
+  createdDateOT: string;
+  approvedDateOT?: string;
+  note?: string;
+}

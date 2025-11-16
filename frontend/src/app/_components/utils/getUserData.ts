@@ -1,6 +1,6 @@
 import { decodeJwt } from "./jwt";
 
-type TargetField = "employee_code" | "full_name" ;
+type TargetField = "employee_code" | "full_name" | "role";
 
 export const getUserData = (target: TargetField) => {
   const userStr = window.sessionStorage.getItem("scpm.auth.user");
@@ -24,5 +24,18 @@ export const getUserData = (target: TargetField) => {
     return decoded ? decoded[target] : undefined;
   } catch (error) {
     console.error("JWT decode error:", error);
+  }
+}
+
+export function getUserMeta(target: TargetField){
+  const userStr = window.sessionStorage.getItem("scpm.auth.user");
+  if (!userStr) {
+    return;
+  }
+  const parsed = JSON.parse(userStr);
+  if (target === "role"){
+    return parsed.role;
+  } else if (target === "full_name"){
+    return parsed.fullName;
   }
 }

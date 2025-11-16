@@ -3,7 +3,8 @@
 import { ManagerLeavesTable } from "@/app/_components/manager/requests/leaves/table";
 import { ManagerLeavesParams, ManagerLeavesResonse } from "@/app/_components/manager/requests/leaves/types";
 import { ParamsContext, DataContext } from "@/app/_components/manager/requests/leaves/context";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getUserMeta } from "@/app/_components/utils/getUserData";
 
 export default function ManagerLeavesPage() {
   const [params, setParams] = useState<ManagerLeavesParams>({
@@ -20,6 +21,12 @@ export default function ManagerLeavesPage() {
       setParams((prev) => ({ ...prev, keyword: searchInput, indexPage: 0 }));
     }
   };
+
+  useEffect(() => {
+      if (getUserMeta("role") !== "Manager" && getUserMeta("role") !== "HR") {
+        window.location.href = "/login";
+      }
+    }, []);
 
   return (
     <ParamsContext.Provider value={{ params, setParams }}>
