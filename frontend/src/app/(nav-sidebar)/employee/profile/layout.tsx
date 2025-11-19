@@ -1,6 +1,8 @@
-import Sidebar from "../../_components/navigation-sidebar/employee";
+import type {ReactNode} from "react";
 
-export default function EmployeesLayout({children}: { children: React.ReactNode }) {
+import Sidebar from "../../../_components/navigation-sidebar/employee";
+
+export default function DetailEmployeeLayout({children}: { children: ReactNode }) {
     return (
         <div className="flex flex-1">
             <div className="w-20">

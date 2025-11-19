@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {useEffect, useState} from "react";
 import {usePathname} from "next/navigation";
 import localFont from "next/font/local";
@@ -131,13 +132,16 @@ export default function Navbar() {
                     <ChevronDown/>
                 </button>
 
-                <span className="flex items-center gap-1">
-          <Avatar className="h-12 w-12">
-            <AvatarImage src="/logo.jpg" alt="User avatar"/>
-            <AvatarFallback>Avatar</AvatarFallback>
-          </Avatar>
-          <span id="username">{username || "Loading..."}</span>
-        </span>
+                <Link href="/employee/profile"
+                      className="flex items-center gap-2 rounded-full px-2 py-1 transition hover:bg-white/50">
+                    <Avatar className="h-12 w-12">
+                        <AvatarImage src="/logo.jpg" alt="User avatar"/>
+                        <AvatarFallback>Avatar</AvatarFallback>
+                    </Avatar>
+                    <span id="username" className="font-semibold">
+            {username || "Loading..."}
+          </span>
+                </Link>
 
                 <CircleChevronDown/>
             </div>
