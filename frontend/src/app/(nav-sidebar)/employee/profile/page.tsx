@@ -1,7 +1,7 @@
 "use client";
 
 import type {ReactNode, ChangeEvent} from "react";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import Link from "next/link";
 
 import {
@@ -15,26 +15,169 @@ import {
     FileDown,
 } from "lucide-react";
 
-const initialEmployee = {
-    id: "PC1611",
-    name: "Nguyễn Văn A",
-    position: "Employee",
-    joinDate: "20/02/2024",
-    personalEmail: "nguyenvana@example.com",
-    contractType: "Toàn thời gian",
-    phone: "+84 84923275***",
-    dob: "25/2/2004",
-    status: "Đang Làm",
-    citizenId: "1234 5678 9000",
-    address: "120 Pasteur, Phường 06, Quận 3, Tp. HCM",
-    visaExpiry: "20/02/2029",
-    contractUrl: "/files/contracts/PC1611.pdf", // đường dẫn hợp đồng
-    taxCode: "0123456789",
+type EmployeeProfile = {
+    id: string;
+    name: string;
+    position: string;
+    joinDate: string;
+    personalEmail: string;
+    contractType: string;
+    phone: string;
+    dob: string;
+    status: string;
+    citizenId: string;
+    address: string;
+    visaExpiry: string;
+    contractUrl: string;
+    taxCode: string;
 };
 
+type EmployeeProfileResponse = {
+    employeeCode?: string;
+    fullName?: string;
+    position?: string;
+    joinDate?: string;
+    personalEmail?: string;
+    contractType?: string;
+    phone?: string;
+    dob?: string;
+    status?: string;
+    citizenId?: string;
+    address?: string;
+    visaExpiry?: string;
+    contractUrl?: string;
+    taxCode?: string;
+};
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const EMPLOYEE_EDITABLE_FIELDS = new Set<keyof EmployeeProfile>([
+    "personalEmail",
+    "phone",
+    "address",
+]);
+
+const emptyProfile: EmployeeProfile = {
+    id: "",
+    name: "",
+    position: "",
+    joinDate: "",
+    personalEmail: "",
+    contractType: "",
+    phone: "",
+    dob: "",
+    status: "",
+    citizenId: "",
+    address: "",
+    visaExpiry: "",
+    contractUrl: "",
+    taxCode: "",
+};
+
+function formatDateDisplay(value: string) {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Intl.DateTimeFormat("vi-VN").format(date);
+}
+
+function formatCurrency(value: string) {
+    if (!value) return "";
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) return value;
+    return new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+        maximumFractionDigits: 0,
+    }).format(numeric);
+}
+
+function mapProfileResponse(data: EmployeeProfileResponse): EmployeeProfile {
+    return {
+        id: data.employeeCode ?? "",
+        name: data.fullName ?? "",
+        position: data.position ?? "",
+        joinDate: data.joinDate ?? "",
+        personalEmail: data.personalEmail ?? "",
+        contractType: data.contractType ?? "",
+        phone: data.phone ?? "",
+        dob: data.dob ?? "",
+        status: data.status ?? "",
+        citizenId: data.citizenId ?? "",
+        address: data.address ?? "",
+        visaExpiry: data.visaExpiry ?? "",
+        contractUrl: data.contractUrl ?? "",
+        taxCode: data.taxCode ?? "",
+    };
+}
+
+function parseNumber(value: string) {
+    if (!value.trim()) return undefined;
+    const numeric = Number(value);
+    return Number.isNaN(numeric) ? undefined : numeric;
+}
+
 export default function DetailEmployeePage() {
-    const [employee, setEmployee] = useState(initialEmployee);
+    const [employee, setEmployee] = useState<EmployeeProfile>(emptyProfile);
     const [isEditing, setIsEditing] = useState(false);
+    const [role, setRole] = useState<string>("EMPLOYEE");
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [token, setToken] = useState<string>("");
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const sessionUser = window.sessionStorage.getItem("scpm.auth.user");
+        try {
+            if (sessionUser) {
+                const parsed = JSON.parse(sessionUser);
+                if (parsed?.token) {
+                    setRole(parsed.role ?? "EMPLOYEE");
+                    setToken(parsed.token as string);
+                    return;
+                }
+            }
+        } catch (err) {
+            console.error("Failed to parse session user", err);
+        }
+
+        const storedToken = localStorage.getItem("access_token") ?? "";
+        setToken(storedToken);
+    }, []);
+
+    useEffect(() => {
+        async function fetchProfile() {
+            setLoading(true);
+            setError(null);
+
+            if (!token) {
+                setError("Không tìm thấy token đăng nhập");
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/profile`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error("Không thể tải thông tin hồ sơ");
+                }
+
+                const data = (await response.json()) as EmployeeProfileResponse;
+                setEmployee(mapProfileResponse(data));
+            } catch (err) {
+                console.error(err);
+                setError("Không thể tải thông tin hồ sơ");
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchProfile();
+    }, [token]);
 
     // popup đổi mật khẩu
     const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -45,15 +188,66 @@ export default function DetailEmployeePage() {
     });
 
     const handleChange =
-        (field: keyof typeof initialEmployee) =>
+        (field: keyof EmployeeProfile) =>
             (e: ChangeEvent<HTMLInputElement>) => {
                 setEmployee((prev) => ({...prev, [field]: e.target.value}));
             };
 
-    const handleSave = () => {
-        // Ở đây bạn có thể gọi API update, hiện tại chỉ mock UI
-        console.log("Saved data:", employee);
-        setIsEditing(false);
+    const canEditField = (field: keyof EmployeeProfile) =>
+        field !== "position" && (role === "HR" || EMPLOYEE_EDITABLE_FIELDS.has(field));
+
+    const handleSave = async () => {
+        if (!token) {
+            setError("Không tìm thấy token đăng nhập");
+            return;
+        }
+
+        try {
+            const payload = role === "HR"
+                ? {
+                    fullName: employee.name || undefined,
+                    personalEmail: employee.personalEmail || undefined,
+                    dob: employee.dob || undefined,
+                    contractType: employee.contractType || undefined,
+                    phone: employee.phone || undefined,
+                    taxCode: employee.taxCode || undefined,
+                    status: employee.status || undefined,
+                    address: employee.address || undefined,
+                    joinDate: employee.joinDate || undefined,
+                    visaExpiry: employee.visaExpiry || undefined,
+                    contractUrl: employee.contractUrl || undefined,
+                }
+                : {
+                    personalEmail: employee.personalEmail || undefined,
+                    phone: employee.phone || undefined,
+                    address: employee.address || undefined,
+                };
+
+            const sanitizedPayload = Object.fromEntries(
+                Object.entries(payload).filter(([, value]) => value !== undefined),
+            );
+
+            const response = await fetch(`${API_BASE_URL}/api/profile`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(sanitizedPayload),
+            });
+
+            if (!response.ok) {
+                throw new Error("Cập nhật hồ sơ thất bại");
+            }
+
+            const data = (await response.json()) as EmployeeProfileResponse;
+            setEmployee(mapProfileResponse(data));
+            setIsEditing(false);
+            setError(null);
+        } catch (err) {
+            console.error(err);
+            setError("Cập nhật hồ sơ thất bại");
+        }
     };
 
     const handlePasswordInput =
@@ -63,10 +257,7 @@ export default function DetailEmployeePage() {
             };
 
     const handlePasswordSave = () => {
-        // Mock xử lý đổi mật khẩu
-        console.log("Password form:", passwordForm);
         // TODO: validate + call API đổi mật khẩu
-
         setIsChangingPassword(false);
         setPasswordForm({
             oldPassword: "",
@@ -82,7 +273,7 @@ export default function DetailEmployeePage() {
                 <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <Link
                         href="/employee"
-                        className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#1F2A44] shadow-sm transition hover:shadow-md"
+                        className="inline-flex items-center gap-2 rounded-full bg.white px-4 py-2 text-sm font-semibold text-[#1F2A44] shadow-sm transition hover:shadow-md"
                     >
                         <span className="text-lg leading-none">⬅</span>
                         Back
@@ -100,6 +291,18 @@ export default function DetailEmployeePage() {
 
                 {/* Thông tin nhân viên */}
                 <div className="grid gap-6">
+                    {error ? (
+                        <div className="rounded-3xl bg-red-50 p-4 text-sm text-red-700 shadow-sm">
+                            {error}
+                        </div>
+                    ) : null}
+
+                    {loading ? (
+                        <div className="rounded-3xl bg-white p-6 text-center shadow-sm">
+                            Đang tải thông tin hồ sơ...
+                        </div>
+                    ) : null}
+
                     <section className="space-y-4 rounded-3xl bg-white p-6 shadow-sm">
                         <div className="mb-2 flex items-center justify-between gap-2">
                             <h2 className="text-lg font-semibold text-[#1F2A44]">
@@ -119,88 +322,92 @@ export default function DetailEmployeePage() {
                                 label="Mã Nhân Viên"
                                 icon={<IdCard className="h-4 w-4 text-[#4AB4DE]"/>}
                             >
-                                {employee.id}
+                                {employee.id || "—"}
                             </InfoField>
 
                             <InfoField
                                 label="Họ và tên"
                                 icon={<UserRound className="h-4 w-4 text-[#4AB4DE]"/>}
                             >
-                                {employee.name}
+                                {employee.name || "—"}
                             </InfoField>
 
                             <InfoField
                                 label="Chức vụ"
                                 icon={<Shield className="h-4 w-4 text-[#4AB4DE]"/>}
                             >
-                                {employee.position}
+                                {employee.position || "—"}
                             </InfoField>
 
                             <InfoField
                                 label="Ngày Bắt Đầu"
                                 icon={<CalendarClock className="h-4 w-4 text-[#4AB4DE]"/>}
                             >
-                                {employee.joinDate}
+                                {formatDateDisplay(employee.joinDate) || "—"}
                             </InfoField>
 
                             <InfoField
                                 label="E-Mail cá nhân"
                                 icon={<Mail className="h-4 w-4 text-[#4AB4DE]"/>}
                             >
-                                {employee.personalEmail}
+                                {employee.personalEmail || "—"}
                             </InfoField>
+
                             <InfoField
                                 label="Ngày Sinh"
                                 icon={<CalendarClock className="h-4 w-4 text-[#4AB4DE]"/>}
                             >
-                                {employee.dob}
+                                {formatDateDisplay(employee.dob) || "—"}
                             </InfoField>
 
                             <InfoField
                                 label="Loại hợp đồng"
                                 icon={<Shield className="h-4 w-4 text-[#4AB4DE]"/>}
                             >
-                                {employee.contractType}
+                                {employee.contractType || "—"}
                             </InfoField>
+
 
                             <InfoField
                                 label="Điện thoại"
                                 icon={<Phone className="h-4 w-4 text-[#4AB4DE]"/>}
                             >
-                                {employee.phone}
+                                {employee.phone || "—"}
                             </InfoField>
 
                             <InfoField
                                 label="Tình trạng"
                                 icon={<Shield className="h-4 w-4 text-[#4AB4DE]"/>}
                             >
-                                {employee.status}
+                                {employee.status || "—"}
                             </InfoField>
 
                             <InfoField
                                 label="CCCD"
                                 icon={<IdCard className="h-4 w-4 text-[#4AB4DE]"/>}
                             >
-                                {employee.citizenId}
+                                {employee.citizenId || "—"}
                             </InfoField>
+
                             <InfoField
                                 label="Mã Số Thuế"
                                 icon={<IdCard className="h-4 w-4 text-[#4AB4DE]"/>}
                             >
-                                {employee.taxCode}
+                                {employee.taxCode || "—"}
                             </InfoField>
+
                             <InfoField
                                 label="Địa chỉ"
                                 icon={<Home className="h-4 w-4 text-[#4AB4DE]"/>}
                             >
-                                {employee.address}
+                                {employee.address || "—"}
                             </InfoField>
 
                             <InfoField
                                 label="Thời hạn kết thúc"
                                 icon={<CalendarClock className="h-4 w-4 text-[#4AB4DE]"/>}
                             >
-                                {employee.visaExpiry}
+                                {formatDateDisplay(employee.visaExpiry) || "—"}
                             </InfoField>
 
                             {/* Nút tải hợp đồng */}
@@ -212,10 +419,12 @@ export default function DetailEmployeePage() {
                                     type="button"
                                     onClick={() => window.open(employee.contractUrl, "_blank")}
                                     className="inline-flex items-center gap-2 rounded-full bg-[#4AB4DE] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#3ba1ca] hover:shadow-md"
+                                    disabled={!employee.contractUrl}
                                 >
                                     ⬇️ Tải hợp đồng
                                 </button>
                             </InfoField>
+
                         </div>
                     </section>
                 </div>
@@ -233,52 +442,79 @@ export default function DetailEmployeePage() {
                                 label="Họ và tên"
                                 value={employee.name}
                                 onChange={handleChange("name")}
+                                disabled={!canEditField("name")}
                             />
                             <EditField
                                 label="Chức vụ"
                                 value={employee.position}
                                 onChange={handleChange("position")}
+                                disabled={!canEditField("position")}
                             />
                             <EditField
                                 label="E-Mail cá nhân"
                                 value={employee.personalEmail}
                                 onChange={handleChange("personalEmail")}
+                                disabled={!canEditField("personalEmail")}
                             />
                             <EditField
                                 label="Ngày Sinh"
                                 value={employee.dob}
                                 onChange={handleChange("dob")}
+                                type="date"
+                                disabled={!canEditField("dob")}
                             />
                             <EditField
                                 label="Loại hợp đồng"
                                 value={employee.contractType}
                                 onChange={handleChange("contractType")}
+                                disabled={!canEditField("contractType")}
                             />
+
                             <EditField
                                 label="Điện thoại"
                                 value={employee.phone}
                                 onChange={handleChange("phone")}
+                                disabled={!canEditField("phone")}
                             />
                             <EditField
                                 label="Mã Số Thuế"
                                 value={employee.taxCode}
                                 onChange={handleChange("taxCode")}
+                                disabled={!canEditField("taxCode")}
                             />
                             <EditField
                                 label="Tình trạng"
                                 value={employee.status}
                                 onChange={handleChange("status")}
+                                disabled={!canEditField("status")}
                             />
                             <EditField
                                 label="Địa chỉ"
                                 value={employee.address}
                                 onChange={handleChange("address")}
+                                disabled={!canEditField("address")}
                             />
                             <EditField
                                 label="Thời hạn kết thúc"
                                 value={employee.visaExpiry}
                                 onChange={handleChange("visaExpiry")}
+                                type="date"
+                                disabled={!canEditField("visaExpiry")}
                             />
+                            <EditField
+                                label="Ngày bắt đầu"
+                                value={employee.joinDate}
+                                onChange={handleChange("joinDate")}
+                                type="date"
+                                disabled={!canEditField("joinDate")}
+                            />
+                            <EditField
+                                label="Đường dẫn hợp đồng"
+                                value={employee.contractUrl}
+                                onChange={handleChange("contractUrl")}
+                                disabled={!canEditField("contractUrl")}
+                            />
+
                         </div>
 
                         <div className="mt-6 flex justify-end gap-3">
@@ -308,10 +544,9 @@ export default function DetailEmployeePage() {
                         <h3 className="mb-4 text-lg font-semibold text-[#1F2A44]">
                             Đổi mật khẩu
                         </h3>
-
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             <EditField
-                                label="Mật khẩu cũ"
+                                label="Mật khẩu hiện tại"
                                 value={passwordForm.oldPassword}
                                 onChange={handlePasswordInput("oldPassword")}
                                 type="password"
@@ -323,7 +558,7 @@ export default function DetailEmployeePage() {
                                 type="password"
                             />
                             <EditField
-                                label="Nhập lại mật khẩu mới"
+                                label="Xác nhận mật khẩu mới"
                                 value={passwordForm.confirmPassword}
                                 onChange={handlePasswordInput("confirmPassword")}
                                 type="password"
@@ -336,7 +571,7 @@ export default function DetailEmployeePage() {
                                 onClick={() => setIsChangingPassword(false)}
                                 className="rounded-full bg-[#E5E7EB] px-4 py-2 text-sm font-semibold text-[#374151] hover:bg-[#d4d7dd]"
                             >
-                                Back
+                                Hủy
                             </button>
                             <button
                                 type="button"
@@ -379,9 +614,10 @@ interface EditFieldProps {
     value: string;
     onChange: (e: ChangeEvent<HTMLInputElement>) => void;
     type?: string;
+    disabled?: boolean;
 }
 
-function EditField({label, value, onChange, type = "text"}: EditFieldProps) {
+function EditField({label, value, onChange, type = "text", disabled}: EditFieldProps) {
     return (
         <label className="space-y-1 text-sm">
             <span className="font-semibold text-[#1F2A44]">{label}</span>
@@ -390,6 +626,7 @@ function EditField({label, value, onChange, type = "text"}: EditFieldProps) {
                 value={value}
                 onChange={onChange}
                 type={type}
+                disabled={disabled}
             />
         </label>
     );

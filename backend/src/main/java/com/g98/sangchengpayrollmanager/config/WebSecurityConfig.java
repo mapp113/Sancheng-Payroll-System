@@ -36,12 +36,13 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/otp/**").permitAll()
-                        .requestMatchers("/api/v1/admin/**").hasRole("Admin")
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow OPTIONS requests (preflight)
                         .requestMatchers("/api/paysummaries/**").permitAll()
                         .requestMatchers("/api/attsummary/**").permitAll()
                         .requestMatchers("/api/employees/**").permitAll()
                         .requestMatchers("/api/leave/**").permitAll()
+                        .requestMatchers("api/v1/hr/**").hasRole("HR")
                         .requestMatchers(HttpMethod.POST, "/api/v1/admin/create-account").permitAll()
 
                         .anyRequest().authenticated()
