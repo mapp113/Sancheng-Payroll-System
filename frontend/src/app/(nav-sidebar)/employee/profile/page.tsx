@@ -21,13 +21,15 @@ const initialEmployee = {
     position: "Employee",
     joinDate: "20/02/2024",
     personalEmail: "nguyenvana@example.com",
-    workEmail: "nguyenvana@payroll.vn",
+    contractType: "Toàn thời gian",
     phone: "+84 84923275***",
+    dob: "25/2/2004",
     status: "Đang Làm",
     citizenId: "1234 5678 9000",
     address: "120 Pasteur, Phường 06, Quận 3, Tp. HCM",
     visaExpiry: "20/02/2029",
     contractUrl: "/files/contracts/PC1611.pdf", // đường dẫn hợp đồng
+    taxCode: "0123456789",
 };
 
 export default function DetailEmployeePage() {
@@ -135,7 +137,7 @@ export default function DetailEmployeePage() {
                             </InfoField>
 
                             <InfoField
-                                label="Ngày Gia Nhập"
+                                label="Ngày Bắt Đầu"
                                 icon={<CalendarClock className="h-4 w-4 text-[#4AB4DE]"/>}
                             >
                                 {employee.joinDate}
@@ -147,12 +149,18 @@ export default function DetailEmployeePage() {
                             >
                                 {employee.personalEmail}
                             </InfoField>
+                            <InfoField
+                                label="Ngày Sinh"
+                                icon={<CalendarClock className="h-4 w-4 text-[#4AB4DE]"/>}
+                            >
+                                {employee.dob}
+                            </InfoField>
 
                             <InfoField
-                                label="E-Mail công ty"
-                                icon={<Mail className="h-4 w-4 text-[#4AB4DE]"/>}
+                                label="Loại hợp đồng"
+                                icon={<Shield className="h-4 w-4 text-[#4AB4DE]"/>}
                             >
-                                {employee.workEmail}
+                                {employee.contractType}
                             </InfoField>
 
                             <InfoField
@@ -175,7 +183,12 @@ export default function DetailEmployeePage() {
                             >
                                 {employee.citizenId}
                             </InfoField>
-
+                            <InfoField
+                                label="Mã Số Thuế"
+                                icon={<IdCard className="h-4 w-4 text-[#4AB4DE]"/>}
+                            >
+                                {employee.taxCode}
+                            </InfoField>
                             <InfoField
                                 label="Địa chỉ"
                                 icon={<Home className="h-4 w-4 text-[#4AB4DE]"/>}
@@ -184,7 +197,7 @@ export default function DetailEmployeePage() {
                             </InfoField>
 
                             <InfoField
-                                label="Thời hạn visa / Hợp đồng"
+                                label="Thời hạn kết thúc"
                                 icon={<CalendarClock className="h-4 w-4 text-[#4AB4DE]"/>}
                             >
                                 {employee.visaExpiry}
@@ -232,14 +245,24 @@ export default function DetailEmployeePage() {
                                 onChange={handleChange("personalEmail")}
                             />
                             <EditField
-                                label="E-Mail công ty"
-                                value={employee.workEmail}
-                                onChange={handleChange("workEmail")}
+                                label="Ngày Sinh"
+                                value={employee.dob}
+                                onChange={handleChange("dob")}
+                            />
+                            <EditField
+                                label="Loại hợp đồng"
+                                value={employee.contractType}
+                                onChange={handleChange("contractType")}
                             />
                             <EditField
                                 label="Điện thoại"
                                 value={employee.phone}
                                 onChange={handleChange("phone")}
+                            />
+                            <EditField
+                                label="Mã Số Thuế"
+                                value={employee.taxCode}
+                                onChange={handleChange("taxCode")}
                             />
                             <EditField
                                 label="Tình trạng"
@@ -252,7 +275,7 @@ export default function DetailEmployeePage() {
                                 onChange={handleChange("address")}
                             />
                             <EditField
-                                label="Thời hạn visa / Hợp đồng"
+                                label="Thời hạn kết thúc"
                                 value={employee.visaExpiry}
                                 onChange={handleChange("visaExpiry")}
                             />
