@@ -62,6 +62,7 @@ public class WebSecurityConfig {
     public CorsFilter corsFilter() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.addAllowedOrigin("http://localhost:3000/"); // Frontend origin
+        corsConfiguration.addAllowedOrigin("http://localhost:3001/"); // Frontend origin
         corsConfiguration.addAllowedMethod("*"); // Allow all HTTP methods (GET, POST, etc.)
         corsConfiguration.addAllowedHeader("*"); // Allow all headers
         corsConfiguration.setAllowCredentials(true); // Allow cookies or authorization headers

@@ -38,6 +38,10 @@ public class EmployeeInformation {
     @Column(name = "bank_number", length = 50)
     private String bankNumber;
 
+    @Column(name = "address", length = 255)
+    private String address;
+
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "position_id",

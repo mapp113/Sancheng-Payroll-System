@@ -1,4 +1,4 @@
-import Sidebar from "../../../_components/navigation-sidebar/employee";
+import Sidebar from "../../_components/navigation-sidebar/employee";
 
 export default function EmployeesLayout({children}: { children: React.ReactNode }) {
     return (
