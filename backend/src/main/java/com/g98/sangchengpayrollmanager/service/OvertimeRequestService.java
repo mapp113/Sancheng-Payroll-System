@@ -2,9 +2,12 @@ package com.g98.sangchengpayrollmanager.service;
 
 import com.g98.sangchengpayrollmanager.model.dto.OT.OvertimeRequestResponse;
 import com.g98.sangchengpayrollmanager.model.dto.OvertimeRequestCreateDTO;
+import com.g98.sangchengpayrollmanager.model.entity.User;
 import com.g98.sangchengpayrollmanager.model.enums.LeaveandOTStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import java.time.LocalDate;
 
 public interface OvertimeRequestService {
 
@@ -35,8 +38,10 @@ public interface OvertimeRequestService {
     // tìm theo trạng thái
     Page<OvertimeRequestResponse> findByStatus(LeaveandOTStatus status, Pageable pageable);
 
-    // Tính số OT còn lại trong tuần
+    // Tính số OT còn lại trong tháng
     Integer getMyRemainingMonthlyOvertime();
+
+    void changeOvertimetoLeaveWithMonthlyOverLimit(User user, LocalDate otDate);
 
 
 }

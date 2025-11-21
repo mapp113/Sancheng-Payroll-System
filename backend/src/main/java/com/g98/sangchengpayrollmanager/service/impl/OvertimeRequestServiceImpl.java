@@ -163,6 +163,8 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
         if (workHours > 0) {
             upsertOvertimeBalance(overtimeRequest.getUser(), overtimeRequest.getOtDate(), workHours);
         }
+
+        changeOvertimetoLeaveWithMonthlyOverLimit(overtimeRequest.getUser(), overtimeRequest.getOtDate());
         return mapToResponse(savedOvertimeRequest);
     }
 
@@ -225,44 +227,51 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
         return Math.max(0, remaining);
     }
 
-    private void changeOvertimetoLeaveWithMonthlyOverLimit(User user, LocalDate otDate) {
-        String username = getCurrentUsername();
+    public void changeOvertimetoLeaveWithMonthlyOverLimit(User user, LocalDate otDate) {
+        String empCode = user.getEmployeeCode();
         int year = otDate.getYear();
         int month = otDate.getMonthValue();
 
         LocalDate monthStart = LocalDate.of(year, month, 1);
         LocalDate monthEnd = otDate.withDayOfMonth(otDate.lengthOfMonth());
 
-        int monthlyHours = overtimeRequestRespository.sumWorkedHoursInMonth(username, monthStart, monthEnd);
+        int monthlyHours = overtimeRequestRespository.sumWorkedHoursInMonth(
+                empCode, monthStart, monthEnd);
 
-        int limit = 40;
-        int excessHours = monthlyHours - limit;
+        int monthlimit = 40;
+        int excessHours = monthlyHours - monthlimit;
 
         if (excessHours <= 0) {
             return;
         }
 
-        double extraDays = excessHours / 8.0;
-        if (extraDays <= 0.0) {
-            return;
-        }
+        LocalDate yearStart = LocalDate.of(year, 1, 1);
+        LocalDate yearEnd   = LocalDate.of(year, 12, 31);
+        int yearlyHours = overtimeRequestRespository.sumWorkedHoursInYear(
+                empCode, yearStart, yearEnd
+        );
+
+        int yearlyLimit = 200;
+        boolean exceedYearLimit = yearlyHours > yearlyLimit;
+
 
         LeaveType compType = leaveTypeRepository.findByCode("OT_COMP")
                 .orElseGet(() -> {
                     LeaveType leaveType = new LeaveType();
                     leaveType.setCode("OT_COMP");
-                    leaveType.setName("Nghỉ bù OT ");
+                    leaveType.setName("Nghỉ bù OT");
                     leaveType.setIsCountedAsLeave(true);
                     leaveType.setIsPaid(true);
-                    leaveType.setNote(" OT vượt quá 40h/ tháng tự động tạo");
+                    leaveType.setNote("Tự động tạo khi OT vượt quá 40h/tháng");
                     return leaveTypeRepository.save(leaveType);
                 });
 
 
-        LeaveQuota quota = leaveQuotaRepository.findByEmployeeCodeAndLeaveTypeCodeAndYear(username, compType.getCode(), year)
+
+        LeaveQuota quota = leaveQuotaRepository.findByEmployeeCodeAndLeaveTypeCodeAndYear(empCode, compType.getCode(), year)
                 .orElseGet(() -> {
                     LeaveQuota q = new LeaveQuota();
-                    q.setEmployeeCode(username);
+                    q.setEmployeeCode(empCode);
                     q.setLeaveTypeCode("OT_COMP");
                     q.setLeaveType(compType);
                     q.setYear(LocalDate.now().getYear());
@@ -271,10 +280,20 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
                     q.setUsedDays(0.0);
                     return q;
                 });
-        double currentEntitledDays = quota.getEntitledDays() == null ? 0 :quota.getEntitledDays();
-        quota.setEntitledDays(currentEntitledDays + extraDays);
 
+        double prevRemainder = quota.getCarriedOver() == null ? 0.0 : quota.getCarriedOver();
+        double totalRemainder = prevRemainder + excessHours;
+        int extraDays = (int) (totalRemainder / 8);
+        double newRemainder = totalRemainder % 8;
+        if (extraDays > 0) {
+            double currentEntitled = quota.getEntitledDays() == null ? 0.0 : quota.getEntitledDays();
+            quota.setEntitledDays(currentEntitled + extraDays);
+        }
+
+
+        quota.setCarriedOver(newRemainder);
         leaveQuotaRepository.save(quota);
+
     }
 
 

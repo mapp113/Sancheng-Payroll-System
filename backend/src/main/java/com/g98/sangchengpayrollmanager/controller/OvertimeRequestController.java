@@ -112,8 +112,8 @@ public class OvertimeRequestController {
     }
 
     // Xem số thời gian ot còn lại
-    @GetMapping("/remaining-week")
-    public ResponseEntity<Integer> getMyRemainingWeeklyOvertime() {
+    @GetMapping("/remaining-month")
+    public ResponseEntity<Integer> getMyRemainingMonthlyOvertime() {
         return ResponseEntity.ok(overtimeRequestService.getMyRemainingMonthlyOvertime());
     }
 

@@ -95,4 +95,15 @@ import java.util.Optional;
 
 
     Integer id(Integer id);
+
+    @Query("""
+       SELECT COALESCE(SUM(o.workedTime), 0)
+       FROM OvertimeRequest o
+       WHERE o.user.employeeCode = :empCode
+         AND o.otDate BETWEEN :yearStart AND :yearEnd
+         AND o.status = 'APPROVED'
+       """)
+    int sumWorkedHoursInYear(@Param("empCode") String empCode,
+                             @Param("yearStart") LocalDate yearStart,
+                             @Param("yearEnd") LocalDate yearEnd);
 }

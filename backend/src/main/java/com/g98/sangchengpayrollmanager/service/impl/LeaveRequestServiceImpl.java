@@ -8,10 +8,7 @@ import com.g98.sangchengpayrollmanager.model.entity.LeaveType;
 import com.g98.sangchengpayrollmanager.model.entity.User;
 import com.g98.sangchengpayrollmanager.model.enums.DurationType;
 import com.g98.sangchengpayrollmanager.model.enums.LeaveandOTStatus;
-import com.g98.sangchengpayrollmanager.repository.LeaveQuotaRepository;
-import com.g98.sangchengpayrollmanager.repository.LeaveRequestRepository;
-import com.g98.sangchengpayrollmanager.repository.LeaveTypeRepository;
-import com.g98.sangchengpayrollmanager.repository.UserRepository;
+import com.g98.sangchengpayrollmanager.repository.*;
 import com.g98.sangchengpayrollmanager.service.LeaveRequestService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +32,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     private final LeaveTypeRepository leaveTypeRepository;
     private final LeaveQuotaRepository leaveQuotaRepository;
     private static final String ANNUAL_LEAVE_CODE = "annual";
+    private final SpecialDaysRepository specialDaysRepository;
 
     @Override
     public LeaveRequestResponse submitLeaveRequest(LeaveRequestCreateDTO leaveRequestDTO) {
@@ -109,8 +107,16 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
        DurationType durationType = DurationType.valueOf(duration.trim().toUpperCase());
        switch (durationType) {
            case FULL_DAY -> {
-               long days = ChronoUnit.DAYS.between(fromDate, toDate) + 1;
-               return (double) days;
+               double days = 0.0;
+               LocalDate date = fromDate;
+               while (!date.isAfter(toDate)) {
+                   if(isWorkingDay(date)) {
+                       days++;
+                   }
+                   date = date.plusDays(1);
+               }
+               return days;
+
            }
 //           case HALF_DAY_AM, HALF_DAY_PM -> {
 //               return (fromDate.toEpochDay() - toDate.toEpochDay()) / 2;
@@ -295,6 +301,16 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         leaveRequest.setApprovedDate(LocalDateTime.now());
 
         return mapToResponse(LeaveRequestRepository.save(leaveRequest));
+    }
+
+    private boolean isWorkingDay(LocalDate date) {
+        if (specialDaysRepository.existsByDate(date)) {
+            return false;
+        }
+        return switch (date.getDayOfWeek()) {
+            case SATURDAY, SUNDAY -> false;
+            default -> true;
+        };
     }
 
 
