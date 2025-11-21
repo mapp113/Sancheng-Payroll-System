@@ -23,3 +23,13 @@ export type TimesheetDataContextType = {
   timesheetData: TimesheetRecord[];
   setTimesheetData: React.Dispatch<React.SetStateAction<TimesheetRecord[]>>;
 };
+
+export type CreateDraftParamContextType = {
+  createDraftParams: CreateDraftParams | null;
+  setCreateDraftParams: React.Dispatch<React.SetStateAction<CreateDraftParams | null>>;
+};
+
+export interface CreateDraftParams {
+  employeeCode: string[];
+  date: string;
+}

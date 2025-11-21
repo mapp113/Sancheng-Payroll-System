@@ -7,7 +7,7 @@ const backButtonHandler = () => {
   alert("Back")
 }
 
-export default function TimesheetToolbar() {
+export default function TimesheetToolbar( { showForm }: { showForm: () => void }) {
   const params = useContext(ParamsContext)!;
   const data = useContext(DataContext)!;
 
@@ -54,7 +54,7 @@ export default function TimesheetToolbar() {
         <button
           id="payroll-toolbar-back-button"
           className="mr-15 py-3 px-10 border rounded-sm text-xs border-black bg-[#9ee87b] text-[#5a896b] hover:bg-[#91d771] transition-all cursor-pointer"
-          onClick={backButtonHandler}
+          onClick={() => showForm()}
         >
           Create DRAFT
         </button>

@@ -12,8 +12,6 @@ interface OTRequestData {
   reason: string;
 }
 
-const leaveTypes = ["Ngày thường", "Thứ 7/Chủ nhật", "Ngày lễ"];
-
 export default function OTRequestsPage() {
   const [formData, setFormData] = useState<OTRequestData>({
     otDate: "",
@@ -116,19 +114,25 @@ export default function OTRequestsPage() {
         <h1 className="text-lg text-center">Yêu cầu xin OT</h1>
         <div className="my-2 grid grid-cols-[150px_1fr] items-center">
           <label htmlFor="ot-date">Ngày làm thêm:</label>
-          <input
-            id="ot-date"
-            className="border border-black rounded px-2 py-1 w-fit"
-            type="date"
-            value={formData.otDate}
-            onChange={(e) => {
-              const selectedDate = e.target.value;
-              handleInputChange("otDate", selectedDate);
-              // Tự động set loại OT dựa trên ngày được chọn
-              const autoOTType = getOTTypeFromDate(selectedDate);
-              handleInputChange("otType", autoOTType);
-            }}
-          />
+          <div className="flex items-center gap-4">
+            <input
+              id="ot-date"
+              className="border border-black rounded px-2 py-1 w-fit"
+              type="date"
+              value={formData.otDate}
+              onChange={(e) => {
+                const selectedDate = e.target.value;
+                handleInputChange("otDate", selectedDate);
+                // Tự động set loại OT dựa trên ngày được chọn
+                const autoOTType = getOTTypeFromDate(selectedDate);
+                handleInputChange("otType", autoOTType);
+              }}
+            />
+
+            <div className="px-2 py-1 rounded border bg-white text-sm text-gray-700">
+              {formData.otType || "-"}
+            </div>
+          </div>
         </div>
         <div className="my-2 grid grid-cols-[150px_1fr] items-center">
           <label htmlFor="fromTime">Từ:</label>
@@ -169,22 +173,7 @@ export default function OTRequestsPage() {
               : '0 giờ'}
             </span>
         </div>
-        <div className="my-2 grid grid-cols-[150px_1fr] items-center">
-          <label htmlFor="ot-type">Loại OT:</label>
-          <select
-            id="ot-type"
-            className="border border-black rounded px-2 py-1 w-fit"
-            value={formData.otType}
-            onChange={(e) => handleInputChange("otType", e.target.value)}
-          >
-            <option value="">Chọn loại OT</option>
-            {leaveTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-        </div>
+        
         <div className="my-2 grid grid-cols-[150px_1fr] items-start">
           <span className="pt-1">Lý do:</span>
           <textarea
