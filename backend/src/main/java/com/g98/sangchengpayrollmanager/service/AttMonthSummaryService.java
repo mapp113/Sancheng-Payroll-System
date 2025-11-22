@@ -1,5 +1,6 @@
 package com.g98.sangchengpayrollmanager.service;
 
+import com.g98.sangchengpayrollmanager.model.dto.attendant.response.AttMonthSummaryResponse;
 import com.g98.sangchengpayrollmanager.model.dto.attendant.response.TimeSheetResponse;
 import com.g98.sangchengpayrollmanager.model.entity.AttDailySummary;
 import com.g98.sangchengpayrollmanager.model.entity.AttMonthSummary;
@@ -132,5 +133,31 @@ public class AttMonthSummaryService {
         monthSummary.setEarlyLeaveCount(earlyLeaveCount);
 
         return attMonthRepo.save(monthSummary);
+    }
+
+    public AttMonthSummaryResponse getAttMonthByEmployeeAndMonth(LocalDate month, String employeeCode) {
+        Optional<User> user = userRepo.findByEmployeeCode(employeeCode);
+        if (user.isEmpty()) {
+            throw new IllegalArgumentException("User not found");
+        }
+        Optional<AttMonthSummary> monthSummary = attMonthRepo.findByUserAndMonth(user.get(), month);
+        if (monthSummary.isEmpty()) {
+            throw new IllegalArgumentException("Month summary not found");
+        }
+
+        AttMonthSummaryResponse response = new AttMonthSummaryResponse(
+                user.get().getEmployeeCode(),
+                user.get().getFullName(),
+                monthSummary.get().getDaysHours(),
+                monthSummary.get().getOtHours(),
+                monthSummary.get().getUsedleave(),
+                monthSummary.get().getDayStandard(),
+                monthSummary.get().getDaysMeal(),
+                monthSummary.get().getDaysTrial(),
+                monthSummary.get().getDaysPayable(),
+                monthSummary.get().getLateCount(),
+                monthSummary.get().getEarlyLeaveCount()
+        );
+        return response;
     }
 }

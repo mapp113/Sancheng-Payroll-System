@@ -80,7 +80,6 @@ public class PaySummaryController {
         } else {
             if (successCount > 0) status = HttpStatus.MULTI_STATUS;
             else status = HttpStatus.BAD_REQUEST;
-
             message = "Có " + errors.size() + " nhân viên tạo lương thất bại. Vui lòng kiểm tra.";
         }
 

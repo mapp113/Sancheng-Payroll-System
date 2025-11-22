@@ -1,6 +1,7 @@
 package com.g98.sangchengpayrollmanager.controller;
 
 import com.g98.sangchengpayrollmanager.model.dto.attendant.response.AttDailySummaryResponse;
+import com.g98.sangchengpayrollmanager.model.dto.attendant.response.AttMonthSummaryResponse;
 import com.g98.sangchengpayrollmanager.model.dto.attendant.response.TimeSheetResponse;
 import com.g98.sangchengpayrollmanager.service.AttDailySummaryService;
 import com.g98.sangchengpayrollmanager.service.AttMonthSummaryService;
@@ -31,6 +32,12 @@ public class AttSummaryController {
                                                        @RequestParam(required = false) String sortBy,
                                                        @RequestParam(required = false) String sortDir) {
         return service.getTimeSheetByMonth(date, keyword, sortBy, sortDir, page, size);
+    }
+
+    @GetMapping("/month")
+    public ResponseEntity<AttMonthSummaryResponse> getAttMonthByEmployeeAndMonth(@RequestParam("month") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate month,
+                                                                                 @RequestParam String employeeCode){
+        return ResponseEntity.ok(service.getAttMonthByEmployeeAndMonth(month, employeeCode));
     }
 
     @GetMapping("/by-month")
