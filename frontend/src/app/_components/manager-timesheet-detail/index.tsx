@@ -6,14 +6,19 @@ import {
     DetailShell,
     DetailSummaryCard,
 } from "@/app/_components/detail";
+import FormPopBox from "@/app/_components/common/pop-box/form";
 
 import type {
     ManagerTimesheetDetailData,
     TimesheetEntry,
     TimesheetOtherEntry,
+    EmployeeInfomation,
+    AttendanceSummary,
+    AttendanceDaily,
 } from "./types";
-import {formatDecimal, formatHours, formatTime} from "./utils";
-import {useMemo, useState} from "react";
+import { formatDecimal, formatHours, formatTime } from "./utils";
+import { useState, useEffect, useContext } from "react";
+import { TimesheetDetailParam } from "./context";
 
 interface ManagerTimesheetDetailProps {
     detail: ManagerTimesheetDetailData;
@@ -21,31 +26,137 @@ interface ManagerTimesheetDetailProps {
 }
 
 export default function ManagerTimesheetDetail({
-                                                   detail,
-                                                   view = "timesheet",
-                                               }: ManagerTimesheetDetailProps) {
+    detail,
+    view = "timesheet",
+}: ManagerTimesheetDetailProps) {
     // ✅ giữ state ngày, khởi tạo từ data
     const [startDate, setStartDate] = useState(detail.startDate);
     const [endDate, setEndDate] = useState(detail.endDate);
+    const [employeeInfo, setEmployeeInfo] = useState<EmployeeInfomation | null>(null);
+    const [attendanceSummary, setAttendanceSummary] = useState<AttendanceSummary | null>(null);
+    const [attendanceDaily, setAttendanceDaily] = useState<AttendanceDaily[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [selectedDay, setSelectedDay] = useState<AttendanceDaily | null>(null);
+    const timesheetParams = useContext(TimesheetDetailParam);
+
+    // Gọi API để lấy thông tin nhân viên
+    useEffect(() => {
+        const fetchEmployeeInfo = async () => {
+            if (!timesheetParams?.employeeCode) return;
+
+            setIsLoading(true);
+            try {
+                const response = await fetch(
+                    `http://localhost:8080/api/employees/${timesheetParams.employeeCode}`
+                );
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch employee information');
+                }
+
+                const data: EmployeeInfomation = await response.json();
+                setEmployeeInfo(data);
+            } catch (error) {
+                console.error('Error fetching employee info:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchEmployeeInfo();
+    }, [timesheetParams?.employeeCode]);
+
+    // Gọi API để lấy attendance summary
+    useEffect(() => {
+        const fetchAttendanceSummary = async () => {
+            if (!timesheetParams?.employeeCode || !timesheetParams?.month) return;
+            
+            setIsLoading(true);
+            try {
+                // Thêm "-01" vào month để tạo định dạng YYYY-MM-DD
+                const monthParam = `${timesheetParams.month}-01`;
+                const response = await fetch(
+                    `http://localhost:8080/api/attsummary/month?month=${monthParam}&employeeCode=${timesheetParams.employeeCode}`
+                );
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch attendance summary');
+                }
+                
+                const data: AttendanceSummary = await response.json();
+                setAttendanceSummary(data);
+            } catch (error) {
+                console.error('Error fetching attendance summary:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchAttendanceSummary();
+    }, [timesheetParams?.employeeCode, timesheetParams?.month]);
+
+    // Gọi API để lấy attendance daily
+    useEffect(() => {
+        const fetchAttendanceDaily = async () => {
+            if (!timesheetParams?.employeeCode || !timesheetParams?.month) return;
+            
+            setIsLoading(true);
+            try {
+                // Thêm "-01" vào month để tạo định dạng YYYY-MM-DD
+                const monthParam = `${timesheetParams.month}-01`;
+                const response = await fetch(
+                    `http://localhost:8080/api/attsummary/by-month?employeeCode=${timesheetParams.employeeCode}&month=${monthParam}`
+                );
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch attendance daily');
+                }
+                
+                const data: AttendanceDaily[] = await response.json();
+                setAttendanceDaily(data);
+            } catch (error) {
+                console.error('Error fetching attendance daily:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchAttendanceDaily();
+    }, [timesheetParams?.employeeCode, timesheetParams?.month]);
 
     const headerLines: DetailHeaderLine[] = [];
-    if (detail.employee.employeeId) {
-        headerLines.push({text: detail.employee.employeeId, variant: "accent"});
+    if (employeeInfo?.employeeCode || detail.employee.employeeId) {
+        headerLines.push({ text: employeeInfo?.employeeCode || detail.employee.employeeId || "", variant: "accent" });
     }
 
-    // ✅ hiển thị nhãn từ state ngày
-    const periodLabel = useMemo(() => `${startDate} - ${endDate}`, [startDate, endDate]);
-    headerLines.push({text: periodLabel, variant: "muted"});
+    const summaryMetrics = [
+        {
+            label: "Total Hours",
+            value: attendanceSummary ? (attendanceSummary.daysHours + attendanceSummary.otHours) : (detail.summaryMetrics[0]?.value || 0),
+            unit: "hrs",
+            iconSrc: "/icons/attendance.png"
+        },
+        {
+            label: "Work Hours",
+            value: attendanceSummary?.daysHours ?? (detail.summaryMetrics[1]?.value || 0),
+            unit: "hrs"
+        },
+        {
+            label: "Overtime Hours",
+            value: attendanceSummary?.otHours ?? (detail.summaryMetrics[2]?.value || 0),
+            unit: "hrs"
+        }
+    ];
 
     const header = (
         <DetailHeader
             badgeLabel={detail.title}
-            title={detail.employee.name}
-            subtitle={[detail.employee.position, detail.employee.department].filter(Boolean).join(" • ")}
+            title={employeeInfo?.fullName || detail.employee.name}
+            subtitle={employeeInfo?.positionName || detail.employee.position}
             lines={headerLines}
-            avatarName={detail.employee.name}
+            avatarName={employeeInfo?.fullName || detail.employee.name}
             avatarUrl={detail.employee.avatarUrl}
-            summary={detail.summaryMetrics.map((metric) => (
+            summary={summaryMetrics.map((metric) => (
                 <DetailSummaryCard
                     key={metric.label}
                     label={metric.label}
@@ -72,7 +183,7 @@ export default function ManagerTimesheetDetail({
                             setEndDate(e);
                         }}
                     />
-                    <OtherEntriesTable entries={detail.otherEntries}/>
+                    <OtherEntriesTable entries={detail.otherEntries} />
                 </div>
             </DetailShell>
         );
@@ -85,20 +196,33 @@ export default function ManagerTimesheetDetail({
             <div className="grid gap-6 p-6 xl:grid-cols-[320px_1fr]">
                 <div className="space-y-6">
                     <LeaveSummaryCard
-                        startDate={startDate}
-                        endDate={endDate}
+                        month={startDate}
                         onChange={(s, e) => {
                             setStartDate(s);
                             setEndDate(e);
                         }}
                         leaveSummary={detail.leaveSummary}
+                        attendanceSummary={attendanceSummary}
                     />
                 </div>
 
                 <div className="space-y-6">
-                    <TimesheetTable entries={detail.entries}/>
+                    <TimesheetTable 
+                        entries={detail.entries} 
+                        attendanceDaily={attendanceDaily}
+                        month={timesheetParams?.month || startDate.slice(0, 7)}
+                        onDayClick={setSelectedDay}
+                    />
                 </div>
             </div>
+            
+            {selectedDay && (
+                <AttendanceDayDetailPopup
+                    attendanceData={selectedDay}
+                    employeeInfo={employeeInfo}
+                    onClose={() => setSelectedDay(null)}
+                />
+            )}
         </DetailShell>
     );
 }
@@ -106,15 +230,15 @@ export default function ManagerTimesheetDetail({
 /* ===== Cards & Tables ===== */
 
 function LeaveSummaryCard({
-                              startDate,
-                              endDate,
-                              onChange,
-                              leaveSummary,
-                          }: {
-    startDate: string;
-    endDate: string;
+    month,
+    onChange,
+    leaveSummary,
+    attendanceSummary,
+}: {
+    month: string;
     onChange: (s: string, e: string) => void;
     leaveSummary: ManagerTimesheetDetailData["leaveSummary"];
+    attendanceSummary: AttendanceSummary | null;
 }) {
     return (
         <div
@@ -123,83 +247,185 @@ function LeaveSummaryCard({
                 TIME PERIOD
             </div>
 
-            {/* ✅ 2 ô chọn ngày */}
-            <div className="mt-2 flex flex-col gap-3">
-                <div className="flex flex-col">
-                    <label className="text-xs font-semibold text-[#56749A] mb-1">Start Date</label>
-                    <input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => onChange(e.target.value, endDate)}
-                        className="rounded-xl border border-[#CCE1F0] bg-white px-3 py-2 text-sm text-[#1D3E6A] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4AB4DE]"
-                    />
-                </div>
-
-                <div className="flex flex-col">
-                    <label className="text-xs font-semibold text-[#56749A] mb-1">End Date</label>
-                    <input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => onChange(startDate, e.target.value)}
-                        className="rounded-xl border border-[#CCE1F0] bg-white px-3 py-2 text-sm text-[#1D3E6A] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4AB4DE]"
-                    />
-                </div>
+            <div className="mt-2 flex flex-col">
+                <label className="text-xs font-semibold text-[#56749A] mb-1">Date</label>
+                <input
+                    type="month"
+                    value={month.slice(0, 7)}
+                    onChange={(e) => onChange(e.target.value, e.target.value)}
+                    className="rounded-xl border border-[#CCE1F0] bg-white px-3 py-2 text-sm text-[#1D3E6A] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4AB4DE]"
+                />
             </div>
 
             <div className="mt-4 flex flex-wrap gap-3">
-                <button
-                    type="button"
-                    className="inline-flex items-center gap-2 rounded-full border border-black bg-white px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] shadow-[3px_3px_0_#CCE1F0]"
+                <div
+                    className="inline-flex items-center w-full gap-2 rounded-full border border-black bg-white px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] shadow-[3px_3px_0_#CCE1F0]"
                 >
-                    Leave Taken
-                    <span className="rounded-full bg-[#4AB4DE] px-2 py-0.5 text-xs font-semibold text-white">
-            {leaveSummary.takenDays}
-          </span>
-                </button>
-                <button
-                    type="button"
-                    className="inline-flex items-center gap-2 rounded-full border border-black bg-[#4AB4DE] px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-[3px_3px_0_#CCE1F0]"
+                    Số buổi nghỉ đã sử dụng
+                    <span className="ml-auto rounded-full bg-[#4AB4DE] px-2 py-0.5 text-xs font-semibold text-white">
+                        {attendanceSummary?.usedleave ?? leaveSummary.takenDays}
+                    </span>
+                </div>
+                <div
+                    className="inline-flex items-center w-full gap-2 rounded-full border border-black bg-white px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] shadow-[3px_3px_0_#CCE1F0]"
                 >
-                    Remaining Leave
-                    <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-[#1D3E6A]">
-            {leaveSummary.remainingDays}
-          </span>
-                </button>
+                    Số ngày công chuẩn
+                    <span className="ml-auto rounded-full bg-[#4AB4DE] px-2 py-0.5 text-xs font-semibold text-white">
+                        {attendanceSummary?.dayStandard ?? 0}
+                    </span>
+                </div>
+                <div
+                    className="inline-flex items-center w-full gap-2 rounded-full border border-black bg-white px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] shadow-[3px_3px_0_#CCE1F0]"
+                >
+                    Số ngày công cơm
+                    <span className="ml-auto rounded-full bg-[#4AB4DE] px-2 py-0.5 text-xs font-semibold text-white">
+                        {attendanceSummary?.daysMeal ?? 0}
+                    </span>
+                </div>
+                <div
+                    className="inline-flex items-center w-full gap-2 rounded-full border border-black bg-white px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] shadow-[3px_3px_0_#CCE1F0]"
+                >
+                    số lần đi muộn
+                    <span className="ml-auto rounded-full bg-[#4AB4DE] px-2 py-0.5 text-xs font-semibold text-white">
+                        {attendanceSummary?.lateCount ?? 0}
+                    </span>
+                </div>
+                <div
+                    className="inline-flex items-center gap-2 w-full rounded-full border border-black bg-white px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] shadow-[3px_3px_0_#CCE1F0]"
+                >
+                    số lần về sớm
+                    <span className="ml-auto rounded-full bg-[#4AB4DE] px-2 py-0.5 text-xs font-semibold text-white">
+                        {attendanceSummary?.earlyLeaveCount ?? 0}
+                    </span>
+                </div>
+
             </div>
         </div>
     );
 }
 
-function TimesheetTable({entries}: { entries: TimesheetEntry[] }) {
+function TimesheetTable({ 
+    entries, 
+    attendanceDaily, 
+    month,
+    onDayClick
+}: { 
+    entries: TimesheetEntry[]; 
+    attendanceDaily: AttendanceDaily[];
+    month: string;
+    onDayClick: (data: AttendanceDaily) => void;
+}) {
+    // Tạo mảng chứa tất cả các ngày trong tháng
+    const generateMonthDays = (monthStr: string): TimesheetEntry[] => {
+        const [year, monthNum] = monthStr.split('-').map(Number);
+        const daysInMonth = new Date(year, monthNum, 0).getDate();
+        const days: TimesheetEntry[] = [];
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(year, monthNum - 1, day);
+            const dateStr = `${year}-${String(monthNum).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const dayName = dayNames[date.getDay()];
+            
+            // Tìm dữ liệu từ API cho ngày này
+            const dailyData = attendanceDaily.find(d => d.date === dateStr);
+
+            if (dailyData) {
+                // Nếu có dữ liệu từ API
+                if (dailyData.isAbsent) {
+                    // Nghỉ không phép
+                    days.push({
+                        id: dateStr,
+                        day: dayName,
+                        date: `${String(day).padStart(2, '0')}/${String(monthNum).padStart(2, '0')}/${year}`,
+                        type: "leave",
+                        note: "Nghỉ không phép",
+                    });
+                } else if (dailyData.leaveTypeCode) {
+                    // Ngày nghỉ có phép
+                    days.push({
+                        id: dateStr,
+                        day: dayName,
+                        date: `${String(day).padStart(2, '0')}/${String(monthNum).padStart(2, '0')}/${year}`,
+                        type: "leave",
+                        note: dailyData.leaveTypeCode,
+                    });
+                } else {
+                    // Ngày làm việc
+                    const checkIn = dailyData.checkInTime ? dailyData.checkInTime.split('T')[1]?.substring(0, 5) : null;
+                    const checkOut = dailyData.checkOutTime ? dailyData.checkOutTime.split('T')[1]?.substring(0, 5) : null;
+                    
+                    days.push({
+                        id: dateStr,
+                        day: dayName,
+                        date: `${String(day).padStart(2, '0')}/${String(monthNum).padStart(2, '0')}/${year}`,
+                        checkIn: checkIn,
+                        checkOut: checkOut,
+                        workHours: dailyData.workHours,
+                        overtimeHours: dailyData.otHour,
+                        type: "work",
+                    });
+                }
+            } else {
+                // Nếu không có dữ liệu, hiển thị là "Ngày nghỉ"
+                days.push({
+                    id: dateStr,
+                    day: dayName,
+                    date: `${String(day).padStart(2, '0')}/${String(monthNum).padStart(2, '0')}/${year}`,
+                    type: "leave",
+                    note: "Ngày nghỉ",
+                    checkIn: null,
+                    checkOut: null,
+                    workHours: null,
+                    overtimeHours: null,
+                });
+            }
+        }
+
+        return days;
+    };
+
+    const allDays = generateMonthDays(month);
+
     return (
         <section
-            className="overflow-hidden rounded-2xl border border-black bg.white text-[#1D3E6A] shadow-[6px_6px_0_#CCE1F0]">
-            <table className="w-full border-collapse">
-                <thead className="bg-[#CCE1F0] text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A]">
-                <tr>
-                    <th className="px-5 py-3 text-left">Day</th>
-                    <th className="px-5 py-3 text-left">Checkin</th>
-                    <th className="px-5 py-3 text-left">Checkout</th>
-                    <th className="px-5 py-3 text-left">Work Hours</th>
-                    <th className="px-5 py-3 text-left">Overtime</th>
-                    <th className="px-5 py-3 text-left"></th>
-                </tr>
-                </thead>
-                <tbody>
-                {entries.map((entry) => (
-                    <TimesheetTableRow key={entry.id} entry={entry}/>
-                ))}
-                </tbody>
-            </table>
+            className="overflow-hidden rounded-2xl border border-black bg-white text-[#1D3E6A] shadow-[6px_6px_0_#CCE1F0]">
+            <div className="h-[600px] overflow-y-auto">
+                <table className="w-full border-collapse">
+                    <thead className="bg-[#CCE1F0] text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] sticky top-0 z-10">
+                        <tr>
+                            <th className="px-5 py-3 text-left">Day</th>
+                            <th className="px-5 py-3 text-left">Checkin</th>
+                            <th className="px-5 py-3 text-left">Checkout</th>
+                            <th className="px-5 py-3 text-left">Work Hours</th>
+                            <th className="px-5 py-3 text-left">Overtime</th>
+                            <th className="px-5 py-3 text-left"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {allDays.map((entry) => {
+                            const dailyData = attendanceDaily.find(d => d.date === entry.id);
+                            return (
+                                <TimesheetTableRow 
+                                    key={entry.id} 
+                                    entry={entry} 
+                                    dailyData={dailyData}
+                                    onDayClick={onDayClick}
+                                />
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
         </section>
     );
 }
 
 function OtherPeriodCard({
-                             startDate,
-                             endDate,
-                             onChange,
-                         }: {
+    startDate,
+    endDate,
+    onChange,
+}: {
     startDate: string;
     endDate: string;
     onChange: (s: string, e: string) => void;
@@ -229,7 +455,7 @@ function OtherPeriodCard({
     );
 }
 
-function OtherEntriesTable({entries}: { entries?: TimesheetOtherEntry[] }) {
+function OtherEntriesTable({ entries }: { entries?: TimesheetOtherEntry[] }) {
     if (!entries?.length) return null;
 
     return (
@@ -237,36 +463,51 @@ function OtherEntriesTable({entries}: { entries?: TimesheetOtherEntry[] }) {
             className="overflow-hidden rounded-2xl border border-black bg-white text-[#1D3E6A] shadow-[6px_6px_0_#CCE1F0]">
             <table className="w-full border-collapse">
                 <thead className="bg-[#CCE1F0] text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A]">
-                <tr>
-                    <th className="px-5 py-3 text-left">Type</th>
-                    <th className="px-5 py-3 text-left">Description</th>
-                    <th className="px-5 py-3 text-left">Amount</th>
-                    <th className="px-5 py-3 text-left">Started On</th>
-                </tr>
+                    <tr>
+                        <th className="px-5 py-3 text-left">Type</th>
+                        <th className="px-5 py-3 text-left">Description</th>
+                        <th className="px-5 py-3 text-left">Amount</th>
+                        <th className="px-5 py-3 text-left">Started On</th>
+                    </tr>
                 </thead>
                 <tbody>
-                {entries.map((entry) => (
-                    <tr
-                        key={`${entry.type}-${entry.description}-${entry.startedOn}`}
-                        className="border-b border-[#E6F2FB] last:border-0"
-                    >
-                        <td className="px-5 py-4 text-sm font-semibold text-[#1D3E6A]">{entry.type}</td>
-                        <td className="px-5 py-4 text-sm font-semibold text-[#1D3E6A]">{entry.description}</td>
-                        <td className="px-5 py-4 text-sm font-semibold text-[#1D3E6A]">{entry.amount}</td>
-                        <td className="px-5 py-4 text-sm font-semibold text-[#1D3E6A]">{entry.startedOn}</td>
-                    </tr>
-                ))}
+                    {entries.map((entry) => (
+                        <tr
+                            key={`${entry.type}-${entry.description}-${entry.startedOn}`}
+                            className="border-b border-[#E6F2FB] last:border-0"
+                        >
+                            <td className="px-5 py-4 text-sm font-semibold text-[#1D3E6A]">{entry.type}</td>
+                            <td className="px-5 py-4 text-sm font-semibold text-[#1D3E6A]">{entry.description}</td>
+                            <td className="px-5 py-4 text-sm font-semibold text-[#1D3E6A]">{entry.amount}</td>
+                            <td className="px-5 py-4 text-sm font-semibold text-[#1D3E6A]">{entry.startedOn}</td>
+                        </tr>
+                    ))}
                 </tbody>
             </table>
         </section>
     );
 }
 
-function TimesheetTableRow({entry}: { entry: TimesheetEntry }) {
+function TimesheetTableRow({ 
+    entry, 
+    dailyData, 
+    onDayClick 
+}: { 
+    entry: TimesheetEntry; 
+    dailyData?: AttendanceDaily;
+    onDayClick: (data: AttendanceDaily) => void;
+}) {
     const isLeave = entry.type === "leave";
+    const isDefaultLeave = entry.note === "Ngày nghỉ";
+
+    const handleDetailClick = () => {
+        if (dailyData) {
+            onDayClick(dailyData);
+        }
+    };
 
     return (
-        <tr className="border-b border-[#E6F2FB] last:border-0">
+        <tr className="border-b border-[#E6F2FB] bg-white last:border-0">
             <td className="px-5 py-4 align-top">
                 <div className="text-sm font-semibold text-[#1D3E6A]">
                     {entry.day}
@@ -283,24 +524,198 @@ function TimesheetTableRow({entry}: { entry: TimesheetEntry }) {
                 {isLeave ? (
                     <span
                         className="inline-flex items-center rounded-full bg-[#FFEFD6] px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[#B45309]">
-            {entry.note}
-          </span>
+                        {entry.note}
+                    </span>
                 ) : (
-                    formatHours(entry.workHours, {fallback: "--"})
+                    formatHours(entry.workHours, { fallback: "--" })
                 )}
             </td>
             <td className="px-5 py-4 text-sm font-semibold text-[#1D3E6A]">
                 {isLeave ? "--" : formatHours(entry.overtimeHours)}
             </td>
             <td className="px-5 py-4 text-right">
-                <button
-                    type="button"
-                    className="inline-flex items-center justify-center rounded-full border border-[#4AB4DE] bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] transition hover:bg-[#E6F7FF]"
-                >
-                    Edit
-                </button>
+                {!isDefaultLeave && (
+                    <button
+                        type="button"
+                        onClick={handleDetailClick}
+                        className="inline-flex items-center justify-center rounded-full border border-[#4AB4DE] bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] transition hover:bg-[#E6F7FF] cursor-pointer"
+                    >
+                        Detail
+                    </button>
+                )}
             </td>
         </tr>
+    );
+}
+
+/* ===== Attendance Detail Popup ===== */
+
+function AttendanceDayDetailPopup({
+    attendanceData,
+    employeeInfo,
+    onClose,
+}: {
+    attendanceData: AttendanceDaily;
+    employeeInfo: EmployeeInfomation | null;
+    onClose: () => void;
+}) {
+    const formatDateTime = (dateTime: string) => {
+        if (!dateTime) return "--";
+        const timePart = dateTime.split('T')[1];
+        return timePart?.substring(0, 5) || "--";
+    };
+
+    return (
+        <FormPopBox>
+            <div className="space-y-6">
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-[#CCE1F0] pb-4">
+                    <h2 className="text-2xl font-bold text-[#1D3E6A]">Attendance Detail</h2>
+                    <button
+                        onClick={onClose}
+                        className="rounded-full p-2 text-[#56749A] hover:bg-[#E6F7FF] transition cursor-pointer"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                {/* Employee Info */}
+                <div className="grid grid-cols-2 gap-4 p-4 bg-[#F4FBFF] rounded-xl border border-[#CCE1F0]">
+                    <div>
+                        <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Employee Code</label>
+                        <p className="text-sm font-bold text-[#1D3E6A] mt-1">{employeeInfo?.employeeCode || "--"}</p>
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Employee Name</label>
+                        <p className="text-sm font-bold text-[#1D3E6A] mt-1">{employeeInfo?.fullName || "--"}</p>
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Position</label>
+                        <p className="text-sm font-bold text-[#1D3E6A] mt-1">{employeeInfo?.positionName || "--"}</p>
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Date</label>
+                        <p className="text-sm font-bold text-[#1D3E6A] mt-1">{attendanceData.date}</p>
+                    </div>
+                </div>
+
+                {/* Attendance Data */}
+                <div className="space-y-4">
+                    <h3 className="text-lg font-bold text-[#1D3E6A]">Attendance Information</h3>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Day Type</label>
+                            <p className="text-sm font-bold text-[#1D3E6A]">{attendanceData.dayTypeName}</p>
+                        </div>
+                        
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Leave Type</label>
+                            <p className="text-sm font-bold text-[#1D3E6A]">{attendanceData.leaveTypeCode || "--"}</p>
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Check In Time</label>
+                            <p className="text-sm font-bold text-[#1D3E6A]">{formatDateTime(attendanceData.checkInTime)}</p>
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Check Out Time</label>
+                            <p className="text-sm font-bold text-[#1D3E6A]">{formatDateTime(attendanceData.checkOutTime)}</p>
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Work Hours</label>
+                            <p className="text-sm font-bold text-[#1D3E6A]">{attendanceData.workHours} hrs</p>
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Overtime Hours</label>
+                            <p className="text-sm font-bold text-[#1D3E6A]">{attendanceData.otHour} hrs</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Boolean Flags */}
+                <div className="space-y-4">
+                    <h3 className="text-lg font-bold text-[#1D3E6A]">Status Flags</h3>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                checked={attendanceData.isLateCounted}
+                                disabled
+                                className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE]"
+                            />
+                            <label className="text-sm font-semibold text-[#1D3E6A]">Late Counted</label>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                checked={attendanceData.isEarlyLeaveCounted}
+                                disabled
+                                className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE]"
+                            />
+                            <label className="text-sm font-semibold text-[#1D3E6A]">Early Leave Counted</label>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                checked={attendanceData.isCountPayableDay}
+                                disabled
+                                className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE]"
+                            />
+                            <label className="text-sm font-semibold text-[#1D3E6A]">Count Payable Day</label>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                checked={attendanceData.isAbsent}
+                                disabled
+                                className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE]"
+                            />
+                            <label className="text-sm font-semibold text-[#1D3E6A]">Absent</label>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                checked={attendanceData.isDayMeal}
+                                disabled
+                                className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE]"
+                            />
+                            <label className="text-sm font-semibold text-[#1D3E6A]">Day Meal</label>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                checked={attendanceData.isTrialDay}
+                                disabled
+                                className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE]"
+                            />
+                            <label className="text-sm font-semibold text-[#1D3E6A]">Trial Day</label>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Close Button */}
+                <div className="flex justify-end pt-4 border-t border-[#CCE1F0]">
+                    <button
+                        onClick={onClose}
+                        className="rounded-full border border-[#4AB4DE] bg-white px-6 py-2 text-sm font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] transition hover:bg-[#E6F7FF] cursor-pointer"
+                    >
+                        Close
+                    </button>
+                </div>
+            </div>
+        </FormPopBox>
     );
 }
 
