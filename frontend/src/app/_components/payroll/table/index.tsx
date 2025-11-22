@@ -58,10 +58,8 @@ export default function PayrollTable() {
               <td className="py-3 px-4">${record.netSalary}</td>
               <td className="py-3 px-4">
                 <span
-                  className={`inline-block w-4 h-4 rounded-full ${getStatusColor(
-                    record.status
-                  )}`}
-                ></span>
+                  className={`py-3 px-4`}
+                >{record.status}</span>
               </td>
               <td className="py-3 px-4">
                 <button className="bg-cyan-300 hover:bg-cyan-400 text-sm text-gray-800 font-medium py-1 px-3 rounded-md shadow">
