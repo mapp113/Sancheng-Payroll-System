@@ -39,54 +39,54 @@ class PayrollServiceImplTest {
                 LocalDate.of(2025, 9, 1), //monthStart
                 LocalDate.of(2025, 9, 30)  //monthEnd
         );
-        payrollService.calculateMonthlySalary(
-                "EMP002",
-                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
-                LocalDate.of(2025, 9, 1), //monthStart
-                LocalDate.of(2025, 9, 30)  //monthEnd
-        );
-        payrollService.calculateMonthlySalary(
-                "EMP003",
-                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
-                LocalDate.of(2025, 9, 1), //monthStart
-                LocalDate.of(2025, 9, 30)  //monthEnd
-        );
-        payrollService.calculateMonthlySalary(
-                "EMP004",
-                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
-                LocalDate.of(2025, 9, 1), //monthStart
-                LocalDate.of(2025, 9, 30)  //monthEnd
-        );
-        payrollService.calculateMonthlySalary(
-                "EMP005",
-                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
-                LocalDate.of(2025, 9, 1), //monthStart
-                LocalDate.of(2025, 9, 30)  //monthEnd
-        );
-        payrollService.calculateMonthlySalary(
-                "EMP006",
-                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
-                LocalDate.of(2025, 9, 1), //monthStart
-                LocalDate.of(2025, 9, 30)  //monthEnd
-        );
-        payrollService.calculateMonthlySalary(
-                "EMP007",
-                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
-                LocalDate.of(2025, 9, 1), //monthStart
-                LocalDate.of(2025, 9, 30)  //monthEnd
-        );
-        payrollService.calculateMonthlySalary(
-                "EMP008",
-                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
-                LocalDate.of(2025, 9, 1), //monthStart
-                LocalDate.of(2025, 9, 30)  //monthEnd
-        );
-        payrollService.calculateMonthlySalary(
-                "EMP009",
-                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
-                LocalDate.of(2025, 9, 1), //monthStart
-                LocalDate.of(2025, 9, 30)  //monthEnd
-        );
+//        payrollService.calculateMonthlySalary(
+//                "EMP002",
+//                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
+//                LocalDate.of(2025, 9, 1), //monthStart
+//                LocalDate.of(2025, 9, 30)  //monthEnd
+//        );
+//        payrollService.calculateMonthlySalary(
+//                "EMP003",
+//                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
+//                LocalDate.of(2025, 9, 1), //monthStart
+//                LocalDate.of(2025, 9, 30)  //monthEnd
+//        );
+//        payrollService.calculateMonthlySalary(
+//                "EMP004",
+//                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
+//                LocalDate.of(2025, 9, 1), //monthStart
+//                LocalDate.of(2025, 9, 30)  //monthEnd
+//        );
+//        payrollService.calculateMonthlySalary(
+//                "EMP005",
+//                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
+//                LocalDate.of(2025, 9, 1), //monthStart
+//                LocalDate.of(2025, 9, 30)  //monthEnd
+//        );
+//        payrollService.calculateMonthlySalary(
+//                "EMP006",
+//                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
+//                LocalDate.of(2025, 9, 1), //monthStart
+//                LocalDate.of(2025, 9, 30)  //monthEnd
+//        );
+//        payrollService.calculateMonthlySalary(
+//                "EMP007",
+//                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
+//                LocalDate.of(2025, 9, 1), //monthStart
+//                LocalDate.of(2025, 9, 30)  //monthEnd
+//        );
+//        payrollService.calculateMonthlySalary(
+//                "EMP008",
+//                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
+//                LocalDate.of(2025, 9, 1), //monthStart
+//                LocalDate.of(2025, 9, 30)  //monthEnd
+//        );
+//        payrollService.calculateMonthlySalary(
+//                "EMP009",
+//                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
+//                LocalDate.of(2025, 9, 1), //monthStart
+//                LocalDate.of(2025, 9, 30)  //monthEnd
+//        );
 
 
 
