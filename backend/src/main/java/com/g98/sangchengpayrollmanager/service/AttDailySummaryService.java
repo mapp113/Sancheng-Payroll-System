@@ -1,5 +1,6 @@
 package com.g98.sangchengpayrollmanager.service;
 
+import com.g98.sangchengpayrollmanager.model.dto.attendant.request.AttDailySummaryUpdateRequest;
 import com.g98.sangchengpayrollmanager.model.dto.attendant.response.AttDailySummaryResponse;
 import com.g98.sangchengpayrollmanager.model.entity.*;
 import com.g98.sangchengpayrollmanager.repository.*;
@@ -26,6 +27,7 @@ public class AttDailySummaryService {
     private final LeaveRequestRepository leaveRequestRepo;
     private final AttRecordRepository attRecordRepo;
     private final OvertimeRequestRespository overtimeRequestRespo;
+    private final AttMonthSummaryService attMonthSummaryService;
 
 
     @Transactional
@@ -305,6 +307,7 @@ public class AttDailySummaryService {
 
         return entities.stream().map(e -> {
             AttDailySummaryResponse dto = new AttDailySummaryResponse();
+            dto.setId(e.getId());
             dto.setDate(e.getDate());
             dto.setDayTypeName(e.getDayType().getName());
             dto.setWorkHours(e.getWorkHours());
@@ -323,4 +326,24 @@ public class AttDailySummaryService {
         }).toList();
     }
 
+    @Transactional
+    public void updateDailySummary(Integer id, AttDailySummaryUpdateRequest req) {
+        AttDailySummary entity = attDailySummaryRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Daily summary not found: " + id));
+
+        if (req.getIsLateCounted() != null) {
+            entity.setIsLateCounted(req.getIsLateCounted());
+        }
+        if (req.getIsEarlyLeaveCounted() != null) {
+            entity.setIsEarlyLeaveCounted(req.getIsEarlyLeaveCounted());
+        }
+        if (req.getIsDayMeal() != null) {
+            entity.setIsDayMeal(req.getIsDayMeal());
+        }
+
+        // ✔️ Save daily summary để đảm bảo dữ liệu mới được flush vào database
+        attDailySummaryRepo.save(entity);
+        //update lại monthSummary
+        attMonthSummaryService.createMonthSummary(entity.getUser().getEmployeeCode(), entity.getDate());
+    }
 }

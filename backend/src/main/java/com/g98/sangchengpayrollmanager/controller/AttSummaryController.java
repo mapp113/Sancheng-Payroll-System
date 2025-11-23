@@ -1,5 +1,6 @@
 package com.g98.sangchengpayrollmanager.controller;
 
+import com.g98.sangchengpayrollmanager.model.dto.attendant.request.AttDailySummaryUpdateRequest;
 import com.g98.sangchengpayrollmanager.model.dto.attendant.response.AttDailySummaryResponse;
 import com.g98.sangchengpayrollmanager.model.dto.attendant.response.AttMonthSummaryResponse;
 import com.g98.sangchengpayrollmanager.model.dto.attendant.response.TimeSheetResponse;
@@ -9,10 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -46,6 +44,15 @@ public class AttSummaryController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate month) {
 
         return ResponseEntity.ok(attDailySummaryService.getByEmployeeAndMonth(employeeCode, month));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<Void> updateDailySummary(
+            @PathVariable Integer id,
+            @RequestBody AttDailySummaryUpdateRequest request
+    ) {
+        attDailySummaryService.updateDailySummary(id, request);
+        return ResponseEntity.noContent().build(); // 204
     }
 }
 

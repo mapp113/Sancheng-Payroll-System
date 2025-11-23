@@ -46,40 +46,22 @@ public class AttMonthSummaryService {
         // Lấy ngày đầu tháng
         LocalDate monthStart = date.withDayOfMonth(1);
 
-        // Lấy policy mặc định (ALL)=================================================================
+        // 1)Lấy policy mặc định (ALL)=================================================================
         AttPolicy policy = attPolicyRepo.findFirstByApplyScopeOrderByIdAsc("ALL")
                 .orElseThrow(() -> new IllegalStateException("No default ATT policy configured"));
 
-        // 1) Tìm month summary đã có cho user + tháng đó
-        Optional<AttMonthSummary> optional = attMonthRepo.findByUserAndMonth(user, monthStart);
-
-        AttMonthSummary monthSummary;
-
-        if (date.getDayOfMonth() == 1) {
-            // Ngày đầu tháng → tạo mới
-            if (optional.isPresent()) {
-                throw new IllegalStateException("Month summary for " + employeeCode + " at " + monthStart + " already exists");
-            }
-
-            monthSummary = new AttMonthSummary();
-            monthSummary.setUser(user);
-            monthSummary.setMonth(monthStart);
-
-        } else {
-            // Không phải ngày 1:
-            // - Nếu đã có thì lấy ra để update
-            // - Nếu chưa có thì cũng tạo mới luôn
-            if (optional.isPresent()) {
-                monthSummary = optional.get();
-            } else {
-                monthSummary = new AttMonthSummary();
-                monthSummary.setUser(user);
-                monthSummary.setMonth(monthStart);
-            }
-        }
+        // 2) Lấy Month Summary nếu đã có, nếu chưa thì tạo mới
+        AttMonthSummary monthSummary = attMonthRepo.findByUserAndMonth(user, monthStart)
+                .orElseGet(() -> {
+                    AttMonthSummary ms = new AttMonthSummary();
+                    ms.setUser(user);
+                    ms.setMonth(monthStart);
+                    return ms;
+                });
 
         // 3) Lấy toàn bộ Daily Summary của tháng
-        LocalDate toDate = date; // hoặc full tháng tùy bạn
+//        LocalDate toDate = date; // hoặc full tháng tùy bạn
+        LocalDate toDate = monthStart.withDayOfMonth(monthStart.lengthOfMonth());
         List<AttDailySummary> dailyList = attDailySummaryRepo
                 .findByUserEmployeeCodeAndDateBetween(employeeCode, monthStart, toDate);
 

@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class AttDailySummaryResponse {
+    private Integer id;
     private LocalDate date;
     private String dayTypeName;
     private Integer workHours;
