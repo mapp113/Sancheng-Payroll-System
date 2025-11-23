@@ -23,12 +23,33 @@ public class TaxLevelService {
 
     @Transactional
     public TaxLevelResponse addTaxLevel(TaxLevelDTO request) {
+
+        Integer fromValue = request.getFromValue();
+        Integer toValue = request.getToValue();
+
+        if (fromValue == null || toValue == null) {
+            throw new RuntimeException("Khoảng thu nhập không được null");
+        }
+        if (fromValue > fromValue) {
+            throw new RuntimeException("Giá trị 'from' phải nhỏ hơn hoặc bằng 'to'");
+        }
+
+        List<TaxLevel> existingLevels = taxLevelRepository.findAll();
+        for (TaxLevel t : existingLevels) {
+            boolean overlap = fromValue <= t.getToValue() && toValue >= t.getFromValue();
+            if (overlap) {
+                throw new RuntimeException(
+                        "Khoảng thu nhập bị trùng với bậc thuế đang tồn tại: "
+                );
+            }
+        }
         TaxLevel taxLevel = TaxLevel.builder()
                 .name(request.getName())
                 .fromValue(request.getFromValue())
                 .toValue(request.getToValue())
                 .percentage(request.getPercentage())
                 .build();
+
 
         taxLevel = taxLevelRepository.save(taxLevel);
         return toResponse(taxLevel);
