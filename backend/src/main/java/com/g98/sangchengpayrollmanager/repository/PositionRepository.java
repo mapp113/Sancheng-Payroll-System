@@ -1,0 +1,7 @@
+package com.g98.sangchengpayrollmanager.repository;
+
+import com.g98.sangchengpayrollmanager.model.entity.Position;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface PositionRepository extends JpaRepository<Position, Integer> {
+}

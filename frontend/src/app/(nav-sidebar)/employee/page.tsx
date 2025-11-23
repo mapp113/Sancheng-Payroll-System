@@ -1,4 +1,7 @@
-import {CalendarDays, Clock4, DoorOpen, FileText, History, PlusCircle, TimerReset} from "lucide-react";
+"use client";
+
+import {useState} from "react";
+import {CalendarDays, Clock4, TimerReset} from "lucide-react";
 
 const checkInTime = "08:55";
 const checkOutTime = "17:45";
@@ -47,21 +50,29 @@ const timesheets = [
         checkIn: "08:58",
         checkOut: "16:50",
         total: "7h 52p",
-        // note: "Về sớm",
+        note: "Về sớm",
     },
 ];
 
-const requestSummary = [
-    {label: "Số ngày làm việc trong tuần", value: "05"},
-    {label: "Số ngày làm việc trong tháng", value: "20"},
-    {label: "Số giờ OT trong tuần", value: "04"},
-    {label: "Số giờ OT trong tháng", value: "12"},
-    {label: "Số ngày nghỉ", value: "02"},
-];
-
 export default function EmployeesDashboardPage() {
+    const [showCalendar, setShowCalendar] = useState(false);
+    const [viewMode, setViewMode] = useState<"day" | "week">("day");
+    const [selectedDate, setSelectedDate] = useState<string>("");
+    const [selectedWeek, setSelectedWeek] = useState<string>("");
+
+    const handleChoose = () => {
+        if (viewMode === "day") {
+            console.log("Xem theo ngày:", selectedDate);
+            // TODO: gọi API load chấm công theo ngày / tháng
+        } else {
+            console.log("Xem theo tuần:", selectedWeek); // ví dụ: "2024-W33"
+            // TODO: gọi API load chấm công theo tuần
+        }
+        setShowCalendar(false);
+    };
+
     return (
-        <div className="flex min-h-full flex-col gap-6 p-6 text-[#1F2A44]">
+        <div className="relative flex min-h-full flex-col gap-6 p-6 text-[#1F2A44]">
             <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
                 <aside className="space-y-6">
                     <section
@@ -69,9 +80,7 @@ export default function EmployeesDashboardPage() {
                         <div className="absolute -right-16 -top-10 h-44 w-44 rounded-full bg-white/20"
                              aria-hidden="true"/>
                         <div className="flex items-start gap-4">
-
                             <div>
-                                <p className="text-sm uppercase tracking-[0.3em] text-white/80">Employee</p>
                                 <h2 className="mt-1 text-2xl font-semibold">Nguyễn Văn A</h2>
                             </div>
                         </div>
@@ -82,37 +91,20 @@ export default function EmployeesDashboardPage() {
                                 <dd className="text-lg font-semibold">PC1611</dd>
                             </div>
                             <div>
-                                <dt className="text-white/80">Ngày Vào Công Ty</dt>
+                                <dt className="text-white/80">Ngày Bắt Đầu</dt>
                                 <dd className="text-lg font-semibold">20/02/2024</dd>
                             </div>
                             <div className="sm:col-span-2">
-                                <dt className="text-white/80">Mobile</dt>
-                                <dd className="text-lg font-semibold">+84 963 333 899</dd>
+                                <dt className="text-white/80">Ngày Hết Hạn</dt>
+                                <dd className="text-lg font-semibold">20/02/2025</dd>
                             </div>
                         </dl>
-                    </section>
-
-                    <section className="space-y-3 rounded-3xl bg-white p-6 shadow-sm">
-                        <h3 className="text-lg font-semibold text-[#1F2A44]">Tóm tắt yêu cầu</h3>
-                        <div className="space-y-4 text-sm text-[#1F2A44]/80">
-                            <p className="flex items-center gap-3 rounded-2xl border border-dashed border-[#CCE1F0] p-3">
-                                <FileText className="h-5 w-5 text-[#4AB4DE]"/>
-                                OT Ngày .....
-                            </p>
-                            <p className="flex items-center gap-3 rounded-2xl border border-dashed border-[#CCE1F0] p-3">
-                                <History className="h-5 w-5 text-[#4AB4DE]"/>
-                                Xin nghỉ phép ngày....
-                            </p>
-
-                        </div>
                     </section>
                 </aside>
 
                 <section className="flex flex-col gap-6">
-                    {/* HÀNG 2 CỘT: Trái = Theo dõi chấm công, Phải = Tạo yêu cầu */}
-                    <div className="grid gap-6 lg:grid-cols-[2fr_0.7fr]">
-
-                        {/* Trái: THEO DÕI CHẤM CÔNG */}
+                    {/* THEO DÕI CHẤM CÔNG */}
+                    <div className="rounded-3xl bg-white p-6 shadow-sm">
                         <div className="rounded-3xl bg-white p-4 shadow-sm">
                             <div className="space-y-4">
                                 <header>
@@ -139,51 +131,25 @@ export default function EmployeesDashboardPage() {
                                 </div>
                             </div>
                         </div>
-
-                        {/*              /!* Phải: TẠO YÊU CẦU (thu nhỏ) *!/*/}
-                        {/*              <div className="flex flex-col gap-3 rounded-3xl bg-white p-4 shadow-sm text-sm">*/}
-                        {/*                  <h3 className="text-base font-semibold text-[#1F2A44]">Tạo Yêu Cầu</h3>*/}
-                        {/*                  <p className="text-xs text-[#1F2A44]/70">*/}
-                        {/*                      Theo dõi và tạo yêu cầu khi cần.*/}
-                        {/*                  </p>*/}
-
-                        {/*                  <div className="space-y-3">*/}
-                        {/*                      {requestSummary.map((item) => (*/}
-                        {/*                          <div*/}
-                        {/*                              key={item.label}*/}
-                        {/*                              className="flex items-center justify-between rounded-xl border border-dashed border-[#CCE1F0] p-3"*/}
-                        {/*                          >*/}
-                        {/*                              <p className="text-[11px] font-medium text-[#1F2A44]">{item.label}</p>*/}
-                        {/*                              <span*/}
-                        {/*                                  className="rounded-full bg-[#FBF6EF] px-3 py-1 text-[13px] font-semibold text-[#1F2A44]">*/}
-                        {/*  {item.value}*/}
-                        {/*</span>*/}
-                        {/*                          </div>*/}
-                        {/*                      ))}*/}
-                        {/*                  </div>*/}
-
-                        {/*                  <button type="button"*/}
-                        {/*                          className="mt-2 inline-flex items-center justify-center gap-1.5 rounded-full bg-[#4AB4DE] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#3d9fc5]">*/}
-                        {/*                      <PlusCircle className="h-3 w-3"/> Tạo yêu cầu*/}
-                        {/*                  </button>*/}
-                        {/*              </div>*/}
                     </div>
 
-
+                    {/* DANH SÁCH CHẤM CÔNG */}
                     <section className="rounded-3xl bg-white p-6 shadow-sm">
                         <header
                             className="flex flex-col gap-3 border-b border-[#CCE1F0] pb-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <h3 className="text-xl font-semibold text-[#1F2A44]">Danh Sách Chấm Công</h3>
-                                <p className="text-sm text-[#1F2A44]/60">Trạng thái chấm công trong tuần
-                                    này</p>
+                                <p className="text-sm text-[#1F2A44]/60">
+                                    Trạng thái chấm công trong tuần này
+                                </p>
                             </div>
                             <button
                                 type="button"
+                                onClick={() => setShowCalendar(true)}
                                 className="inline-flex items-center gap-2 rounded-full border border-[#4AB4DE] px-4 py-2 text-sm font-medium text-[#4AB4DE] transition hover:bg-[#EAF5FF]"
                             >
                                 <CalendarDays className="h-4 w-4"/>
-                                Xem lịch tháng
+                                Xem lịch tháng / tuần
                             </button>
                         </header>
 
@@ -239,6 +205,86 @@ export default function EmployeesDashboardPage() {
                     </section>
                 </section>
             </div>
+
+            {/* POPUP CHỌN NGÀY / TUẦN */}
+            {showCalendar && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-lg">
+                        <h3 className="mb-3 text-lg font-semibold text-[#1F2A44]">
+                            Chọn khoảng thời gian
+                        </h3>
+
+                        {/* Chọn chế độ xem */}
+                        <div className="mb-4 flex gap-2 text-xs font-semibold">
+                            <button
+                                type="button"
+                                onClick={() => setViewMode("day")}
+                                className={`flex-1 rounded-full px-3 py-2 ${
+                                    viewMode === "day"
+                                        ? "bg-[#4AB4DE] text-white"
+                                        : "bg-[#E5E7EB] text-[#374151]"
+                                }`}
+                            >
+                                Xem theo ngày
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setViewMode("week")}
+                                className={`flex-1 rounded-full px-3 py-2 ${
+                                    viewMode === "week"
+                                        ? "bg-[#4AB4DE] text-white"
+                                        : "bg-[#E5E7EB] text-[#374151]"
+                                }`}
+                            >
+                                Xem theo tuần
+                            </button>
+                        </div>
+
+                        {/* Input theo chế độ */}
+                        {viewMode === "day" ? (
+                            <label className="flex flex-col gap-1 text-sm">
+                                <span className="font-medium text-[#1F2A44]">Chọn ngày</span>
+                                <input
+                                    type="date"
+                                    value={selectedDate}
+                                    onChange={(e) => setSelectedDate(e.target.value)}
+                                    className="w-full rounded-xl border border-[#D1D5DB] px-3 py-2 text-sm text-[#111827] outline-none focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/40"
+                                />
+                            </label>
+                        ) : (
+                            <label className="flex flex-col gap-1 text-sm">
+                                <span className="font-medium text-[#1F2A44]">Chọn tuần</span>
+                                <input
+                                    type="week"
+                                    value={selectedWeek}
+                                    onChange={(e) => setSelectedWeek(e.target.value)}
+                                    className="w-full rounded-xl border border-[#D1D5DB] px-3 py-2 text-sm text-[#111827] outline-none focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/40"
+                                />
+                                <span className="text-[11px] text-[#6B7280]">
+                                    Ví dụ: 2024-W33 (tuần 33 năm 2024)
+                                </span>
+                            </label>
+                        )}
+
+                        <div className="mt-5 flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setShowCalendar(false)}
+                                className="rounded-full bg-[#E5E7EB] px-4 py-2 text-sm font-semibold text-[#374151] hover:bg-[#d4d7dd]"
+                            >
+                                Đóng
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleChoose}
+                                className="rounded-full bg-[#4AB4DE] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3ba1ca]"
+                            >
+                                Xem dữ liệu
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

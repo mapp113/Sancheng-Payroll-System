@@ -14,6 +14,7 @@ public class CorsConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/api/**") // đường dẫn cần mở
                         .allowedOrigins("http://localhost:3000") // domain frontend
+                        
                         .allowedMethods("*") // GET, POST, PUT, DELETE,...
                         .allowedHeaders("*");
             }
