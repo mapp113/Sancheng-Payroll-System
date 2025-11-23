@@ -1,5 +1,7 @@
 package com.g98.sangchengpayrollmanager.service;
 
+import com.g98.sangchengpayrollmanager.model.dto.attendant.request.AttDailySummaryUpdateRequest;
+import com.g98.sangchengpayrollmanager.model.dto.attendant.response.AttDailySummaryResponse;
 import com.g98.sangchengpayrollmanager.model.entity.*;
 import com.g98.sangchengpayrollmanager.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -9,8 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +27,7 @@ public class AttDailySummaryService {
     private final LeaveRequestRepository leaveRequestRepo;
     private final AttRecordRepository attRecordRepo;
     private final OvertimeRequestRespository overtimeRequestRespo;
+    private final AttMonthSummaryService attMonthSummaryService;
 
 
     @Transactional
@@ -103,7 +106,7 @@ public class AttDailySummaryService {
 
             // neu la nghi co luong
             if(leaveRequest.getIsPaidLeave()){
-                dailySummary.setWorkHours(8);
+                dailySummary.setWorkHours(policy.getStandardHoursPerDay());
                 dailySummary.setIsPayableDay(true);
                 dailySummary.setIsCountPayableDay(true);
                 return attDailySummaryRepo.save(dailySummary);
@@ -121,9 +124,6 @@ public class AttDailySummaryService {
         List<OvertimeRequest> otRequests = overtimeRequestRespo
                 .findByUserAndDateAndStatus(user, date, "APPROVED");
         Integer otHour = 0;
-        for (OvertimeRequest ot : otRequests) {
-            otHour += ot.getWorkedTime();
-        }
 
 
         // 8. Xác định có record chấm công không
@@ -155,15 +155,60 @@ public class AttDailySummaryService {
             if (checkOutTime != null && checkInTime != null) {
                 LocalDateTime checkInTime1 = checkInTime;
                 LocalDateTime checkOutTime1 = checkOutTime;
-                if(checkInTime.isBefore(shiftStart)) checkInTime1 = shiftStart;
-                if(checkOutTime.isAfter(shiftEnd)) checkOutTime1 = shiftEnd;
+                if (shiftStart != null && shiftEnd != null) {
+                    //khi có shift
+                    if(checkInTime.isBefore(shiftStart)) checkInTime1 = shiftStart;
+                    if(checkOutTime.isAfter(shiftEnd)) checkOutTime1 = shiftEnd;
+                }
                 Integer workMinutes = (int) Duration.between(checkInTime1, checkOutTime1).toMinutes() - breakMinutes;
                 if (workMinutes > 0) workHours = workMinutes / 60;
-                if (workHours >= policy.getStandardHoursPerDay()) workHours = policy.getStandardHoursPerDay();
-                // không phaải ngày công chuẩn , tính full ot
-                if(schedule == null && !otRequests.isEmpty()) {
-                    otHour = workHours;
+                // 🔹 CHỈ cap khi có schedule (ngày làm việc bình thường)
+                if (schedule != null && workHours >= policy.getStandardHoursPerDay()) {
+                    workHours = policy.getStandardHoursPerDay();
+                }
+
+                // không phải ngày công chuẩn và đăng ký OT → tính OT theo chấm công
+                if (schedule == null && !otRequests.isEmpty()) {
+
+                    LocalDateTime firstFrom = otRequests.get(0).getFromTime();
+                    LocalDateTime lastTo = otRequests.get(otRequests.size() - 1).getToTime();
+
+                    // OT bắt đầu = max(checkIn, fromTime)
+                    LocalDateTime otCheckInTime =
+                            checkInTime.isAfter(firstFrom) ? checkInTime : firstFrom;
+
+                    // OT kết thúc = min(checkOut, toTime)
+                    LocalDateTime otCheckOutTime =
+                            checkOutTime.isBefore(lastTo) ? checkOutTime : lastTo;
+
+                    int otMinutes = 0;
+                    if (otCheckOutTime.isAfter(otCheckInTime)) {
+                        otMinutes = (int) Duration.between(otCheckInTime, otCheckOutTime).toMinutes();
+                    }
+
+                    otHour = otMinutes > 0 ? (otMinutes / 60) : 0;
                     workHours = 0;
+                }
+
+                // nếu là ngày công chuẩn và có đăng ký OT, tính OT theo dữ liệu chấm công
+                if (schedule != null && !otRequests.isEmpty() && shiftEnd != null) {
+
+                    // Lấy from/to tổng: request đầu tiên và cuối cùng trong ngày
+                    LocalDateTime firstFrom = otRequests.get(0).getFromTime();
+                    LocalDateTime lastTo = otRequests.get(otRequests.size() - 1).getToTime();
+
+                    // OT chỉ tính sau khi hết giờ làm chuẩn
+                    LocalDateTime otCheckInTime = firstFrom.isAfter(shiftEnd) ? firstFrom : shiftEnd;
+
+                    // OT không được vượt quá thời gian chấm công thực tế
+                    LocalDateTime otCheckOutTime = lastTo.isBefore(checkOutTime) ? lastTo : checkOutTime;
+
+                    int otMinutes = 0;
+                    if (otCheckOutTime.isAfter(otCheckInTime)) {
+                        otMinutes = (int) Duration.between(otCheckInTime, otCheckOutTime).toMinutes();
+                    }
+
+                    otHour = otMinutes > 0 ? otMinutes / 60 : 0;
                 }
             }
             // Tính đi muộn / về sớm nếu có shift
@@ -224,6 +269,12 @@ public class AttDailySummaryService {
         // 9. Trial day: tạm chưa xu ly de la false
         Boolean isTrialDay = false;
 
+        // Nếu là ngày lễ → luôn tính công, bất kể record hay giờ giấc
+        if (specialDay != null) {
+            isCountPayableDay = true;
+        }
+
+
         // 10. Khoi tao daily summary
         dailySummary.setUser(user);
         dailySummary.setDate(date);
@@ -244,5 +295,55 @@ public class AttDailySummaryService {
         dailySummary.setIsAbsent(isAbsent);
 
         return attDailySummaryRepo.save(dailySummary);
+    }
+
+    public List<AttDailySummaryResponse> getByEmployeeAndMonth(String employeeCode, LocalDate month) {
+        YearMonth ym = YearMonth.from(month);
+        LocalDate start = ym.atDay(1);
+        LocalDate end   = ym.atEndOfMonth();
+
+        List<AttDailySummary> entities =
+                attDailySummaryRepo.findByUserEmployeeCodeAndDateBetween(employeeCode, start, end);
+
+        return entities.stream().map(e -> {
+            AttDailySummaryResponse dto = new AttDailySummaryResponse();
+            dto.setId(e.getId());
+            dto.setDate(e.getDate());
+            dto.setDayTypeName(e.getDayType().getName());
+            dto.setWorkHours(e.getWorkHours());
+            dto.setOtHour(e.getOtHour());
+            dto.setIsLateCounted(e.getIsLateCounted());
+            dto.setIsEarlyLeaveCounted(e.getIsEarlyLeaveCounted());
+            dto.setIsCountPayableDay(e.getIsCountPayableDay());
+            dto.setIsAbsent(e.getIsAbsent());
+            dto.setIsDayMeal(e.getIsDayMeal());
+            dto.setIsTrialDay(e.getIsTrialDay());
+            dto.setLeaveTypeCode(e.getLeaveTypeCode());
+            dto.setCheckInTime(e.getCheckInTime());
+            dto.setCheckOutTime(e.getCheckOutTime());
+            // nếu có join dayType thì set thêm dayTypeName
+            return dto;
+        }).toList();
+    }
+
+    @Transactional
+    public void updateDailySummary(Integer id, AttDailySummaryUpdateRequest req) {
+        AttDailySummary entity = attDailySummaryRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Daily summary not found: " + id));
+
+        if (req.getIsLateCounted() != null) {
+            entity.setIsLateCounted(req.getIsLateCounted());
+        }
+        if (req.getIsEarlyLeaveCounted() != null) {
+            entity.setIsEarlyLeaveCounted(req.getIsEarlyLeaveCounted());
+        }
+        if (req.getIsDayMeal() != null) {
+            entity.setIsDayMeal(req.getIsDayMeal());
+        }
+
+        // ✔️ Save daily summary để đảm bảo dữ liệu mới được flush vào database
+        attDailySummaryRepo.save(entity);
+        //update lại monthSummary
+        attMonthSummaryService.createMonthSummary(entity.getUser().getEmployeeCode(), entity.getDate());
     }
 }
