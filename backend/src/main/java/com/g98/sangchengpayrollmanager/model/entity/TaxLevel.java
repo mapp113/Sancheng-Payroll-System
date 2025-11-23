@@ -24,7 +24,7 @@ public class TaxLevel {
     @Column(name = "`from`", nullable = false)
     private Integer fromValue;
 
-    @Column(name = "to", nullable = false)
+    @Column(name = "`to`", nullable = false)
     private Integer toValue;
 
     @Column(precision = 5, scale = 3, nullable = false)

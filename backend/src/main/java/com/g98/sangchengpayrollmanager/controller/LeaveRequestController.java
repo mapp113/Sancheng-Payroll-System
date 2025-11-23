@@ -51,7 +51,7 @@ public class LeaveRequestController {
         return ResponseEntity.created(location).build();
     }
 
-    // Lấy leave request cho anager xem
+    // Lấy leave request cho Manager xem
     @GetMapping("/all")
     public ResponseEntity<Page<LeaveRequestResponse>> getAllOrSearch( @RequestParam(required = false) String keyword,
                                                                       @RequestParam(required = false) Integer month,
@@ -59,6 +59,7 @@ public class LeaveRequestController {
                                                                       @RequestParam(defaultValue = "0") int page,
                                                                       @RequestParam(defaultValue = "20") int size,
                                                                       @RequestParam(defaultValue = "createdDate,desc") String sort
+
     ) {
         Pageable pageable = toPageable(page, size, sort);
 
