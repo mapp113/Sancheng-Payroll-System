@@ -365,15 +365,6 @@ export default function SalaryInfoPage() {
                         </div>
 
                         <div className="space-y-6 text-sm font-semibold text-[#003344]">
-                            <div className="grid grid-cols-[140px,minmax(0,1fr)] items-center gap-4">
-                                <span>Nội dung</span>
-                                <input
-                                    className="h-10 w-full rounded-full px-4 text-sm font-normal text-[#003344]"
-                                    value={label}
-                                    onChange={(e) => setLabel(e.target.value)}
-                                    placeholder="VD: Lương cơ bản"
-                                />
-                            </div>
 
                             <div className="grid grid-cols-[140px,minmax(0,1fr)] items-center gap-4">
                                 <span>Giá trị</span>
