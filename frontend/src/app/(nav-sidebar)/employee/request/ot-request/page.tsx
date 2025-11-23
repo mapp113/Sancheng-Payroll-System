@@ -3,6 +3,8 @@
 import LeavesToolBar from "@/app/_components/leaves/tool-bar";
 import { dateSlashToHyphen } from "@/app/_components/utils/dateSlashToHyphen";
 import { useState } from "react";
+import { NotificationProvider, useNotification } from "@/app/_components/common/pop-box/notification/notification-context";
+import BottomRightNotification from "@/app/_components/common/pop-box/notification/bottom-right";
 
 interface OTRequestData {
   otDate: string;
@@ -12,9 +14,8 @@ interface OTRequestData {
   reason: string;
 }
 
-const leaveTypes = ["Ngày thường", "Thứ 7/Chủ nhật", "Ngày lễ"];
-
-export default function OTRequestsPage() {
+function OTRequestsPageContent() {
+  const { addNotification } = useNotification();
   const [formData, setFormData] = useState<OTRequestData>({
     otDate: "",
     fromTime: 0,
@@ -59,13 +60,13 @@ export default function OTRequestsPage() {
   const handleSubmit = async () => {
     // Validate required fields
     if (!formData.otDate || formData.fromTime === undefined || formData.toTime === undefined) {
-      alert("Vui lòng điền đầy đủ thông tin ngày làm thêm và thời gian");
+      addNotification("error", "Lỗi", "Vui lòng điền đầy đủ thông tin ngày làm thêm và thời gian", 4000);
       return;
     }
 
     // Validate fromTime < toTime
     if (formData.fromTime >= formData.toTime) {
-      alert("Giờ bắt đầu phải nhỏ hơn giờ kết thúc");
+      addNotification("error", "Lỗi", "Giờ bắt đầu phải nhỏ hơn giờ kết thúc", 4000);
       return;
     }
 
@@ -97,7 +98,7 @@ export default function OTRequestsPage() {
       });
 
       if (response.ok) {
-        alert("Gửi yêu cầu OT thành công");
+        addNotification("ok", "Thành công", "Gửi yêu cầu OT thành công", 3000);
         handleReset();
       } else {
         const errorText = await response.text();
@@ -105,7 +106,8 @@ export default function OTRequestsPage() {
       }
     } catch (error) {
       console.error("Lỗi khi gửi yêu cầu OT:", error);
-      alert("Gửi yêu cầu OT thất bại"+ (error instanceof Error ? `: ${error.message}` : ""));
+      const errorMessage = error instanceof Error ? error.message : "Lỗi không xác định";
+      addNotification("error", "Lỗi", `Gửi yêu cầu OT thất bại: ${errorMessage}`, 5000);
     }
   };
 
@@ -116,19 +118,25 @@ export default function OTRequestsPage() {
         <h1 className="text-lg text-center">Yêu cầu xin OT</h1>
         <div className="my-2 grid grid-cols-[150px_1fr] items-center">
           <label htmlFor="ot-date">Ngày làm thêm:</label>
-          <input
-            id="ot-date"
-            className="border border-black rounded px-2 py-1 w-fit"
-            type="date"
-            value={formData.otDate}
-            onChange={(e) => {
-              const selectedDate = e.target.value;
-              handleInputChange("otDate", selectedDate);
-              // Tự động set loại OT dựa trên ngày được chọn
-              const autoOTType = getOTTypeFromDate(selectedDate);
-              handleInputChange("otType", autoOTType);
-            }}
-          />
+          <div className="flex items-center gap-4">
+            <input
+              id="ot-date"
+              className="border border-black rounded px-2 py-1 w-fit"
+              type="date"
+              value={formData.otDate}
+              onChange={(e) => {
+                const selectedDate = e.target.value;
+                handleInputChange("otDate", selectedDate);
+                // Tự động set loại OT dựa trên ngày được chọn
+                const autoOTType = getOTTypeFromDate(selectedDate);
+                handleInputChange("otType", autoOTType);
+              }}
+            />
+
+            <div className="px-2 py-1 rounded border bg-white text-sm text-gray-700">
+              {formData.otType || "-"}
+            </div>
+          </div>
         </div>
         <div className="my-2 grid grid-cols-[150px_1fr] items-center">
           <label htmlFor="fromTime">Từ:</label>
@@ -169,22 +177,7 @@ export default function OTRequestsPage() {
               : '0 giờ'}
             </span>
         </div>
-        <div className="my-2 grid grid-cols-[150px_1fr] items-center">
-          <label htmlFor="ot-type">Loại OT:</label>
-          <select
-            id="ot-type"
-            className="border border-black rounded px-2 py-1 w-fit"
-            value={formData.otType}
-            onChange={(e) => handleInputChange("otType", e.target.value)}
-          >
-            <option value="">Chọn loại OT</option>
-            {leaveTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-        </div>
+        
         <div className="my-2 grid grid-cols-[150px_1fr] items-start">
           <span className="pt-1">Lý do:</span>
           <textarea
@@ -212,5 +205,14 @@ export default function OTRequestsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OTRequestsPage() {
+  return (
+    <NotificationProvider>
+      <OTRequestsPageContent />
+      <BottomRightNotification />
+    </NotificationProvider>
   );
 }

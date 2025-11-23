@@ -3,29 +3,18 @@ import { useContext } from "react";
 import { DataContext, ParamsContext } from "../timesheet-context";
 import { TimesheetQuery } from "../query";
 
-const backButtonHandler = () => {
-  alert("Back")
-}
-
-export default function TimesheetToolbar() {
+export default function TimesheetToolbar( { showForm }: { showForm: () => void }) {
   const params = useContext(ParamsContext)!;
   const data = useContext(DataContext)!;
 
   return (
     <div className="flex items-end border-b border-black p-2">
-      <button
-        id="payroll-toolbar-back-button"
-        className="mr-15 py-3 px-5 border rounded-sm text-xs border-black bg-[#89CDFE] text-[#345EA8] hover:bg-[#77b2dd] transition-all cursor-pointer"
-        onClick={backButtonHandler}
-      >
-        BACK
-      </button>
       <div className="flex items-center p-1 mr-15 border border-black rounded-xl">
         <Search className="inline mr-1" />
         <input
           id="payroll-toolbar-search-input"
           className="inline focus:outline-0"
-          placeholder="Search"
+          placeholder="Tìm kiếm"
           defaultValue={params?.timesheetParams.keyword}
           onKeyDown={(e) => {
             if ((e as React.KeyboardEvent<HTMLInputElement>).key === "Enter") {
@@ -54,9 +43,9 @@ export default function TimesheetToolbar() {
         <button
           id="payroll-toolbar-back-button"
           className="mr-15 py-3 px-10 border rounded-sm text-xs border-black bg-[#9ee87b] text-[#5a896b] hover:bg-[#91d771] transition-all cursor-pointer"
-          onClick={backButtonHandler}
+          onClick={() => showForm()}
         >
-          Create DRAFT
+          Tạo bảng lương nháp
         </button>
       </div>
     </div>

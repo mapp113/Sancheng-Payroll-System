@@ -1,12 +1,12 @@
 "use client";
 
-import {useEffect, useState} from "react";
-import {usePathname} from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import localFont from "next/font/local";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
-import {Bell, ChevronDown, CircleChevronDown, Clock, Languages} from "lucide-react";
-import {useLanguage} from "@/lib/language-context";
 import {useTranslations} from "@/lib/translations";
+import { Bell, ChevronDown, CircleChevronDown, Clock, Languages, User, Settings, LogOut, ArrowLeftRight } from "lucide-react";
+import { useLanguage } from "@/lib/language-context";
 
 const iceland = localFont({
     src: "../../../../public/fonts/Iceland-Regular.ttf",
@@ -21,6 +21,12 @@ interface JwtPayload {
     full_name?: string;
     exp?: number;
     iat?: number;
+}
+
+// Interface cho user data trong session storage
+interface UserData {
+    token: string;
+    role: string; // "EMPLOYEE" | "MANAGER" | "HR"
 }
 
 function decodeJwt(token: string): JwtPayload | null {
@@ -45,13 +51,17 @@ function decodeJwt(token: string): JwtPayload | null {
 
 export default function Navbar() {
     const pathname = usePathname();
+    const router = useRouter();
     const noLayoutRoutes = ["/login", "/register"];
     const shouldHideNavbar = pathname && noLayoutRoutes.includes(pathname);
     const [username, setUsername] = useState<string | null>(null);
+    const [userRole, setUserRole] = useState<string | null>(null);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
 
     // Ẩn navbar ở các route không cần layout
     // if (pathname && noLayoutRoutes.includes(pathname)) return null;
-    const {language, toggleLanguage} = useLanguage();
+    const { language, toggleLanguage } = useLanguage();
     // const dashboardTitle = pathname?.startsWith("/manager")
     //     ? "Manager Dashboard"
     //     : "HR Dashboard";
@@ -71,12 +81,15 @@ export default function Navbar() {
         }
 
         try {
-            const parsed = JSON.parse(userStr);
+            const parsed: UserData = JSON.parse(userStr);
             const token = parsed?.token;
             // if (!token) return;
             if (!token) {
                 return;
             }
+
+            // Lưu role
+            setUserRole(parsed?.role || null);
 
             // Giải mã token để lấy sub
             // const decoded = jwtDecode<JwtPayload>(token);
@@ -94,6 +107,45 @@ export default function Navbar() {
         }
     }, []);
 
+    // Đóng menu khi click bên ngoài
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setIsMenuOpen(false);
+            }
+        };
+
+        if (isMenuOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [isMenuOpen]);
+
+    const handleLogout = () => {
+        window.sessionStorage.removeItem("scpm.auth.user");
+        window.sessionStorage.removeItem("scpm.auth.token");
+        router.push("/login");
+    };
+
+    // Kiểm tra quyền chuyển đổi view dựa trên role
+    const isManagerOrHR = userRole === "MANAGER" || userRole === "HR";
+    const isEmployeeView = pathname?.startsWith("/employees");
+    const canSwitchView = isManagerOrHR && (isManagerOrHR || isEmployeeView);
+
+    const handleSwitchView = () => {
+        setIsMenuOpen(false);
+        if (isEmployeeView) {
+            // Đang ở view nhân viên, chuyển sang quản lý
+            router.push("/manager/timesheet");
+        } else if (isManagerOrHR) {
+            // Đang ở view quản lý, chuyển sang nhân viên
+            router.push("/employees");
+        }
+    };
+
     if (shouldHideNavbar) return null;
 
     return (
@@ -102,12 +154,12 @@ export default function Navbar() {
             {/* trái: logo + tiêu đề */}
             <div className="flex items-center gap-3">
                 <Avatar className="h-12 w-12">
-                    <AvatarImage src="/logo.jpg" alt="Logo"/>
+                    <AvatarImage src="/logo.jpg" alt="Logo" />
                     <AvatarFallback>Logo</AvatarFallback>
                 </Avatar>
                 <span className={`${iceland.className} text-2xl font-bold`}>
-          {dashboardTitle}
-        </span>
+                    {dashboardTitle}
+                </span>
             </div>
 
             {/* phải: chuông, đồng hồ, user */}
@@ -118,28 +170,87 @@ export default function Navbar() {
                     className="flex items-center gap-2 rounded-full bg-white/40 px-3 py-1 text-sm font-semibold text-[#345EA8] transition hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#345EA8]"
                     aria-label={`Switch to ${language === "vi" ? "English" : "Vietnamese"}`}
                 >
-                    <Languages className="h-4 w-4" aria-hidden="true"/>
+                    <Languages className="h-4 w-4" aria-hidden="true" />
                     <span>{language === "vi" ? "Tiếng Việt" : "English"}</span>
                 </button>
                 <button id="notification" className="flex items-center gap-1">
-                    <Bell/>
-                    <ChevronDown/>
+                    <Bell />
+                    <ChevronDown />
                 </button>
 
                 <button id="clock" className="flex items-center gap-1">
-                    <Clock/>
-                    <ChevronDown/>
+                    <Clock />
+                    <ChevronDown />
                 </button>
 
                 <span className="flex items-center gap-1">
-          <Avatar className="h-12 w-12">
-            <AvatarImage src="/logo.jpg" alt="User avatar"/>
-            <AvatarFallback>Avatar</AvatarFallback>
-          </Avatar>
-          <span id="username">{username || "Loading..."}</span>
-        </span>
-
-                <CircleChevronDown/>
+                    <Avatar className="h-12 w-12">
+                        <AvatarImage src="/logo.jpg" alt="User avatar" />
+                        <AvatarFallback>Avatar</AvatarFallback>
+                    </Avatar>
+                    <span id="username">{username || "Loading..."}</span>
+                </span>
+                <div className="relative" ref={menuRef}>
+                    <button 
+                        className="cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        aria-label="User menu"
+                    >
+                        <CircleChevronDown />
+                    </button>
+                    
+                    {isMenuOpen && (
+                        <div className="absolute right-0 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+                            <div className="py-1">
+                                {canSwitchView && (
+                                    <>
+                                        <button
+                                            className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                            onClick={handleSwitchView}
+                                        >
+                                            <ArrowLeftRight className="h-4 w-4" />
+                                            <span>
+                                                {isEmployeeView 
+                                                    ? (language === "vi" ? "Chuyển sang quản lý" : "Switch to Manager")
+                                                    : (language === "vi" ? "Chuyển sang nhân viên" : "Switch to Employee")
+                                                }
+                                            </span>
+                                        </button>
+                                        <hr className="my-1 border-gray-200" />
+                                    </>
+                                )}
+                                <button
+                                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                    onClick={() => {
+                                        setIsMenuOpen(false);
+                                        // Navigate to profile
+                                    }}
+                                >
+                                    <User className="h-4 w-4" />
+                                    <span>{language === "vi" ? "Hồ sơ" : "Profile"}</span>
+                                </button>
+                                <button
+                                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                    onClick={() => {
+                                        setIsMenuOpen(false);
+                                        // Navigate to settings
+                                    }}
+                                >
+                                    <Settings className="h-4 w-4" />
+                                    <span>{language === "vi" ? "Cài đặt" : "Settings"}</span>
+                                </button>
+                                <hr className="my-1 border-gray-200" />
+                                <button
+                                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                    onClick={handleLogout}
+                                >
+                                    <LogOut className="h-4 w-4" />
+                                    <span>{language === "vi" ? "Đăng xuất" : "Logout"}</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
 
         </nav>

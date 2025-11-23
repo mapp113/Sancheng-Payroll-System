@@ -4,13 +4,16 @@ import { useState, useEffect } from "react";
 import { RequestLeaveData } from "@/app/_components/employee/request/leave/types";
 import LeavesToolBar from "@/app/_components/leaves/tool-bar";
 import { dateSlashToHyphen } from "@/app/_components/utils/dateSlashToHyphen";
+import { NotificationProvider, useNotification } from "@/app/_components/common/pop-box/notification/notification-context";
+import BottomRightNotification from "@/app/_components/common/pop-box/notification/bottom-right";
 
 interface LeaveTypeOption {
   code: string;
   name: string;
 }
 
-export default function LeavesPage() {
+function LeavesPageContent() {
+  const { addNotification } = useNotification();
   const [formData, setFormData] = useState<RequestLeaveData>({
     employeeCode: "EMP001",
     leaveType: "annual",
@@ -101,8 +104,7 @@ export default function LeavesPage() {
       });
 
       if (response.ok) {
-        //console.log("Gửi yêu cầu thành công");
-        alert("Gửi yêu cầu thành công");
+        addNotification("ok", "Thành công", "Gửi yêu cầu nghỉ phép thành công", 3000);
         handleReset();
       } else {
         const errorText = await response.text();
@@ -111,7 +113,8 @@ export default function LeavesPage() {
 
     } catch (error) {
       console.error("Lỗi khi gửi yêu cầu:", error);
-      alert("Gửi yêu cầu thất bại" + (error instanceof Error ? `: ${error.message}` : ""));
+      const errorMessage = error instanceof Error ? error.message : "Lỗi không xác định";
+      addNotification("error", "Lỗi", `Gửi yêu cầu thất bại: ${errorMessage}`, 5000);
     }
   };
 
@@ -211,5 +214,14 @@ export default function LeavesPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LeavesPage() {
+  return (
+    <NotificationProvider>
+      <LeavesPageContent />
+      <BottomRightNotification />
+    </NotificationProvider>
   );
 }

@@ -26,7 +26,7 @@ export default function TimesheetToolbar() {
   return (
     <div className="flex p-3 box-border">
       <span className="mx-5 text-2xl font-bold">
-        List Timesheet
+        Bảng chấm công
       </span>
       <div className="flex items-center gap-2 ml-auto">
         <div className="flex items-center p-1 border border-black rounded-lg">

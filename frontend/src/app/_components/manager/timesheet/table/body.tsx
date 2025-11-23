@@ -52,9 +52,9 @@ export default function TimesheetTableBody() {
           <td className="py-3 px-4">{record.fullName}</td>
           <td className="py-3 px-4">{record.positionName}</td>
           <td className="py-3 px-4"><div>{`Total time: ${record.daysHours}h`}</div><div>{`OT: ${record.otHours}h`}</div></td>
-          <td className="py-3 px-4">{record.timeOff}</td>
+          <td className="py-3 px-4 text-center">{record.usedleave}</td>
           <td className="py-3 px-4">
-            <button className="px-2 py-1 rounded-xl bg-[#79dee9] cursor-pointer">Edit</button>
+            <a href={`timesheet-detail?employeeCode=${record.employeeCode}&month=${params.timesheetParams.date}`} className="px-2 py-1 rounded-xl bg-[#79dee9] cursor-pointer">Chi tiết</a>
           </td>
         </tr>
       ))}

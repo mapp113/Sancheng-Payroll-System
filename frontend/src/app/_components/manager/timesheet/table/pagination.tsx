@@ -40,7 +40,7 @@ export default function Pagination() {
       <div className="flex space-x-2">
         <button className="cursor-pointer" onClick={() => setPageHandler("0")}><ChevronsLeft /></button>
         <button className="cursor-pointer" onClick={() => switchPageHandler("prev")}><ChevronLeft /></button>
-        <span>Page {parseInt(params.timesheetParams.index, 10) + 1} of {parseInt(params.timesheetParams.totalPages, 10)}</span>
+        <span>Trang {parseInt(params.timesheetParams.index, 10) + 1} trên {parseInt(params.timesheetParams.totalPages, 10)}</span>
         <button className="cursor-pointer" onClick={() => switchPageHandler("next")}><ChevronRight /></button>
         <button className="cursor-pointer" onClick={() => setPageHandler(params.timesheetParams.totalPages.toString())}><ChevronsRight /></button>
       </div>
