@@ -132,7 +132,7 @@ export default function Navbar() {
 
     // Kiểm tra quyền chuyển đổi view dựa trên role
     const isManagerOrHR = userRole === "MANAGER" || userRole === "HR";
-    const isEmployeeView = pathname?.startsWith("/employees");
+    const isEmployeeView = pathname?.startsWith("/employee");
     const canSwitchView = isManagerOrHR && (isManagerOrHR || isEmployeeView);
 
     const handleSwitchView = () => {
@@ -142,7 +142,7 @@ export default function Navbar() {
             router.push("/manager/timesheet");
         } else if (isManagerOrHR) {
             // Đang ở view quản lý, chuyển sang nhân viên
-            router.push("/employees");
+            router.push("/employee");
         }
     };
 
