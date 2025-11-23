@@ -4,8 +4,11 @@ import com.g98.sangchengpayrollmanager.model.dto.UserDTO;
 import com.g98.sangchengpayrollmanager.model.dto.api.response.ApiResponse;
 import com.g98.sangchengpayrollmanager.model.dto.employee.EmployeeProfileResponse;
 import com.g98.sangchengpayrollmanager.model.dto.employee.EmployeeProfileUpdateRequest;
+import com.g98.sangchengpayrollmanager.model.dto.payroll.PayComponentResponse;
+import com.g98.sangchengpayrollmanager.model.dto.payroll.SalaryInformationResponse;
 import com.g98.sangchengpayrollmanager.service.AdminService;
 import com.g98.sangchengpayrollmanager.service.EmployeeService;
+import com.g98.sangchengpayrollmanager.service.PayrollInfoService;
 import com.g98.sangchengpayrollmanager.service.impl.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +28,7 @@ public class HrController {
     private final AdminService adminService;
     private final EmployeeService employeeService;
     private final JwtService jwtService;
+    private final PayrollInfoService payrollInfoService;
 
 
     @GetMapping("/users")
@@ -51,6 +55,26 @@ public class HrController {
         String token = extractToken(authorization);
         String role = jwtService.extractRole(token);
         return employeeService.updateProfile(employeeCode, role, request);
+    }
+
+    @GetMapping("/users/{employeeCode}/salary-information")
+    public ApiResponse<List<SalaryInformationResponse>> getSalaryInformation(@PathVariable String employeeCode) {
+        List<SalaryInformationResponse> salaryInformation = payrollInfoService.getSalaryInformation(employeeCode);
+        return ApiResponse.<List<SalaryInformationResponse>>builder()
+                .status(200)
+                .message("Lấy thông tin lương thành công")
+                .data(salaryInformation)
+                .build();
+    }
+
+    @GetMapping("/users/{employeeCode}/pay-components")
+    public ApiResponse<List<PayComponentResponse>> getPayComponents(@PathVariable String employeeCode) {
+        List<PayComponentResponse> payComponents = payrollInfoService.getPayComponents(employeeCode);
+        return ApiResponse.<List<PayComponentResponse>>builder()
+                .status(200)
+                .message("Lấy danh sách pay component thành công")
+                .data(payComponents)
+                .build();
     }
 
     private String extractToken(String authorizationHeader) {

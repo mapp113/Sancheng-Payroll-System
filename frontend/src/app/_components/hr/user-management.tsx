@@ -382,9 +382,14 @@ export default function UserManagement() {
                                         {/* ⭐ NEW COLUMN — EDIT BUTTON */}
                                         <td className="whitespace-nowrap px-4 py-3 text-right">
                                             <button
-                                                onClick={() =>
-                                                    router.push(`/manager/contract/salary-info/${user.employeeCode}`)
-                                                }
+                                                onClick={() => {
+                                                    if (!user.employeeCode) return;
+                                                    router.push(
+                                                        `/manager/contract/salary-info/${encodeURIComponent(
+                                                            user.employeeCode,
+                                                        )}`,
+                                                    );
+                                                }}
                                                 className="p-2 rounded-full hover:bg-slate-100 text-[#4AB4DE]"
                                             >
                                                 <Pencil className="h-4 w-4"/>

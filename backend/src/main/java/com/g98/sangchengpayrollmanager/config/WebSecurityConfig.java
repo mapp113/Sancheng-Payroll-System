@@ -42,7 +42,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/attsummary/**").permitAll()
                         .requestMatchers("/api/employees/**").permitAll()
                         .requestMatchers("/api/leave/**").permitAll()
-                        .requestMatchers("api/v1/hr/**").hasRole("HR")
+                        .requestMatchers("api/v1/hr/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/admin/create-account").permitAll()
 
                         .anyRequest().authenticated()
