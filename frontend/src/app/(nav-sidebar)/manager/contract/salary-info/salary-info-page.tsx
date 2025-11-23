@@ -1,8 +1,7 @@
 "use client";
 
-import {ArrowLeft, Pencil, Trash2} from "lucide-react";
-import {useRouter, useSearchParams} from "next/navigation";
-import {useEffect, useMemo, useState} from "react";
+import {ArrowLeft} from "lucide-react";
+import {useCallback, useEffect, useMemo, useState} from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
@@ -16,12 +15,19 @@ type PayrollRow = {
 
 type AllowanceRow = {
     id: number;
+    typeId?: number;
     name: string;
     typeName: string;
     amount: string;
     startDate: string;
     endDate: string;
     status: string;
+};
+
+type PayComponentTypeOption = {
+    id: number;
+    name: string;
+    description?: string;
 };
 
 const initialAllowances: AllowanceRow[] = [];
@@ -31,45 +37,98 @@ type SalaryInfoProps = {
 };
 
 export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
-    const router = useRouter();
-    const searchParams = useSearchParams();
 
     const code = useMemo(() => {
-        const paramCode = employeeCode || searchParams?.get("employeeCode") || "";
-        return Array.isArray(paramCode) ? paramCode[0] : paramCode;
-    }, [employeeCode, searchParams]);
+        return employeeCode || "";
+    }, [employeeCode]);
 
     const [rows, setRows] = useState<PayrollRow[]>([]);
     const [loadingSalary, setLoadingSalary] = useState(false);
 
     const [showSalaryModal, setShowSalaryModal] = useState(false);
-    const [label, setLabel] = useState("Lương cơ bản");
-    const [value, setValue] = useState("");
+    const [baseSalary, setBaseSalary] = useState("");
+    const [baseHourlyRate, setBaseHourlyRate] = useState("");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
+    const [salaryStatus, setSalaryStatus] = useState("ACTIVE");
+    const [submittingSalary, setSubmittingSalary] = useState(false);
 
     const resetSalaryForm = () => {
-        setLabel("Lương cơ bản");
-        setValue("");
+        setBaseSalary("");
+        setBaseHourlyRate("");
         setStartDate("");
         setEndDate("");
+        setSalaryStatus("ACTIVE");
     };
 
-    const handleSaveSalary = () => {
-        if (!label || !value || !startDate || !endDate) return;
+    const fetchSalaryInformation = useCallback(async () => {
+        if (!code) return;
 
-        setRows((prev) => [
-            ...prev,
-            {
-                id: Date.now(),
-                label,
-                value,
-                startDate,
-                endDate,
-            },
-        ]);
-        resetSalaryForm();
-        setShowSalaryModal(false);
+        setLoadingSalary(true);
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/api/v1/hr/users/${code}/salary-information`,
+            );
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            const payload = await response.json();
+            const salaryRows: PayrollRow[] = (payload?.data ?? []).map(
+                (
+                    item: {
+                        baseSalary?: number;
+                        effectiveFrom?: string;
+                        effectiveTo?: string | null;
+                    },
+                    index: number,
+                ) => ({
+                    id: index + 1,
+                    label: "Lương cơ bản",
+                    value: formatCurrency(item.baseSalary),
+                    startDate: formatDate(item.effectiveFrom),
+                    endDate: formatDate(item.effectiveTo),
+                }),
+            );
+            setRows(salaryRows);
+        } catch (error) {
+            console.error("Không thể tải thông tin lương", error);
+        } finally {
+            setLoadingSalary(false);
+        }
+    }, [code]);
+
+    const handleSaveSalary = async () => {
+        if (!code || !baseSalary || !baseHourlyRate || !startDate) return;
+
+        setSubmittingSalary(true);
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/api/v1/hr/users/${code}/salary-information`,
+                {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({
+                        baseSalary: Number(baseSalary),
+                        baseHourlyRate: Number(baseHourlyRate),
+                        effectiveFrom: startDate,
+                        effectiveTo: endDate || null,
+                        status: salaryStatus,
+                    }),
+                },
+            );
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            await fetchSalaryInformation();
+            resetSalaryForm();
+            setShowSalaryModal(false);
+        } catch (error) {
+            console.error("Không thể thêm thông tin lương", error);
+        } finally {
+            setSubmittingSalary(false);
+        }
     };
 
     const handleCancelSalary = () => {
@@ -79,62 +138,111 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
 
     const [allowanceRows, setAllowanceRows] = useState<AllowanceRow[]>(initialAllowances);
     const [loadingAllowances, setLoadingAllowances] = useState(false);
+    const [payComponentTypes, setPayComponentTypes] = useState<PayComponentTypeOption[]>([]);
 
     const [showAllowanceModal, setShowAllowanceModal] = useState(false);
-    const [allowName, setAllowName] = useState("Bonus 1");
-    const [allowType, setAllowType] = useState("");
+    const [allowTypeId, setAllowTypeId] = useState("");
+    const [allowName, setAllowName] = useState("");
     const [allowAmount, setAllowAmount] = useState("");
     const [allowStart, setAllowStart] = useState("");
     const [allowEnd, setAllowEnd] = useState("");
-    const [allowStatus, setAllowStatus] = useState("Đang áp dụng");
-    const [editingAllowanceId, setEditingAllowanceId] = useState<number | null>(null);
+    const [submittingAllowance, setSubmittingAllowance] = useState(false);
 
     const resetAllowanceForm = () => {
-        setAllowName("Bonus 1");
-        setAllowType("");
+        setAllowTypeId("");
+        setAllowName("");
         setAllowAmount("");
         setAllowStart("");
         setAllowEnd("");
-        setAllowStatus("Đang áp dụng");
-        setEditingAllowanceId(null);
     };
 
-    const handleSaveAllowance = () => {
-        if (!allowName || !allowType || !allowAmount || !allowStart || !allowEnd) return;
+    const fetchPayComponentTypes = useCallback(async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/v1/hr/pay-component-types`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
 
-        if (editingAllowanceId !== null) {
-            setAllowanceRows((prev) =>
-                prev.map((row) =>
-                    row.id === editingAllowanceId
-                        ? {
-                            ...row,
-                            name: allowName,
-                            typeName: allowType,
-                            amount: allowAmount,
-                            startDate: allowStart,
-                            endDate: allowEnd,
-                            status: allowStatus,
-                        }
-                        : row,
-                ),
-            );
-        } else {
-            setAllowanceRows((prev) => [
-                ...prev,
-                {
-                    id: Date.now(),
-                    name: allowName,
-                    typeName: allowType,
-                    amount: allowAmount,
-                    startDate: allowStart,
-                    endDate: allowEnd,
-                    status: allowStatus,
-                },
-            ]);
+            const payload = await response.json();
+            setPayComponentTypes(payload?.data ?? []);
+        } catch (error) {
+            console.error("Không thể tải loại trợ cấp", error);
         }
+    }, []);
 
-        resetAllowanceForm();
-        setShowAllowanceModal(false);
+    const fetchAllowances = useCallback(async () => {
+        if (!code) return;
+
+        setLoadingAllowances(true);
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/api/v1/hr/users/${code}/pay-components`,
+            );
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            const payload = await response.json();
+            const allowances: AllowanceRow[] = (payload?.data ?? []).map(
+                (
+                    item: {
+                        typeId?: number;
+                        typeName?: string;
+                        name?: string;
+                        value?: number;
+                        startDate?: string;
+                        endDate?: string | null;
+                    },
+                    index: number,
+                ) => ({
+                    id: index + 1,
+                    typeId: item.typeId,
+                    name: item.name ?? "—",
+                    typeName: item.typeName ?? "—",
+                    amount: formatCurrency(item.value),
+                    startDate: formatDate(item.startDate),
+                    endDate: formatDate(item.endDate),
+                    status: deriveStatus(item.endDate),
+                }),
+            );
+            setAllowanceRows(allowances);
+        } catch (error) {
+            console.error("Không thể tải trợ cấp", error);
+        } finally {
+            setLoadingAllowances(false);
+        }
+    }, [code]);
+
+    const handleSaveAllowance = async () => {
+        if (!code || !allowTypeId || !allowName || !allowAmount || !allowStart) return;
+
+        setSubmittingAllowance(true);
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/v1/hr/users/${code}/pay-components`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    typeId: Number(allowTypeId),
+                    name: allowName,
+                    description: allowName,
+                    value: Number(allowAmount),
+                    startDate: allowStart,
+                    endDate: allowEnd || null,
+                    isAddition: true,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            await fetchAllowances();
+            resetAllowanceForm();
+            setShowAllowanceModal(false);
+        } catch (error) {
+            console.error("Không thể thêm trợ cấp", error);
+        } finally {
+            setSubmittingAllowance(false);
+        }
     };
 
     const handleCancelAllowance = () => {
@@ -142,113 +250,11 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
         setShowAllowanceModal(false);
     };
 
-    const handleEditAllowance = (id: number) => {
-        const row = allowanceRows.find((r) => r.id === id);
-        if (!row) return;
-        setAllowName(row.name);
-        setAllowType(row.typeName);
-        setAllowAmount(row.amount);
-        setAllowStart(row.startDate);
-        setAllowEnd(row.endDate === "-" ? "" : row.endDate);
-        setAllowStatus(row.status);
-        setEditingAllowanceId(id);
-        setShowAllowanceModal(true);
-    };
-
-    const handleDeleteAllowance = (id: number) => {
-        setAllowanceRows((prev) => prev.filter((r) => r.id !== id));
-    };
-
     useEffect(() => {
-        if (!code) return;
-
-        const controller = new AbortController();
-        const fetchSalaryInformation = async () => {
-            setLoadingSalary(true);
-            try {
-                const response = await fetch(
-                    `${API_BASE_URL}/api/v1/hr/users/${code}/salary-information`,
-                    {signal: controller.signal},
-                );
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                const payload = await response.json();
-                const salaryRows: PayrollRow[] = (payload?.data ?? []).map(
-                    (
-                        item: {
-                            baseSalary?: number;
-                            effectiveFrom?: string;
-                            effectiveTo?: string | null;
-                        },
-                        index: number,
-                    ) => ({
-                        id: index + 1,
-                        label: "Lương cơ bản",
-                        value: formatCurrency(item.baseSalary),
-                        startDate: formatDate(item.effectiveFrom),
-                        endDate: formatDate(item.effectiveTo),
-                    }),
-                );
-                setRows(salaryRows);
-            } catch (error) {
-                console.error("Không thể tải thông tin lương", error);
-            } finally {
-                setLoadingSalary(false);
-            }
-        };
-
         fetchSalaryInformation();
-        return () => controller.abort();
-    }, [code]);
-
-    useEffect(() => {
-        if (!code) return;
-
-        const controller = new AbortController();
-        const fetchAllowances = async () => {
-            setLoadingAllowances(true);
-            try {
-                const response = await fetch(
-                    `${API_BASE_URL}/api/v1/hr/users/${code}/pay-components`,
-                    {signal: controller.signal},
-                );
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                const payload = await response.json();
-                const allowances: AllowanceRow[] = (payload?.data ?? []).map(
-                    (
-                        item: {
-                            typeId?: number;
-                            typeName?: string;
-                            name?: string;
-                            value?: number;
-                            startDate?: string;
-                            endDate?: string | null;
-                        },
-                        index: number,
-                    ) => ({
-                        id: item.typeId ?? index + 1,
-                        name: item.name ?? "—",
-                        typeName: item.typeName ?? "—",
-                        amount: formatCurrency(item.value),
-                        startDate: formatDate(item.startDate),
-                        endDate: formatDate(item.endDate),
-                        status: deriveStatus(item.endDate),
-                    }),
-                );
-                setAllowanceRows(allowances);
-            } catch (error) {
-                console.error("Không thể tải trợ cấp", error);
-            } finally {
-                setLoadingAllowances(false);
-            }
-        };
-
         fetchAllowances();
-        return () => controller.abort();
-    }, [code]);
+        fetchPayComponentTypes();
+    }, [fetchAllowances, fetchPayComponentTypes, fetchSalaryInformation]);
 
     function formatDate(value?: string | null) {
         if (!value) return "-";
@@ -277,7 +283,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                 <button
                     type="button"
                     className="flex items-center gap-3 text-sm font-semibold text-[#4AB4DE]"
-                    onClick={() => router.push("/manager/contract")}
+                    onClick={() => window.history.back()}
                 >
                     <ArrowLeft className="h-5 w-5"/>
                     <span>BACK</span>
@@ -321,7 +327,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                         <th className="px-4 py-3 font-semibold">Ngày kết thúc</th>
                                     </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-[#EAF5FF] bg-white">
+                                    <tbody className="divide-y divide-[#EAF5FF] bg:white">
                                     {loadingSalary ? (
                                         <tr>
                                             <td className="px-4 py-3 text-center" colSpan={4}>
@@ -390,15 +396,15 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                     <th className="px-4 py-3 font-semibold">Giá trị</th>
                                     <th className="px-4 py-3 font-semibold">Ngày bắt đầu</th>
                                     <th className="px-4 py-3 font-semibold">Ngày kết thúc</th>
-                                    <th className="px-4 py-3 font-semibold">Trạng thái</th>
-                                    <th className="px-4 py-3 font-semibold text-center">Chỉnh sửa</th>
+                                    <th className="px-4 py-3 font-semibold">Tình trạng</th>
                                 </tr>
                                 </thead>
+
                                 <tbody className="divide-y divide-[#EAF5FF] bg:white">
                                 {loadingAllowances ? (
                                     <tr>
-                                        <td className="px-4 py-3 text-center" colSpan={7}>
-                                            Đang tải trợ cấp và thưởng...
+                                        <td className="px-4 py-3 text-center" colSpan={6}>
+                                            Đang tải trợ cấp...
                                         </td>
                                     </tr>
                                 ) : allowanceRows.length ? (
@@ -424,29 +430,11 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                                   {allowance.status}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex items-center justify-center gap-2">
-                                                    <button
-                                                        onClick={() => handleEditAllowance(allowance.id)}
-                                                        className="rounded-full p-1 hover:bg-[#E2E8F0]"
-                                                        aria-label="Chỉnh sửa"
-                                                    >
-                                                        <Pencil className="h-4 w-4 text-[#4AB4DE]"/>
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteAllowance(allowance.id)}
-                                                        className="rounded-full p-1 hover:bg-[#FEE2E2]"
-                                                        aria-label="Xóa"
-                                                    >
-                                                        <Trash2 className="h-4 w-4 text-[#B91C1C]"/>
-                                                    </button>
-                                                </div>
-                                            </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td className="px-4 py-3 text-center" colSpan={7}>
+                                        <td className="px-4 py-3 text-center" colSpan={6}>
                                             Chưa có trợ cấp hoặc thưởng để hiển thị
                                         </td>
                                     </tr>
@@ -469,24 +457,26 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
 
                         <div className="space-y-5 text-sm font-semibold text-[#003344]">
                             <div className="grid grid-cols-[140px,minmax(0,1fr)] items-center gap-4">
-                                <span>Nội dung</span>
-                                <input
-                                    className="h-10 w-full rounded-full border border-[#CCE1F0] bg-[#F8FAFC] px-4 text-sm font-normal text-[#003344] focus:border-[#4AB4DE] focus:outline-none focus:ring-2 focus:ring-[#4AB4DE]/50"
-                                    value={label}
-                                    onChange={(e) => setLabel(e.target.value)}
-                                    placeholder="VD: Lương cơ bản"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-[140px,minmax(0,1fr)] items-center gap-4">
                                 <span>Giá trị</span>
                                 <input
                                     className="h-10 w-full rounded-full border border-[#CCE1F0] bg-[#F8FAFC] px-4 text-sm font-normal text-[#003344] focus:border-[#4AB4DE] focus:outline-none focus:ring-2 focus:ring-[#4AB4DE]/50"
-                                    value={value}
-                                    onChange={(e) => setValue(e.target.value)}
+                                    type="number"
+                                    value={baseSalary}
+                                    onChange={(e) => setBaseSalary(e.target.value)}
                                     placeholder="VD: 20,000,000"
                                 />
                             </div>
+
+                            {/*<div className="grid grid-cols-[140px,minmax(0,1fr)] items-center gap-4">*/}
+                            {/*    <span>Đơn giá giờ</span>*/}
+                            {/*    <input*/}
+                            {/*        className="h-10 w-full rounded-full border border-[#CCE1F0] bg-[#F8FAFC] px-4 text-sm font-normal text-[#003344] focus:border-[#4AB4DE] focus:outline-none focus:ring-2 focus:ring-[#4AB4DE]/50"*/}
+                            {/*        type="number"*/}
+                            {/*        value={baseHourlyRate}*/}
+                            {/*        onChange={(e) => setBaseHourlyRate(e.target.value)}*/}
+                            {/*        placeholder="VD: 120000"*/}
+                            {/*    />*/}
+                            {/*</div>*/}
 
                             <div className="grid grid-cols-[140px,minmax(0,1fr)] items-center gap-4">
                                 <span>Ngày bắt đầu</span>
@@ -507,14 +497,27 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                     onChange={(e) => setEndDate(e.target.value)}
                                 />
                             </div>
+
+                            {/*<div className="grid grid-cols-[140px,minmax(0,1fr)] items-center gap-4">*/}
+                            {/*    <span>Trạng thái</span>*/}
+                            {/*    <select*/}
+                            {/*        className="h-10 w-full rounded-full border border-[#CCE1F0] bg-[#F8FAFC] px-4 text-sm font-normal text-[#003344] focus:border-[#4AB4DE] focus:outline-none focus:ring-2 focus:ring-[#4AB4DE]/50"*/}
+                            {/*        value={salaryStatus}*/}
+                            {/*        onChange={(e) => setSalaryStatus(e.target.value)}*/}
+                            {/*    >*/}
+                            {/*        <option value="ACTIVE">Đang áp dụng</option>*/}
+                            {/*        <option value="INACTIVE">Ngưng áp dụng</option>*/}
+                            {/*    </select>*/}
+                            {/*</div>*/}
                         </div>
 
                         <div className="mt-8 flex justify-center gap-6">
                             <button
                                 onClick={handleSaveSalary}
-                                className="min-w-[120px] rounded-full bg-[#4AB4DE] px-6 py-2 text-sm font-semibold text-white shadow hover:bg-[#3A9BC2]"
+                                className="min-w-[120px] rounded-full bg-[#4AB4DE] px-6 py-2 text-sm font-semibold text-white shadow hover:bg-[#3A9BC2] disabled:cursor-not-allowed disabled:opacity-70"
+                                disabled={submittingSalary}
                             >
-                                Lưu
+                                {submittingSalary ? "Đang lưu..." : "Lưu"}
                             </button>
                             <button
                                 onClick={handleCancelSalary}
@@ -527,13 +530,12 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                 </div>
             )}
 
-
             {showAllowanceModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
                     <div className="w-full max-w-xl rounded-3xl border border-[#8CECF0] bg-white p-8 shadow-2xl">
                         <div className="mb-6 flex items-center">
                             <h3 className="flex-1 text-center text-lg font-semibold text-[#003344]">
-                                {editingAllowanceId ? "Chỉnh sửa trợ cấp / thưởng" : "Thêm trợ cấp / thưởng mới"}
+                                Thêm trợ cấp / thưởng mới
                             </h3>
                         </div>
 
@@ -542,13 +544,17 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                 <span>Loại</span>
                                 <select
                                     className="h-10 w-full rounded-full border border-[#CCE1F0] bg-[#F8FAFC] px-4 text-sm font-normal text-[#003344] focus:border-[#4AB4DE] focus:outline-none focus:ring-2 focus:ring-[#4AB4DE]/50"
-                                    value={allowName}
-                                    onChange={(e) => setAllowName(e.target.value)}
+                                    value={allowTypeId}
+                                    onChange={(e) => setAllowTypeId(e.target.value)}
                                 >
-                                    <option value="Bonus 1">Bonus 1</option>
-                                    <option value="Bonus 2">Bonus 2</option>
-                                    <option value="Bonus 3">Bonus 3</option>
-                                    <option value="Bonus 4">Bonus 4</option>
+                                    <option value="" disabled>
+                                        Chọn loại phụ cấp
+                                    </option>
+                                    {payComponentTypes.map((type) => (
+                                        <option key={type.id} value={type.id}>
+                                            {type.name}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
 
@@ -556,9 +562,8 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                 <span>Tên</span>
                                 <input
                                     className="h-10 w-full rounded-full border border-[#CCE1F0] bg-[#F8FAFC] px-4 text-sm font-normal text-[#003344] focus:border-[#4AB4DE] focus:outline-none focus:ring-2 focus:ring-[#4AB4DE]/50"
-                                    value={allowType}
-                                    onChange={(e) => setAllowType(e.target.value)}
-                                    placeholder="VD: Allowance 1"
+                                    value={allowName}
+                                    onChange={(e) => setAllowName(e.target.value)}
                                 />
                             </div>
 
@@ -566,9 +571,10 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                 <span>Giá trị</span>
                                 <input
                                     className="h-10 w-full rounded-full border border-[#CCE1F0] bg-[#F8FAFC] px-4 text-sm font-normal text-[#003344] focus:border-[#4AB4DE] focus:outline-none focus:ring-2 focus:ring-[#4AB4DE]/50"
+                                    type="number"
                                     value={allowAmount}
                                     onChange={(e) => setAllowAmount(e.target.value)}
-                                    placeholder="VD: 500k"
+                                    placeholder="VD: 500000"
                                 />
                             </div>
 
@@ -592,26 +598,18 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-[140px,minmax(0,1fr)] items-center gap-4">
-                                <span>Trạng thái</span>
-                                <select
-                                    className="h-10 w-full rounded-full border border-[#CCE1F0] bg-[#F8FAFC] px-4 text-sm font-normal text-[#003344] focus:border-[#4AB4DE] focus:outline-none focus:ring-2 focus:ring-[#4AB4DE]/50"
-                                    value={allowStatus}
-                                    onChange={(e) => setAllowStatus(e.target.value)}
-                                >
-                                    <option value="Đang áp dụng">Đang áp dụng</option>
-                                    <option value="Đã nhận">Đã nhận</option>
-                                    <option value="Tạm dừng">Tạm dừng</option>
-                                </select>
-                            </div>
+                            <p className="text-xs font-normal text-[#56749A]">
+                                Lưu ý: Mô tả sẽ được tự động dùng cùng tên, và loại khoản mặc định là khoản cộng.
+                            </p>
                         </div>
 
                         <div className="mt-8 flex justify-center gap-6">
                             <button
                                 onClick={handleSaveAllowance}
-                                className="min-w-[120px] rounded-full bg-[#4AB4DE] px-6 py-2 text-sm font-semibold text-white shadow hover:bg-[#3A9BC2]"
+                                className="min-w-[120px] rounded-full bg-[#4AB4DE] px-6 py-2 text-sm font-semibold text-white shadow hover:bg-[#3A9BC2] disabled:cursor-not-allowed disabled:opacity-70"
+                                disabled={submittingAllowance}
                             >
-                                {editingAllowanceId ? "Cập nhật" : "Lưu"}
+                                {submittingAllowance ? "Đang lưu..." : "Lưu"}
                             </button>
                             <button
                                 onClick={handleCancelAllowance}

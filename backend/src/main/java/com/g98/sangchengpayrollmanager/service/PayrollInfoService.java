@@ -1,14 +1,22 @@
 package com.g98.sangchengpayrollmanager.service;
 
+import com.g98.sangchengpayrollmanager.model.dto.payroll.PayComponentCreateRequest;
 import com.g98.sangchengpayrollmanager.model.dto.payroll.PayComponentResponse;
+import com.g98.sangchengpayrollmanager.model.dto.payroll.PayComponentTypeResponse;
+import com.g98.sangchengpayrollmanager.model.dto.payroll.SalaryInformationCreateRequest;
 import com.g98.sangchengpayrollmanager.model.dto.payroll.SalaryInformationResponse;
 import com.g98.sangchengpayrollmanager.model.entity.PayComponent;
+import com.g98.sangchengpayrollmanager.model.entity.PayComponentType;
 import com.g98.sangchengpayrollmanager.model.entity.SalaryInformation;
+import com.g98.sangchengpayrollmanager.model.entity.User;
 import com.g98.sangchengpayrollmanager.repository.PayComponentRepository;
+import com.g98.sangchengpayrollmanager.repository.PayComponentTypeRepository;
 import com.g98.sangchengpayrollmanager.repository.SalaryInformationRepository;
+import com.g98.sangchengpayrollmanager.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -17,6 +25,8 @@ public class PayrollInfoService {
 
     private final SalaryInformationRepository salaryInformationRepository;
     private final PayComponentRepository payComponentRepository;
+    private final PayComponentTypeRepository payComponentTypeRepository;
+    private final UserRepository userRepository;
 
     public List<SalaryInformationResponse> getSalaryInformation(String employeeCode) {
         return salaryInformationRepository
@@ -32,6 +42,71 @@ public class PayrollInfoService {
                 .stream()
                 .map(this::mapPayComponent)
                 .toList();
+    }
+
+    public List<PayComponentTypeResponse> getPayComponentTypes() {
+        return payComponentTypeRepository.findAll()
+                .stream()
+                .map(type -> new PayComponentTypeResponse(
+                        type.getId(),
+                        type.getName(),
+                        type.getDescription()
+                ))
+                .toList();
+    }
+
+    public SalaryInformationResponse addSalaryInformation(String employeeCode, SalaryInformationCreateRequest request) {
+        User user = userRepository.findByEmployeeCode(employeeCode)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên với mã: " + employeeCode));
+
+        if (request.getBaseSalary() == null || request.getBaseHourlyRate() == null || request.getEffectiveFrom() == null) {
+            throw new RuntimeException("Thiếu thông tin bắt buộc về lương cơ bản");
+        }
+
+        SalaryInformation salaryInformation = SalaryInformation.builder()
+                .user(user)
+                .baseSalary(request.getBaseSalary())
+                .baseHourlyRate(request.getBaseHourlyRate())
+                .effectiveFrom(request.getEffectiveFrom())
+                .effectiveTo(request.getEffectiveTo())
+                .status(request.getStatus())
+                .date(LocalDate.now())
+                .build();
+
+        SalaryInformation saved = salaryInformationRepository.save(salaryInformation);
+        return mapSalaryInfo(saved);
+    }
+
+    public PayComponentResponse addPayComponent(String employeeCode, PayComponentCreateRequest request) {
+        User user = userRepository.findByEmployeeCode(employeeCode)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên với mã: " + employeeCode));
+
+        if (request.getTypeId() == null
+                || request.getName() == null
+                || request.getDescription() == null
+                || request.getValue() == null
+                || request.getStartDate() == null) {
+            throw new RuntimeException("Thiếu thông tin bắt buộc về phụ cấp");
+        }
+
+        PayComponentType type = payComponentTypeRepository.findById(request.getTypeId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy loại phụ cấp với ID: " + request.getTypeId()));
+
+        PayComponent payComponent = PayComponent.builder()
+                .user(user)
+                .type(type)
+                .name(request.getName())
+                .description(request.getDescription())
+                .value(request.getValue())
+                .startDate(request.getStartDate())
+                .endDate(request.getEndDate())
+                .occurrences(request.getOccurrences() != null ? request.getOccurrences() : 1)
+                .percent(request.getPercent())
+                .isAddition(request.getIsAddition() != null ? request.getIsAddition() : Boolean.TRUE)
+                .build();
+
+        PayComponent saved = payComponentRepository.save(payComponent);
+        return mapPayComponent(saved);
     }
 
     private SalaryInformationResponse mapSalaryInfo(SalaryInformation salaryInformation) {
