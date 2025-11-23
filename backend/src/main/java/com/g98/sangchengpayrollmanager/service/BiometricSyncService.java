@@ -1,4 +1,5 @@
 package com.g98.sangchengpayrollmanager.service;
+//dịch vụ đẩy (sync) người dùng từ hệ thống lên máy chấm công.
 
 import com.g98.sangchengpayrollmanager.device.ZKTecoClient;
 import lombok.RequiredArgsConstructor;

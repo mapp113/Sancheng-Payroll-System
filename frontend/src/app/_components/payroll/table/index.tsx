@@ -1,7 +1,7 @@
-import {useContext, useEffect} from "react";
-import {DataContext, ParamsContext} from "../payroll-context";
-import {PayrollQuery} from "../query";
-import {Info} from "lucide-react";
+import { useContext, useEffect } from "react";
+import { DataContext, ParamsContext } from "../payroll-context";
+import { PayrollQuery } from "../query";
+import { Info } from "lucide-react";
 import Pagination from "./pagination";
 import Link from "next/link";
 
@@ -39,57 +39,42 @@ export default function PayrollTable() {
             <h1 className="text-xl font-bold mb-5">Employees Payroll</h1>
             <table className="w-full border-collapse text-sm text-gray-800">
                 <thead>
-                <tr className="bg-[#CCE1F0] text-left rounded-t-xl">
-                    <th className="py-3 px-4 font-semibold rounded-tl-xl">ID</th>
-                    <th className="py-3 px-4 font-semibold">Name</th>
-                    <th className="py-3 px-4 font-semibold">Position</th>
-                    <th className="py-3 px-4 font-semibold">Salary</th>
-                    <th className="py-3 px-4 font-semibold">Status</th>
-                    <th className="py-3 px-4 font-semibold">Payslip</th>
-                    <th className="py-3 px-4 rounded-tr-xl"></th>
-                </tr>
+                    <tr className="bg-[#CCE1F0] text-left rounded-t-xl">
+                        <th className="py-3 px-4 font-semibold rounded-tl-xl">ID</th>
+                        <th className="py-3 px-4 font-semibold">Name</th>
+                        <th className="py-3 px-4 font-semibold">Position</th>
+                        <th className="py-3 px-4 font-semibold">Salary</th>
+                        <th className="py-3 px-4 font-semibold">Status</th>
+                        <th className="py-3 px-4 font-semibold">Payslip</th>
+                        <th className="py-3 px-4 rounded-tr-xl"></th>
+                    </tr>
                 </thead>
 
                 <tbody className="divide-y divide-gray-200">
-                {payrollData.payrollData.map((record) => (
-                    <tr key={record.employeeCode} className="hover:bg-gray-50">
-                        <td className="py-3 px-4">{record.employeeCode}</td>
-                        <td className="py-3 px-4">{record.fullName}</td>
-                        <td className="py-3 px-4">{record.positionName}</td>
-                        <td className="py-3 px-4">${record.netSalary}</td>
-                        <td className="py-3 px-4">
-                <span
-                    className={`inline-block w-4 h-4 rounded-full ${getStatusColor(
-                        record.status
-                    )}`}
-                ></span>
-                        </td>
-                        <td className="py-3 px-4">
-                            <button
-                                className="bg-cyan-300 hover:bg-cyan-400 text-sm text-gray-800 font-medium py-1 px-3 rounded-md shadow">
-                                Download
-                            </button>
-                        </td>
-                        <td className="py-3 px-4 text-gray-500">
-                            <Link
-                                href={{
-                                    pathname: "/payroll-detail",
-                                    query: {
-                                        employeeCode: record.employeeCode,
-                                        month: payrollParams.payrollParams.date,
-                                    },
-                                }}
-                                aria-label={`View payroll detail for ${record.fullName}`}
-                                className="inline-flex items-center text-gray-500 hover:text-gray-700"
-                            >
-                                <Info size={18}/>
-                            </Link>
-                        </td>
-                    </tr>
-                ))}
+                    {payrollData.payrollData.map((record) => (
+                        <tr key={record.employeeCode} className="hover:bg-gray-50">
+                            <td className="py-3 px-4">{record.employeeCode}</td>
+                            <td className="py-3 px-4">{record.fullName}</td>
+                            <td className="py-3 px-4">{record.positionName}</td>
+                            <td className="py-3 px-4">${record.netSalary}</td>
+                            <td className="py-3 px-4">
+                                <span
+                                    className={`py-3 px-4`}
+                                >{record.status}</span>
+                            </td>
+                            <td className="py-3 px-4">
+                                <button className="bg-cyan-300 hover:bg-cyan-400 text-sm text-gray-800 font-medium py-1 px-3 rounded-md shadow">
+                                    Download
+                                </button>
+                            </td>
+                            <td className="py-3 px-4 text-gray-500">
+                                <Info size={18} />
+                            </td>
+                        </tr>
+                    ))}
                 </tbody>
             </table>
-            <Pagination/>
+            <Pagination />
         </div>
     );
 }

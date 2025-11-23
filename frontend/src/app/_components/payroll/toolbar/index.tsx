@@ -36,14 +36,20 @@ export default function PayrollToolbar() {
     params.setPayrollParams({
       ...params.payrollParams,
       date: (e.target as HTMLInputElement).value,
+      totalPage: params.payrollParams.totalPage,
     });
     const newParams = {
       ...params.payrollParams,
       date: (e.target as HTMLInputElement).value,
+      totalPage: params.payrollParams.totalPage,
     };
 
     const data = await PayrollQuery(newParams);
     payrollData.setPayrollData(data.content);
+    params.setPayrollParams((prev) => ({
+      ...prev,
+      totalPage: data.size.toString(),
+    }));
   };
 
   return (

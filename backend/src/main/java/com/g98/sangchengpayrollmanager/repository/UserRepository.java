@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, String> {
@@ -17,5 +18,14 @@ public interface UserRepository extends JpaRepository<User, String> {
     Optional<User> findByUsernameWithRole(@Param("username") String username);
 
 
+    // ✅ Thêm mới: trả về employeeCode theo userId
+    @Query("SELECT u.employeeCode FROM User u WHERE u.userId = :userId")
+    String findEmployeeCodeByUserId(@Param("userId") String userId);
+
     Optional<User> findByEmployeeCode(String employeeCode);
+
+    Optional<User> findByEmail(String email);
+
+    List<User> findByStatus(Integer status);
+
 }

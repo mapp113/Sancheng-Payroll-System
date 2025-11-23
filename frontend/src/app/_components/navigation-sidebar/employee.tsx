@@ -26,6 +26,11 @@ export default function NavigationSidebar({ select }: { select: number }) {
             <Image src="/icons/employee/request.png" alt="Request" width={52} height={52} />
           </a>
         </li>
+        <li className={`${select === 5 ? selected : ""}`}>
+          <a href="/employee/tax-insurance" className="hover:underline ">
+            <Image src="/icons/employee/tax.png" alt="Request" width={52} height={52} />
+          </a>
+        </li>
       </ul>
     </aside>
   );

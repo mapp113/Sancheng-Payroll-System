@@ -2,9 +2,13 @@ export function formatDecimal(value: number, fractionDigits = 2) {
     return value.toFixed(fractionDigits);
 }
 
-export function formatTime(value?: number | null) {
+export function formatTime(value?: number | string | null) {
     if (value === null || typeof value === "undefined") {
         return "--";
+    }
+
+    if (typeof value === "string") {
+        return value;
     }
 
     return formatDecimal(value);

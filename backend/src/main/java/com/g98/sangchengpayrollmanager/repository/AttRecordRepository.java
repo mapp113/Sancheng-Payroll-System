@@ -35,4 +35,6 @@ public interface AttRecordRepository extends JpaRepository<AttRecord, Integer> {
             "AND a.date = :date " +
             "ORDER BY a.checkTime")
     List<AttRecord> findByUserIdAndDate(String userId, LocalDate date);
+
+    boolean existsByUserIdAndDate(String userId, LocalDate date);
 }
