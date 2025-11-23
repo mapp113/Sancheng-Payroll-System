@@ -16,7 +16,7 @@ function TimesheetPageContent() {
   const { addNotification } = useNotification();
   const [timesheetParams, setTimesheetParams] = useState<TimesheetParam>({
     keyword: "",
-    date: false ? new Date().toISOString().slice(0, 7) : "2025-10",
+    date: true ? new Date().toISOString().slice(0, 7) : "2025-10",
     index: "0",
     totalPages: "",
   });

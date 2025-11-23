@@ -6,7 +6,6 @@ import {
     DetailShell,
     DetailSummaryCard,
 } from "@/app/_components/detail";
-import FormPopBox from "@/app/_components/common/pop-box/form";
 
 import type {
     ManagerTimesheetDetailData,
@@ -15,10 +14,12 @@ import type {
     EmployeeInfomation,
     AttendanceSummary,
     AttendanceDaily,
+    AttDailySummaryUpdateRequest,
 } from "./types";
 import { formatDecimal, formatHours, formatTime } from "./utils";
 import { useState, useEffect, useContext } from "react";
 import { TimesheetDetailParam } from "./context";
+import FormPopBoxNotScroll from "../common/pop-box/form-not-scroll";
 
 interface ManagerTimesheetDetailProps {
     detail: ManagerTimesheetDetailData;
@@ -559,163 +560,250 @@ function AttendanceDayDetailPopup({
     employeeInfo: EmployeeInfomation | null;
     onClose: () => void;
 }) {
+    const [isEditing, setIsEditing] = useState(false);
+    const [isLateCounted, setIsLateCounted] = useState(attendanceData.isLateCounted);
+    const [isEarlyLeaveCounted, setIsEarlyLeaveCounted] = useState(attendanceData.isEarlyLeaveCounted);
+    const [isDayMeal, setIsDayMeal] = useState(attendanceData.isDayMeal);
+    const [isSaving, setIsSaving] = useState(false);
+
     const formatDateTime = (dateTime: string) => {
         if (!dateTime) return "--";
         const timePart = dateTime.split('T')[1];
         return timePart?.substring(0, 5) || "--";
     };
 
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            const body: AttDailySummaryUpdateRequest = {
+                isLateCounted,
+                isEarlyLeaveCounted,
+                isDayMeal,
+            };
+
+            const response = await fetch(
+                `http://localhost:8080/api/attsummary/${attendanceData.id}`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(body),
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Failed to update attendance');
+            }
+
+            // Sau khi save thành công, tắt chế độ edit và đóng popup
+            setIsEditing(false);
+            onClose();
+            // Có thể thêm refresh data ở đây nếu cần
+            window.location.reload();
+        } catch (error) {
+            console.error('Error updating attendance:', error);
+            alert('Failed to update attendance');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     return (
-        <FormPopBox>
+        <FormPopBoxNotScroll>
             <div className="space-y-6">
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-[#CCE1F0] pb-4">
-                    <h2 className="text-2xl font-bold text-[#1D3E6A]">Attendance Detail</h2>
-                    <button
-                        onClick={onClose}
-                        className="rounded-full p-2 text-[#56749A] hover:bg-[#E6F7FF] transition cursor-pointer"
-                    >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-
-                {/* Employee Info */}
-                <div className="grid grid-cols-2 gap-4 p-4 bg-[#F4FBFF] rounded-xl border border-[#CCE1F0]">
-                    <div>
-                        <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Employee Code</label>
-                        <p className="text-sm font-bold text-[#1D3E6A] mt-1">{employeeInfo?.employeeCode || "--"}</p>
-                    </div>
-                    <div>
-                        <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Employee Name</label>
-                        <p className="text-sm font-bold text-[#1D3E6A] mt-1">{employeeInfo?.fullName || "--"}</p>
-                    </div>
-                    <div>
-                        <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Position</label>
-                        <p className="text-sm font-bold text-[#1D3E6A] mt-1">{employeeInfo?.positionName || "--"}</p>
-                    </div>
-                    <div>
-                        <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Date</label>
-                        <p className="text-sm font-bold text-[#1D3E6A] mt-1">{attendanceData.date}</p>
+                <div className="flex items-center justify-between pb-4 border-b border-[#CCE1F0]">
+                    <h2 className="text-xl md:text-2xl font-bold text-[#1D3E6A]">Attendance Detail</h2>
+                    <div className="flex items-center gap-2">
+                        {!isEditing && (
+                            <button
+                                onClick={() => setIsEditing(true)}
+                                className="rounded-full border border-[#4AB4DE] bg-white px-3 md:px-4 py-2 text-xs md:text-sm font-semibold uppercase tracking-[0.2em] text-[#1D3E6A] transition hover:bg-[#E6F7FF] cursor-pointer"
+                            >
+                                Edit
+                            </button>
+                        )}
+                        <button
+                            onClick={onClose}
+                            className="rounded-full p-2 text-[#56749A] hover:bg-[#E6F7FF] transition cursor-pointer"
+                        >
+                            <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
-                {/* Attendance Data */}
-                <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-[#1D3E6A]">Attendance Information</h3>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Day Type</label>
-                            <p className="text-sm font-bold text-[#1D3E6A]">{attendanceData.dayTypeName}</p>
+                {/* Main Content - Responsive Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Left Column */}
+                    <div className="space-y-6">
+                        {/* Employee Info */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-[#F4FBFF] rounded-xl border border-[#CCE1F0]">
+                            <div>
+                                <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Employee Code</label>
+                                <p className="text-sm font-bold text-[#1D3E6A] mt-1">{employeeInfo?.employeeCode || "--"}</p>
+                            </div>
+                            <div>
+                                <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Employee Name</label>
+                                <p className="text-sm font-bold text-[#1D3E6A] mt-1">{employeeInfo?.fullName || "--"}</p>
+                            </div>
+                            <div>
+                                <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Position</label>
+                                <p className="text-sm font-bold text-[#1D3E6A] mt-1">{employeeInfo?.positionName || "--"}</p>
+                            </div>
+                            <div>
+                                <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Date</label>
+                                <p className="text-sm font-bold text-[#1D3E6A] mt-1">{attendanceData.date}</p>
+                            </div>
                         </div>
+
+                        {/* Attendance Data */}
+                        <div className="space-y-4">
+                            <h3 className="text-base md:text-lg font-bold text-[#1D3E6A]">Attendance Information</h3>
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Day Type</label>
+                                    <p className="text-sm font-bold text-[#1D3E6A]">{attendanceData.dayTypeName}</p>
+                                </div>
+                                
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Leave Type</label>
+                                    <p className="text-sm font-bold text-[#1D3E6A]">{attendanceData.leaveTypeCode || "--"}</p>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Check In Time</label>
+                                    <p className="text-sm font-bold text-[#1D3E6A]">{formatDateTime(attendanceData.checkInTime)}</p>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Check Out Time</label>
+                                    <p className="text-sm font-bold text-[#1D3E6A]">{formatDateTime(attendanceData.checkOutTime)}</p>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Work Hours</label>
+                                    <p className="text-sm font-bold text-[#1D3E6A]">{attendanceData.workHours} hrs</p>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Overtime Hours</label>
+                                    <p className="text-sm font-bold text-[#1D3E6A]">{attendanceData.otHour} hrs</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column - Boolean Flags */}
+                    <div className="space-y-4">
+                        <h3 className="text-base md:text-lg font-bold text-[#1D3E6A]">Status Flags</h3>
                         
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Leave Type</label>
-                            <p className="text-sm font-bold text-[#1D3E6A]">{attendanceData.leaveTypeCode || "--"}</p>
-                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={isLateCounted}
+                                    disabled={!isEditing}
+                                    onChange={(e) => setIsLateCounted(e.target.checked)}
+                                    className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE] cursor-pointer disabled:cursor-not-allowed"
+                                />
+                                <label className="text-sm font-semibold text-[#1D3E6A]">Late Counted</label>
+                            </div>
 
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Check In Time</label>
-                            <p className="text-sm font-bold text-[#1D3E6A]">{formatDateTime(attendanceData.checkInTime)}</p>
-                        </div>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={isEarlyLeaveCounted}
+                                    disabled={!isEditing}
+                                    onChange={(e) => setIsEarlyLeaveCounted(e.target.checked)}
+                                    className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE] cursor-pointer disabled:cursor-not-allowed"
+                                />
+                                <label className="text-sm font-semibold text-[#1D3E6A]">Early Leave Counted</label>
+                            </div>
 
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Check Out Time</label>
-                            <p className="text-sm font-bold text-[#1D3E6A]">{formatDateTime(attendanceData.checkOutTime)}</p>
-                        </div>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={attendanceData.isCountPayableDay}
+                                    disabled
+                                    className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE] cursor-pointer disabled:cursor-not-allowed"
+                                />
+                                <label className="text-sm font-semibold text-[#1D3E6A]">Count Payable Day</label>
+                            </div>
 
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Work Hours</label>
-                            <p className="text-sm font-bold text-[#1D3E6A]">{attendanceData.workHours} hrs</p>
-                        </div>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={attendanceData.isAbsent}
+                                    disabled
+                                    className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE]cursor-pointer disabled:cursor-not-allowed"
+                                />
+                                <label className="text-sm font-semibold text-[#1D3E6A]">Absent</label>
+                            </div>
 
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Overtime Hours</label>
-                            <p className="text-sm font-bold text-[#1D3E6A]">{attendanceData.otHour} hrs</p>
-                        </div>
-                    </div>
-                </div>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={isDayMeal}
+                                    disabled={!isEditing}
+                                    onChange={(e) => setIsDayMeal(e.target.checked)}
+                                    className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE] cursor-pointer disabled:cursor-not-allowed"
+                                />
+                                <label className="text-sm font-semibold text-[#1D3E6A]">Day Meal</label>
+                            </div>
 
-                {/* Boolean Flags */}
-                <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-[#1D3E6A]">Status Flags</h3>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                checked={attendanceData.isLateCounted}
-                                disabled
-                                className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE]"
-                            />
-                            <label className="text-sm font-semibold text-[#1D3E6A]">Late Counted</label>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                checked={attendanceData.isEarlyLeaveCounted}
-                                disabled
-                                className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE]"
-                            />
-                            <label className="text-sm font-semibold text-[#1D3E6A]">Early Leave Counted</label>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                checked={attendanceData.isCountPayableDay}
-                                disabled
-                                className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE]"
-                            />
-                            <label className="text-sm font-semibold text-[#1D3E6A]">Count Payable Day</label>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                checked={attendanceData.isAbsent}
-                                disabled
-                                className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE]"
-                            />
-                            <label className="text-sm font-semibold text-[#1D3E6A]">Absent</label>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                checked={attendanceData.isDayMeal}
-                                disabled
-                                className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE]"
-                            />
-                            <label className="text-sm font-semibold text-[#1D3E6A]">Day Meal</label>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                checked={attendanceData.isTrialDay}
-                                disabled
-                                className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE]"
-                            />
-                            <label className="text-sm font-semibold text-[#1D3E6A]">Trial Day</label>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={attendanceData.isTrialDay}
+                                    disabled
+                                    className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE] cursor-pointer disabled:cursor-not-allowed"
+                                />
+                                <label className="text-sm font-semibold text-[#1D3E6A]">Trial Day</label>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Close Button */}
-                <div className="flex justify-end pt-4 border-t border-[#CCE1F0]">
-                    <button
-                        onClick={onClose}
-                        className="rounded-full border border-[#4AB4DE] bg-white px-6 py-2 text-sm font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] transition hover:bg-[#E6F7FF] cursor-pointer"
-                    >
-                        Close
-                    </button>
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-[#CCE1F0]">
+                    {isEditing && (
+                        <>
+                            <button
+                                onClick={() => {
+                                    setIsEditing(false);
+                                    setIsLateCounted(attendanceData.isLateCounted);
+                                    setIsEarlyLeaveCounted(attendanceData.isEarlyLeaveCounted);
+                                    setIsDayMeal(attendanceData.isDayMeal);
+                                }}
+                                className="rounded-full border border-[#56749A] bg-white px-6 py-2 text-xs md:text-sm font-semibold uppercase tracking-[0.3em] text-[#56749A] transition hover:bg-gray-50 cursor-pointer"
+                                disabled={isSaving}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                disabled={isSaving}
+                                className="rounded-full border border-[#4AB4DE] bg-[#4AB4DE] px-6 py-2 text-xs md:text-sm font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-[#3A9AC0] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isSaving ? 'Saving...' : 'Save'}
+                            </button>
+                        </>
+                    )}
+                    {!isEditing && (
+                        <button
+                            onClick={onClose}
+                            className="rounded-full border border-[#4AB4DE] bg-white px-6 py-2 text-xs md:text-sm font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] transition hover:bg-[#E6F7FF] cursor-pointer"
+                        >
+                            Close
+                        </button>
+                    )}
                 </div>
             </div>
-        </FormPopBox>
+        </FormPopBoxNotScroll>
     );
 }
 

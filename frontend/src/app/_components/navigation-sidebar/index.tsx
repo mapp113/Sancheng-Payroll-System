@@ -12,7 +12,7 @@ export default function NavigationSidebar({select}: { select: number }) {
                     </a>
                 </li>
                 <li className={`${select === 2 ? selected : ""}`}>
-                    <a href="/attendance" className="hover:underline">
+                    <a href="/manager/timesheet" className="hover:underline">
                         <Image src="/icons/attendance.png" alt="Attendance" width={52} height={52}/>
                     </a>
                 </li>

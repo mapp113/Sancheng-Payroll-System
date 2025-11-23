@@ -83,6 +83,7 @@ export interface AttendanceSummary {
 }
 
 export interface AttendanceDaily {
+    id:number;
     date: string;
     dayTypeName: string;
     workHours: number;
@@ -96,4 +97,10 @@ export interface AttendanceDaily {
     leaveTypeCode: string | null;
     checkInTime: string;
     checkOutTime: string;
+}
+
+export interface AttDailySummaryUpdateRequest {
+    isLateCounted: boolean;
+    isEarlyLeaveCounted: boolean;
+    isDayMeal: boolean;
 }
