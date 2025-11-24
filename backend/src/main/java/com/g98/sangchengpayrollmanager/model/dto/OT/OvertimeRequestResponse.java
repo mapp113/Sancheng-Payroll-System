@@ -26,11 +26,6 @@ public class OvertimeRequestResponse {
     private String reason;
 
 
-    // thêm 2 cái dưới để xác đinh dạng ngày
-    private Integer dayTypeId;
-    private String dayTypeName;
-
-
     private LeaveandOTStatus status;
     private LocalDateTime createdDateOT;
     private LocalDateTime approvedDateOT;

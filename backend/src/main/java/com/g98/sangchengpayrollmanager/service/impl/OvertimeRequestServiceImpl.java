@@ -40,54 +40,54 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
     @Override
     public OvertimeRequestResponse submitOvertimeRequest(OvertimeRequestCreateDTO overtimeRequestDTO) {
 
-
         String username = getCurrentUsername();
         User user = userRepository.findByUsernameWithRole(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user: " + username));
 
         LocalDate otDate = requestValidator.validateOvertime(overtimeRequestDTO);
 
-        WeekFields wf = WeekFields.of(Locale.getDefault());
-//        int weekOfMonth = otDate.get(wf.weekOfMonth());
-//        int weekOfYear = otDate.get(wf.weekOfYear());
-
         DayType dayType = resolveDayType(otDate);
 
         long workedHours = Duration.between(overtimeRequestDTO.getFromTime(),
-                                            overtimeRequestDTO.getToTime()).toHours();
+                overtimeRequestDTO.getToTime()
+        ).toHours();
 
-        LocalDate monthStart = LocalDate.of(otDate.getYear(), otDate.getMonth(), 1);
+        LocalDate monthStart = otDate.withDayOfMonth(1);
         LocalDate monthEnd   = otDate.withDayOfMonth(otDate.lengthOfMonth());
-
 
         boolean hasOverlap = overtimeRequestRespository.existsOverlappingRequest(
                 user.getEmployeeCode(),
                 otDate,
                 overtimeRequestDTO.getFromTime(),
-                overtimeRequestDTO.getToTime());
+                overtimeRequestDTO.getToTime()
+        );
 
         if (hasOverlap) {
             throw new IllegalArgumentException(
-                    "Khoảng thời gian OT này bị trùng với một đơn OT khác (đang chờ duyệt hoặc đã được duyệt) trong cùng ngày."
+                    "Khoảng thời gian OT này bị trùng với một đơn OT khác " +
+                            "(đang chờ duyệt hoặc đã được duyệt) trong cùng ngày."
             );
         }
 
+        // tổng số giờ OT trong tháng hiện tại
         int monthlyHours = overtimeRequestRespository.sumWorkedHoursInMonth(
-                user.getEmployeeCode(), monthStart, monthEnd);
+                user.getEmployeeCode(), monthStart, monthEnd
+        );
 
-        if(monthlyHours + workedHours > 40 ){
-            throw new IllegalArgumentException(  "Tổng số giờ OT trong tuần (bao gồm đơn này) không được vượt quá 10 giờ. "
-                                                  +"Hiện tại bạn đã đăng ký " + monthlyHours + " giờ trong tuần này.");
-
-
+        // giới hạn 40h / tháng
+        if (monthlyHours + workedHours > 40) {
+            throw new IllegalArgumentException(
+                    "Tổng số giờ OT trong tháng (bao gồm đơn này) không được vượt quá 40 giờ. " +
+                            "Hiện tại bạn đã đăng ký " + monthlyHours + " giờ trong tháng này."
+            );
         }
 
         OvertimeRequest entity = mapToEntity(overtimeRequestDTO, user, otDate, dayType, (int) workedHours);
-       OvertimeRequest savedOvertimeRequest = overtimeRequestRespository.save(entity);
-
+        OvertimeRequest savedOvertimeRequest = overtimeRequestRespository.save(entity);
 
         return mapToResponse(savedOvertimeRequest);
     }
+
 
     @Override
     public Page<OvertimeRequestResponse> getMyOvertimeRequest(Pageable pageable) {
@@ -109,11 +109,10 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
         OvertimeRequest overtimeRequest = overtimeRequestRespository.findById(overtimeRequestId)
                 .orElseThrow(() -> new RuntimeException("Đơn OT không tồn tại: " + overtimeRequestId));
 
-
-        if(!overtimeRequest.getUser().getEmployeeCode().equals(user.getEmployeeCode())){
+        if (!overtimeRequest.getUser().getEmployeeCode().equals(user.getEmployeeCode())) {
             throw new RuntimeException("Chỉ được xóa đơn của mình");
         }
-        if(!LeaveandOTStatus.PENDING.name().equals(overtimeRequest.getStatus())){
+        if (!LeaveandOTStatus.PENDING.name().equals(overtimeRequest.getStatus())) {
             throw new IllegalArgumentException(" Chỉ xóa đơn đang chờ ");
         }
 
@@ -133,7 +132,7 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
         boolean isManager = user.getRole().getName().equalsIgnoreCase("MANAGER")
                 || user.getRole().getName().equalsIgnoreCase("HR");
 
-        if(!isManager && !overtimeRequest.getUser().getEmployeeCode().equals(user.getEmployeeCode())){
+        if (!isManager && !overtimeRequest.getUser().getEmployeeCode().equals(user.getEmployeeCode())) {
             throw new RuntimeException("Bạn ko được xem đơn của người khác");
         }
         return mapToResponse(overtimeRequest);
@@ -176,9 +175,10 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
         overtimeRequest.setNoteOT(note);
 
         OvertimeRequest savedOvertimeRequest = overtimeRequestRespository.save(overtimeRequest);
-        int workHours = ( overtimeRequest.getWorkedTime() == null) ? 0 : overtimeRequest.getWorkedTime();
+        int workHours = (overtimeRequest.getWorkedTime() == null) ? 0 : overtimeRequest.getWorkedTime();
+
         if (workHours > 0) {
-            upsertOvertimeBalance(overtimeRequest.getUser(), overtimeRequest.getOtDate(), workHours);
+            upsertMonthlyOvertimeBalance(overtimeRequest.getUser(), overtimeRequest.getOtDate(), workHours);
         }
 
         changeOvertimetoLeaveWithMonthlyOverLimit(overtimeRequest.getUser(), overtimeRequest.getOtDate());
@@ -333,25 +333,21 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
 
 
     // tạo overtime_balance mới cho tuần đó
-    private void upsertOvertimeBalance(User user, LocalDate otDate, int workedHours) {
-        WeekFields wf = WeekFields.of(Locale.getDefault());
-        int weekOfMonth = otDate.get(wf.weekOfMonth());
+    private void upsertMonthlyOvertimeBalance(User user, LocalDate otDate, int workedHours) {
         int year  = otDate.getYear();
         int month = otDate.getMonthValue();
 
-        OvertimeBalance balance = overtimeBalanceRepository.
-                                  findByUserEmployeeCodeAndYearAndMonthAndWeekOfMonth(
-                                          user.getEmployeeCode(), year, month, weekOfMonth )
+        OvertimeBalance balance = overtimeBalanceRepository
+                .findByUserEmployeeCodeAndYearAndMonth(user.getEmployeeCode(), year, month)
                 .orElseGet(() -> OvertimeBalance.builder()
                         .user(user)
                         .year(year)
                         .month(month)
-                        .weekOfMonth(weekOfMonth)
                         .hourBalance(0)
                         .build()
                 );
 
-        int currentWorkedHours = (balance.getHourBalance()== null) ? 0 : balance.getHourBalance();
+        int currentWorkedHours = (balance.getHourBalance() == null) ? 0 : balance.getHourBalance();
         balance.setHourBalance(currentWorkedHours + workedHours);
 
         overtimeBalanceRepository.save(balance);
@@ -416,8 +412,6 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
                 .toTime(entity.getToTime())
                 .workedTime(entity.getWorkedTime())
                 .reason(entity.getReason())
-                .dayTypeId(entity.getDayType().getId())
-                .dayTypeName(entity.getDayType().getName())
                 .status(LeaveandOTStatus.valueOf(entity.getStatus()))
                 .createdDateOT(entity.getCreatedDateOT())
                 .approvedDateOT(entity.getApprovedDateOT())

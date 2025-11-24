@@ -6,11 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface OvertimeBalanceRepository extends JpaRepository<OvertimeBalance, Integer> {
-
-    Optional<OvertimeBalance> findByUserEmployeeCodeAndYearAndMonthAndWeekOfMonth(
-            String employeeCode,
-            Integer year,
-            Integer month,
-            Integer weekOfMonth
-    );
+    Optional<OvertimeBalance> findByUserEmployeeCodeAndYearAndMonth(String employeeCode,
+                                                                    Integer year,
+                                                                    Integer month);
 }

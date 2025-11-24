@@ -26,9 +26,6 @@ public class OvertimeBalance {
     @Column(name = "month", nullable = false)
     private Integer month;
 
-    @Column(name = "week_of_month", nullable = false)
-    private Integer weekOfMonth;
-
     @Column(name = "hour_balance")
     private Integer hourBalance;
 }

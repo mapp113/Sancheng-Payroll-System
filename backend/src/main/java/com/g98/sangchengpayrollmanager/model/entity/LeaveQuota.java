@@ -40,7 +40,7 @@ public class LeaveQuota {
     private Double entitledDays;
 
     @Column(name = "carried_over", nullable = false)
-    private Double carriedOver ;
+    private Double carriedOver = 0.0 ;
 
     @Column(name = "used_days", nullable = false)
     private Double usedDays  ;

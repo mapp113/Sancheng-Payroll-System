@@ -18,7 +18,7 @@ public class InsurancePolicyController {
 
     private final InsurancePolicyService insurancePolicyService;
 
-    @PreAuthorize("hasAnyRole('HR', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('HR', 'Manager')")
     @GetMapping
     public List<InsurancePolicyResponse> getInsurancePolicy() {
         return insurancePolicyService.getAllInsurancePolicies();
