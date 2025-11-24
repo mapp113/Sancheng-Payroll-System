@@ -20,4 +20,6 @@ public interface LegalPolicyRepository extends JpaRepository<LegalPolicy,Integer
             @Param("code") String code,
             @Param("asOfDate") LocalDate asOfDate
     );
+
+    boolean existsByCode(String code);
 }
