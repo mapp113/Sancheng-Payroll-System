@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -245,12 +244,34 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     @Override
     public LeaveRequestResponse approveLeaveRequest(Integer id, String note) {
 
+        String username = getCurrentUsername();
+
+        User approver = userRepository.findByUsernameWithRole(username)
+                .orElseThrow(() -> new RuntimeException("Người không tồn tại: " + username));
+
+        String roleName = approver.getRole().getName();
+
+        if ("HR".equals(roleName)) {
+            throw new RuntimeException("HR chỉ được xem, không được từ chối đơn nghỉ.");
+        }
+
+        if (!"Manager".equals(roleName)) {
+            throw new RuntimeException("Chỉ Manager mới được phê duyệt đơn nghỉ.");
+        }
+
         LeaveRequest leaveRequest = LeaveRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Yêu cầu nghỉ ko tồn tại"));
+
+
+        if (leaveRequest.getUser().getEmployeeCode().equals(approver.getEmployeeCode())) {
+            throw new RuntimeException("Manager không được tự phê duyệt đơn nghỉ của chính mình.");
+        }
+
 
 //        if (LeaveandOTStatus.APPROVED.name().equals(leaveRequest.getStatus())) {
 //            return mapToResponse(leaveRequest);
 //        }
+
         LocalDate fromDate = leaveRequest.getFromDate();
         LocalDate toDate = (leaveRequest.getToDate() != null) ? leaveRequest.getToDate() : leaveRequest.getFromDate();
         double requestedDays = calculateLeaveDays(fromDate, toDate, leaveRequest.getDurationType().name());
@@ -294,8 +315,28 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
     @Override
     public LeaveRequestResponse rejectLeaveRequest(Integer id, String note) {
+        String username = getCurrentUsername();
+        User approver = userRepository.findByUsernameWithRole(username)
+                .orElseThrow(() -> new RuntimeException("Người không tồn tại : " + username));
+
+        String roleName = approver.getRole().getName();
+
+        if ("HR".equals(roleName)) {
+            throw new RuntimeException("HR chỉ được xem, không được từ chối đơn nghỉ.");
+        }
+
+        if (!"Manager".equals(roleName)) {
+            throw new RuntimeException("Chỉ Manager mới được từ chối đơn nghỉ.");
+        }
+
         LeaveRequest leaveRequest = LeaveRequestRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Leave request not found"));
+                .orElseThrow(() -> new RuntimeException("Yêu cầu nghỉ ko tồn tại"));
+
+
+        if (leaveRequest.getUser().getEmployeeCode().equals(approver.getEmployeeCode())) {
+            throw new RuntimeException("Manager không được tự từ chối đơn nghỉ của chính mình.");
+        }
+
         leaveRequest.setStatus(LeaveandOTStatus.REJECTED.name());
         leaveRequest.setNote(note);
         leaveRequest.setApprovedDate(LocalDateTime.now());

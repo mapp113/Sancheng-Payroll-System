@@ -148,8 +148,25 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
 
     @Override
     public OvertimeRequestResponse approveOvertimeRequest(Integer overtimeRequestId, String note) {
+        String username = getCurrentUsername();
+        User approver = userRepository.findByUsernameWithRole(username)
+                .orElseThrow(() -> new RuntimeException("Người không tồn tại : " + username));
+
+        String roleName = approver.getRole().getName();
+        if ("HR".equals(roleName)) {
+            throw new RuntimeException("HR chỉ được xem, không được từ chối đơn overtime.");
+        }
+        if (!"Manager".equals(roleName)) {
+            throw new RuntimeException("Chỉ Manager mới được từ chối đơn overtime.");
+        }
+
         OvertimeRequest overtimeRequest = overtimeRequestRespository.findById(overtimeRequestId)
-                .orElseThrow(() -> new RuntimeException("Đơn xin overtime ko tồn tại: " + overtimeRequestId));
+                .orElseThrow(() -> new RuntimeException("Yêu cầu overtime ko tồn tại"));
+
+        if (overtimeRequest.getUser().getEmployeeCode().equals(approver.getEmployeeCode())) {
+            throw new RuntimeException("Manager không được tự từ chối overtime của chính mình.");
+        }
+
         if (!LeaveandOTStatus.PENDING.name().equals(overtimeRequest.getStatus())) {
             throw new IllegalStateException("Chỉ duyệt đơn OT ở trạng thái PENDING");
         }
@@ -170,17 +187,33 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
 
     @Override
     public OvertimeRequestResponse rejectOvertimeRequest(Integer overtimeRequestId, String note) {
-        OvertimeRequest ot = overtimeRequestRespository.findById(overtimeRequestId)
-                .orElseThrow(() -> new RuntimeException("Overtime request not found"));
+        String username = getCurrentUsername();
+        User approver = userRepository.findByUsernameWithRole(username)
+                .orElseThrow(() -> new RuntimeException("Người không tồn tại : " + username));
 
-        if (!LeaveandOTStatus.PENDING.name().equals(ot.getStatus())) {
-            throw new IllegalStateException("Chỉ duyệt đơn OT ở trạng thái PENDING");
+        String roleName = approver.getRole().getName();
+        if ("HR".equals(roleName)) {
+            throw new RuntimeException("HR chỉ được xem, không được từ chối đơn overtime.");
+        }
+        if (!"Manager".equals(roleName)) {
+            throw new RuntimeException("Chỉ Manager mới được từ chối đơn overtime.");
         }
 
-        ot.setStatus(LeaveandOTStatus.REJECTED.name());
-        ot.setApprovedDateOT(LocalDateTime.now());
-        ot.setNoteOT(note);
-        return mapToResponse(overtimeRequestRespository.save(ot));
+        OvertimeRequest overtimeRequest = overtimeRequestRespository.findById(overtimeRequestId)
+                .orElseThrow(() -> new RuntimeException("Yêu cầu overtime ko tồn tại"));
+
+        if (overtimeRequest.getUser().getEmployeeCode().equals(approver.getEmployeeCode())) {
+            throw new RuntimeException("Manager không được tự từ chối overtime của chính mình.");
+        }
+
+        if (!LeaveandOTStatus.PENDING.name().equals(overtimeRequest.getStatus())) {
+            throw new IllegalStateException("Chỉ duyệt đơn overtime ở trạng thái PENDING");
+        }
+
+        overtimeRequest.setStatus(LeaveandOTStatus.REJECTED.name());
+        overtimeRequest.setApprovedDateOT(LocalDateTime.now());
+        overtimeRequest.setNoteOT(note);
+        return mapToResponse(overtimeRequestRespository.save(overtimeRequest));
 
     }
 
@@ -325,12 +358,12 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
     }
 
 
-    // xác định dạng ngày ot
+    // xác định dạng ngày overtime
     private DayType resolveDayType(LocalDate otDate) {
 
         if (specialDaysRepository.existsByDate(otDate)) {
             return dayTypeRepository.findByNameIgnoreCase("Holiday")
-                    .orElseThrow(() -> new IllegalArgumentException("khoong tìm thấy ngày lẽ "));
+                    .orElseThrow(() -> new IllegalArgumentException("khoong tìm thấy ngày lễ "));
         }
 
         var dow = otDate.getDayOfWeek();

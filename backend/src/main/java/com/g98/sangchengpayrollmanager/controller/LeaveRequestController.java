@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -151,6 +152,7 @@ public class LeaveRequestController {
 
 
     @PutMapping("/approve/{id}")
+    @PreAuthorize("hasRole('Manager')")
     public ResponseEntity<LeaveRequestResponse> approveLeaveRequest
             (@PathVariable Integer id,
              @RequestBody @Validated LeaveandOTRequestUpdateDTO updateDTO) {
@@ -159,6 +161,7 @@ public class LeaveRequestController {
     }
 
     @PutMapping("/reject/{id}")
+    @PreAuthorize("hasRole('Manager')")
     public ResponseEntity<LeaveRequestResponse> rejectLeaveRequest
             (@PathVariable Integer id,
              @RequestBody @Validated LeaveandOTRequestUpdateDTO updateDTO) {

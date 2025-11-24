@@ -17,7 +17,7 @@ import java.util.List;
 public class TaxLevelController {
     private final TaxLevelService taxLevelService;
 
-    @PreAuthorize("hasAnyRole('HR', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('HR', 'Manager')")
     @GetMapping
     public List<TaxLevelResponse> getAllTaxLevels() {
         return taxLevelService.getAllTaxLevels();
