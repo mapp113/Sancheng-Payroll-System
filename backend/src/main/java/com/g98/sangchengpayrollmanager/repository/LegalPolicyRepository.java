@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 public interface LegalPolicyRepository extends JpaRepository<LegalPolicy,Integer> {
 
@@ -21,5 +22,6 @@ public interface LegalPolicyRepository extends JpaRepository<LegalPolicy,Integer
             @Param("asOfDate") LocalDate asOfDate
     );
 
-    boolean existsByCode(String code);
+
+    Optional<LegalPolicy> findByCode(String code);
 }
