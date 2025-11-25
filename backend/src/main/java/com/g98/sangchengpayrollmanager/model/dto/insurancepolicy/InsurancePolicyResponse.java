@@ -2,6 +2,7 @@ package com.g98.sangchengpayrollmanager.model.dto.insurancepolicy;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -12,4 +13,10 @@ public class InsurancePolicyResponse {
     private BigDecimal employeePercentage;
     private BigDecimal companyPercentage;
     private Integer maxAmount;
+
+    private LocalDate effectiveFrom;
+    private LocalDate effectiveTo;
+
+    private boolean active;
+
 }

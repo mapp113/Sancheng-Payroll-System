@@ -2,12 +2,14 @@ package com.g98.sangchengpayrollmanager.service;
 
 import com.g98.sangchengpayrollmanager.model.dto.TaxLevelDTO;
 import com.g98.sangchengpayrollmanager.model.dto.taxlevel.TaxLevelResponse;
+import com.g98.sangchengpayrollmanager.model.entity.InsurancePolicy;
 import com.g98.sangchengpayrollmanager.model.entity.TaxLevel;
 import com.g98.sangchengpayrollmanager.repository.TaxLevelRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,7 +19,7 @@ public class TaxLevelService {
     private final TaxLevelRepository taxLevelRepository;
 
     public List<TaxLevelResponse> getAllTaxLevels() {
-        return taxLevelRepository.findAll().stream()
+        return getAllSorted().stream()
                 .map(this::toResponse).collect(Collectors.toList());
     }
 
@@ -48,6 +50,8 @@ public class TaxLevelService {
                 .fromValue(request.getFromValue())
                 .toValue(request.getToValue())
                 .percentage(request.getPercentage())
+                .effectiveFrom(request.getEffectiveFrom())
+                .effectiveTo(request.getEffectiveTo())
                 .build();
 
 
@@ -64,6 +68,8 @@ public class TaxLevelService {
         taxLevel.setFromValue(request.getFromValue());
         taxLevel.setToValue(request.getToValue());
         taxLevel.setPercentage(request.getPercentage());
+        taxLevel.setEffectiveFrom(request.getEffectiveFrom());
+        taxLevel.setEffectiveTo(request.getEffectiveTo());
         return toResponse(taxLevelRepository.save(taxLevel));
 
     }
@@ -75,6 +81,13 @@ public class TaxLevelService {
         taxLevelRepository.deleteById(id);
     }
 
+    public List<TaxLevel> getAllSorted() {
+        List<TaxLevel> list = taxLevelRepository.findAll();
+        list.sort(Comparator.comparing(TaxLevel:: isActive).reversed());
+        return list;
+
+    }
+
     private TaxLevelResponse toResponse(TaxLevel t) {
         return TaxLevelResponse.builder()
                 .id(t.getId())
@@ -82,6 +95,9 @@ public class TaxLevelService {
                 .fromValue(t.getFromValue())
                 .toValue(t.getToValue())
                 .percentage(t.getPercentage())
+                .effectiveFrom(t.getEffectiveFrom())
+                .effectiveTo(t.getEffectiveTo())
+                .active(t.isActive())
                 .build();
     }
 
