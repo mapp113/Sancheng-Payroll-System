@@ -99,7 +99,7 @@ export default function LeavesPage() {
 
         // Fetch remaining OT (only once)
         if (otIndexPage === 0) {
-          const remainingOTResponse = await fetch("http://localhost:8080/api/overtime/remaining-week", {
+          const remainingOTResponse = await fetch("http://localhost:8080/api/overtime/remaining-month", {
             headers: {
               "Authorization": `Bearer ${token}`,
               "Content-Type": "application/json",

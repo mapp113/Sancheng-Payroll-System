@@ -3,8 +3,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import localFont from "next/font/local";
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
-import {useTranslations} from "@/lib/translations";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useTranslations } from "@/lib/translations";
 import { Bell, ChevronDown, CircleChevronDown, Clock, Languages, User, Settings, LogOut, ArrowLeftRight } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
 
@@ -57,19 +57,39 @@ export default function Navbar() {
     const [username, setUsername] = useState<string | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [dashboardTitle, setDashboardTitle] = useState("Dashboard");
     const menuRef = useRef<HTMLDivElement>(null);
 
     // Ẩn navbar ở các route không cần layout
     // if (pathname && noLayoutRoutes.includes(pathname)) return null;
     const { language, toggleLanguage } = useLanguage();
-    // const dashboardTitle = pathname?.startsWith("/manager")
-    //     ? "Manager Dashboard"
-    //     : "HR Dashboard";
-    const dashboardTitle = pathname?.startsWith("/admin")
-        ? "Admin Dashboard"
-        : pathname?.startsWith("/manager")
-            ? "Manager Dashboard"
-            : "HR Dashboard";
+    const getDashboardTitle = () => {
+        const userStr = window.sessionStorage.getItem("scpm.auth.user");
+        if (userStr) {
+            try {
+                const parsed: UserData = JSON.parse(userStr);
+                const role = parsed?.role;
+
+                if (role === "MANAGER") {
+                    return "Manager Dashboard";
+                } else if (role === "HR") {
+                    return "HR Dashboard";
+                } else if (role === "EMPLOYEE") {
+                    return "Employee Dashboard";
+                }
+
+            } catch (error) {
+                console.error("Failed to parse user data:", error);
+            }
+        }
+
+        // Fallback to pathname-based logic
+        return pathname?.startsWith("/admin")
+            ? "Admin Dashboard"
+            : pathname?.startsWith("/manager")
+                ? "Manager Dashboard"
+                : "HR Dashboard";
+    };
 
     useEffect(() => {
         // try {
@@ -105,6 +125,8 @@ export default function Navbar() {
             console.error("JWT decode error:", error);
             setUsername("Unknown User");
         }
+        setDashboardTitle(getDashboardTitle());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Đóng menu khi click bên ngoài
@@ -185,14 +207,14 @@ export default function Navbar() {
 
 
                 <Link href="/employee/profile"
-                      className="flex items-center gap-2 rounded-full px-2 py-1 transition hover:bg-white/50">
+                    className="flex items-center gap-2 rounded-full px-2 py-1 transition hover:bg-white/50">
                     <Avatar className="h-12 w-12">
-                        <AvatarImage src="/logo.jpg" alt="User avatar"/>
+                        <AvatarImage src="/logo.jpg" alt="User avatar" />
                         <AvatarFallback>Avatar</AvatarFallback>
                     </Avatar>
                     <span id="username" className="font-semibold">
-            {username || "Loading..."}
-          </span>
+                        {username || "Loading..."}
+                    </span>
                 </Link>
                 <div className="relative" ref={menuRef}>
                     <button

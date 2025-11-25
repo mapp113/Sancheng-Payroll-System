@@ -27,7 +27,7 @@ export default function NavigationSidebar({select}: { select: number }) {
                     </a>
                 </li>
                 <li className={`${select === 5 ? selected : ""}`}>
-                    <a href="/reports" className="hover:underline">
+                    <a href="/manager/allowance-policy" className="hover:underline">
                         <Image src="/icons/report.png" alt="Reports" width={52} height={52}/>
                     </a>
                 </li>

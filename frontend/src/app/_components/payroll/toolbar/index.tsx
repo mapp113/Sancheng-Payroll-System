@@ -55,9 +55,6 @@ export default function PayrollToolbar() {
   return (
     <div className="flex gap-4 mb-4 p-2 flex-row items-end border-b">
       <div className="flex gap-4 items-end">
-        <button className="px-4 py-2 border bg-[#89CDFE] text-[#345EA8] border-black rounded-md cursor-pointer"
-        >Back
-        </button>
         <div className="flex items-center px-2 border border-black rounded-xl">
           <SearchIcon className="inline" />
           <input type="text" className="pl-2 focus:outline-none" placeholder="Search"

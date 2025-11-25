@@ -22,3 +22,19 @@ export interface ManagerLeavesParams {
   totalPages?: number;
   keyword?: string;
 }
+
+export interface LeaveQuotaYearSummaryResponse {
+  employeeCode: string;
+  employeeName: string;
+  year: number;
+  quotas: LeaveQuota[];
+}
+
+export interface LeaveQuota{
+  leaveTypeCode: string;
+  leaveTypeName: string;
+  entitledDays: number;
+  carriedOver: number;
+  usedDays: number;
+  remainingDays: number;
+}

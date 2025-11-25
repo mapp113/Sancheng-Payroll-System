@@ -15,7 +15,7 @@ export default function OTApprovalPage() {
   useEffect(() => {
     async function fetchOTDetail() {
       if (!id) return;
-      
+
       try {
         const token = sessionStorage.getItem("scpm.auth.token");
         const response = await fetch(`http://localhost:8080/api/overtime/detail/${id}`, {
@@ -41,7 +41,7 @@ export default function OTApprovalPage() {
 
   const handleApprove = async () => {
     if (!id) return;
-    
+
     const confirmed = confirm("Bạn có chắc chắn muốn duyệt yêu cầu OT này?");
     if (!confirmed) return;
 
@@ -69,7 +69,7 @@ export default function OTApprovalPage() {
 
   const handleReject = async () => {
     if (!id) return;
-    
+
     const confirmed = confirm("Bạn có chắc chắn muốn từ chối yêu cầu OT này?");
     if (!confirmed) return;
 
@@ -101,22 +101,32 @@ export default function OTApprovalPage() {
         <a href="./" className="w-fit h-fit border border-black bg-[#8acefd] text-[#4577a0] hover:bg-[#66befc] py-2 px-4 rounded cursor-pointer" >Back</a>
       </div>
       <OTDetail otData={otData} loading={loading}>
-        {otData?.status === "PENDING" && (
-          <div className="w-full flex items-center justify-center gap-4">
-            <button 
-              onClick={handleApprove}
-              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded cursor-pointer"
-            >
-              Approve
-            </button>
-            <button 
-              onClick={handleReject}
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded cursor-pointer"
-            >
-              Reject
-            </button>
-          </div>
-        )}
+        {otData?.status === "PENDING" && (() => {
+          const userStr = sessionStorage.getItem("scpm.auth.user");
+          if (!userStr) return null;
+          try {
+            const user = JSON.parse(userStr);
+            if (user.role !== 'MANAGER') return null;
+          } catch {
+            return null;
+          }
+          return (
+            <div className="w-full flex items-center justify-center gap-4">
+              <button
+                onClick={handleApprove}
+                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded cursor-pointer"
+              >
+                Approve
+              </button>
+              <button
+                onClick={handleReject}
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded cursor-pointer"
+              >
+                Reject
+              </button>
+            </div>
+          )
+        })()}
       </OTDetail>
     </div>
   );
