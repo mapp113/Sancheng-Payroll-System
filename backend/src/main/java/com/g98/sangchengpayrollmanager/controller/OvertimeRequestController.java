@@ -79,18 +79,16 @@ public class OvertimeRequestController {
 
     // Duyệt đơn xin overtime
     @PostMapping("/approve/{id}")
-    public ResponseEntity<OvertimeRequestResponse> approveOvertimeRequest(
-            @PathVariable Integer id,
-            @RequestParam(required = false) String note
+    public ResponseEntity<OvertimeRequestResponse> approveOvertimeRequest(@PathVariable Integer id,
+                                                                          @RequestParam(required = false) String note
     ) {
         return ResponseEntity.ok(overtimeRequestService.approveOvertimeRequest(id, note));
     }
 
     // Reject đơn xin overtime
     @PostMapping("/reject/{id}")
-    public ResponseEntity<OvertimeRequestResponse> rejectOvertimeRequest(
-            @PathVariable Integer id,
-            @RequestParam String note
+    public ResponseEntity<OvertimeRequestResponse> rejectOvertimeRequest(@PathVariable Integer id,
+                                                                         @RequestParam String note
     ) {
         return ResponseEntity.ok(overtimeRequestService.rejectOvertimeRequest(id, note));
     }

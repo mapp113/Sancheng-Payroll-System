@@ -26,4 +26,7 @@ public class OvertimeRequestCreateDTO {
     private LocalDateTime toTime;
 
     private String reason;
+
+    private Boolean confirmOverLimit;
+
 }

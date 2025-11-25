@@ -5,6 +5,7 @@ import com.g98.sangchengpayrollmanager.model.dto.OvertimeRequestCreateDTO;
 import com.g98.sangchengpayrollmanager.model.entity.*;
 import com.g98.sangchengpayrollmanager.model.enums.LeaveandOTStatus;
 import com.g98.sangchengpayrollmanager.repository.*;
+import com.g98.sangchengpayrollmanager.security.ConfirmException;
 import com.g98.sangchengpayrollmanager.service.OvertimeRequestService;
 import com.g98.sangchengpayrollmanager.service.validator.RequestValidator;
 import jakarta.transaction.Transactional;
@@ -19,8 +20,8 @@ import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.WeekFields;
-import java.util.Locale;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -48,7 +49,8 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
 
         DayType dayType = resolveDayType(otDate);
 
-        long workedHours = Duration.between(overtimeRequestDTO.getFromTime(),
+        long workedHours = Duration.between(
+                overtimeRequestDTO.getFromTime(),
                 overtimeRequestDTO.getToTime()
         ).toHours();
 
@@ -64,8 +66,7 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
 
         if (hasOverlap) {
             throw new IllegalArgumentException(
-                    "Khoảng thời gian OT này bị trùng với một đơn OT khác " +
-                            "(đang chờ duyệt hoặc đã được duyệt) trong cùng ngày."
+                    "Khoảng thời gian OT này bị trùng với đơn OT khác trong cùng ngày."
             );
         }
 
@@ -74,12 +75,44 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
                 user.getEmployeeCode(), monthStart, monthEnd
         );
 
-        // giới hạn 40h / tháng
-        if (monthlyHours + workedHours > 40) {
-            throw new IllegalArgumentException(
-                    "Tổng số giờ OT trong tháng (bao gồm đơn này) không được vượt quá 40 giờ. " +
-                            "Hiện tại bạn đã đăng ký " + monthlyHours + " giờ trong tháng này."
-            );
+        int monthlyAfter = monthlyHours + (int) workedHours;
+
+        LocalDate yearStart = LocalDate.of(otDate.getYear(), 1, 1);
+        LocalDate yearEnd   = LocalDate.of(otDate.getYear(), 12, 31);
+        int yearlyHours = overtimeRequestRespository.sumWorkedHoursInYear(
+                user.getEmployeeCode(), yearStart, yearEnd
+        );
+
+        // tổng số giờ OT trong năm hiện tại
+        int yearlyAfter = yearlyHours + (int) workedHours;
+
+        boolean overMonthly = monthlyAfter > 40;
+        boolean overYearly  = yearlyAfter > 200;
+
+        if ((overMonthly || overYearly)
+                && (overtimeRequestDTO.getConfirmOverLimit() == null
+                || !overtimeRequestDTO.getConfirmOverLimit())) {
+
+            StringBuilder msg = new StringBuilder();
+            if (overMonthly) {
+                msg.append("Tổng số giờ OT trong tháng ")
+                        .append(otDate.getMonthValue()).append("/").append(otDate.getYear())
+                        .append(" sau khi thêm đơn này là ").append(monthlyAfter)
+                        .append(" giờ (vượt 40 giờ/tháng).\n");
+            }
+            if (overYearly) {
+                msg.append("Tổng số giờ OT trong năm ")
+                        .append(otDate.getYear())
+                        .append(" sau khi thêm đơn này là ").append(yearlyAfter)
+                        .append(" giờ (vượt 200 giờ/năm).\n");
+            }
+            msg.append("Bạn có chắc chắn muốn tiếp tục gửi đơn OT này không?");
+
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("monthlyAfter", monthlyAfter);
+            payload.put("yearlyAfter", yearlyAfter);
+
+            throw new ConfirmException("OT_OVER_LIMIT", msg.toString(), payload);
         }
 
         OvertimeRequest entity = mapToEntity(overtimeRequestDTO, user, otDate, dayType, (int) workedHours);
@@ -287,7 +320,7 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
         int yearlyLimit = 200;
         boolean exceedYearLimit = yearlyHours > yearlyLimit;
 
-
+        // Tạo / lấy loại nghỉ bù OT
         LeaveType compType = leaveTypeRepository.findByCode("OT_COMP")
                 .orElseGet(() -> {
                     LeaveType leaveType = new LeaveType();
@@ -299,15 +332,14 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
                     return leaveTypeRepository.save(leaveType);
                 });
 
-
-
-        LeaveQuota quota = leaveQuotaRepository.findByEmployeeCodeAndLeaveTypeCodeAndYear(empCode, compType.getCode(), year)
+        LeaveQuota quota = leaveQuotaRepository
+                .findByEmployeeCodeAndLeaveTypeCodeAndYear(empCode, compType.getCode(), year)
                 .orElseGet(() -> {
                     LeaveQuota q = new LeaveQuota();
                     q.setEmployeeCode(empCode);
                     q.setLeaveTypeCode("OT_COMP");
                     q.setLeaveType(compType);
-                    q.setYear(LocalDate.now().getYear());
+                    q.setYear(year); // dùng đúng năm OT
                     q.setEntitledDays(0.0);
                     q.setCarriedOver(0.0);
                     q.setUsedDays(0.0);
@@ -323,13 +355,9 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
             quota.setEntitledDays(currentEntitled + extraDays);
         }
 
-
         quota.setCarriedOver(newRemainder);
         leaveQuotaRepository.save(quota);
-
     }
-
-
 
 
     // tạo overtime_balance mới cho tuần đó
@@ -359,17 +387,17 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
 
         if (specialDaysRepository.existsByDate(otDate)) {
             return dayTypeRepository.findByNameIgnoreCase("Holiday")
-                    .orElseThrow(() -> new IllegalArgumentException("khoong tìm thấy ngày lễ "));
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ngày lễ "));
         }
 
         var dow = otDate.getDayOfWeek();
         if (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY) {
             return dayTypeRepository.findByNameIgnoreCase("Weekend")
-                    .orElseThrow(() -> new IllegalArgumentException("khoong tìm thấy ngày "));
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ngày "));
         }
 
         return dayTypeRepository.findByNameIgnoreCase("Working Day")
-                .orElseThrow(() -> new IllegalArgumentException("khoong tìm thấy ngày "));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ngày "));
     }
 
 
@@ -377,7 +405,7 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
     public static String getCurrentUsername() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
-            throw new RuntimeException("ko co nguoi dung");
+            throw new RuntimeException("Không có người dùng.");
         }
         return auth.getName();
     }
