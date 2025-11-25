@@ -5,6 +5,7 @@ import { dateSlashToHyphen } from "@/app/_components/utils/dateSlashToHyphen";
 import { useState } from "react";
 import { NotificationProvider, useNotification } from "@/app/_components/common/pop-box/notification/notification-context";
 import BottomRightNotification from "@/app/_components/common/pop-box/notification/bottom-right";
+import ConfirmPopBox from "@/app/_components/common/pop-box/confirm";
 
 interface OTRequestData {
   otDate: string;
@@ -12,6 +13,7 @@ interface OTRequestData {
   toTime: number;
   otType: string;
   reason: string;
+  confirmOverLimit?: boolean;
 }
 
 function OTRequestsPageContent() {
@@ -23,6 +25,8 @@ function OTRequestsPageContent() {
     otType: "",
     reason: "",
   });
+  const [showConfirmPopup, setShowConfirmPopup] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState("");
 
   // Tự động xác định loại OT dựa trên ngày được chọn
   const getOTTypeFromDate = (dateString: string): string => {
@@ -57,6 +61,47 @@ function OTRequestsPageContent() {
     });
   };
 
+  const handleConfirmOverLimit = async () => {
+    // Gọi lại API với confirmOverLimit = true
+    setShowConfirmPopup(false);
+    
+    const formDataToSend = new FormData();
+    formDataToSend.append("otDate", dateSlashToHyphen(formData.otDate));
+    const fromDateTime = `${dateSlashToHyphen(formData.otDate)}T${String(formData.fromTime).padStart(2, '0')}:00:00`;
+    formDataToSend.append("fromTime", fromDateTime);
+    const toDateTime = `${dateSlashToHyphen(formData.otDate)}T${String(formData.toTime).padStart(2, '0')}:00:00`;
+    formDataToSend.append("toTime", toDateTime);
+    formDataToSend.append("reason", formData.reason);
+    formDataToSend.append("confirmOverLimit", "true");
+
+    try {
+      const token = sessionStorage.getItem("scpm.auth.token");
+      const response = await fetch("http://localhost:8080/api/overtime/submit", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+        body: formDataToSend,
+      });
+
+      if (response.ok) {
+        addNotification("ok", "Thành công", "Gửi yêu cầu OT thành công", 3000);
+        handleReset();
+      } else {
+        const errorText = await response.text();
+        throw new Error(errorText);
+      }
+    } catch (error) {
+      console.error("Lỗi khi gửi yêu cầu OT:", error);
+      const errorMessage = error instanceof Error ? error.message : "Lỗi không xác định";
+      addNotification("error", "Lỗi", `Gửi yêu cầu OT thất bại: ${errorMessage}`, 5000);
+    }
+  };
+
+  const handleCancelOverLimit = () => {
+    setShowConfirmPopup(false);
+  };
+
   const handleSubmit = async () => {
     // Validate required fields
     if (!formData.otDate || formData.fromTime === undefined || formData.toTime === undefined) {
@@ -67,6 +112,12 @@ function OTRequestsPageContent() {
     // Validate fromTime < toTime
     if (formData.fromTime >= formData.toTime) {
       addNotification("error", "Lỗi", "Giờ bắt đầu phải nhỏ hơn giờ kết thúc", 4000);
+      return;
+    }
+
+    // Validate: Ngày thường phải bắt đầu từ 17 giờ trở lên
+    if (formData.otType === "Ngày thường" && formData.fromTime < 17) {
+      addNotification("error", "Lỗi", "OT ngày thường phải bắt đầu từ 17 giờ trở đi", 4000);
       return;
     }
 
@@ -98,6 +149,19 @@ function OTRequestsPageContent() {
       });
 
       if (response.ok) {
+        // Kiểm tra xem có response JSON không
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const jsonResponse = await response.json();
+          
+          // Kiểm tra nếu có code OT_OVER_LIMIT và type CONFIRM
+          if (jsonResponse.code === "OT_OVER_LIMIT" && jsonResponse.type === "CONFIRM") {
+            setConfirmMessage(jsonResponse.message || "Vượt quá giới hạn OT. Bạn có muốn tiếp tục?");
+            setShowConfirmPopup(true);
+            return;
+          }
+        }
+        
         addNotification("ok", "Thành công", "Gửi yêu cầu OT thành công", 3000);
         handleReset();
       } else {
@@ -149,7 +213,15 @@ function OTRequestsPageContent() {
               max="23"
               required
               value={formData.fromTime}
-              onChange={(e) => handleInputChange("fromTime", parseInt(e.target.value) || 0)}
+              onChange={(e) => {
+                const value = parseInt(e.target.value) || 0;
+                handleInputChange("fromTime", value);
+                
+                // Kiểm tra ngay khi người dùng nhập
+                if (formData.otType === "Ngày thường" && value < 17 && value > 0) {
+                  addNotification("error", "Lỗi", "OT ngày thường phải bắt đầu từ 17 giờ trở đi", 3000);
+                }
+              }}
             />
             <span>giờ</span>
           </div>
@@ -204,6 +276,17 @@ function OTRequestsPageContent() {
           </div>
         </div>
       </div>
+      
+      {showConfirmPopup && (
+        <ConfirmPopBox
+          title="Xác nhận vượt giới hạn OT"
+          message={confirmMessage}
+          onConfirm={handleConfirmOverLimit}
+          onCancel={handleCancelOverLimit}
+          confirmText="Đồng ý"
+          cancelText="Từ chối"
+        />
+      )}
     </div>
   );
 }
