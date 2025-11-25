@@ -39,7 +39,8 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Inte
       AND l.status <> 'REJECTED'
     """)
     boolean existsOverlappingLeave(@Param("empCode") String employeeCode,
-                                   @Param("fromDate") LocalDate fromDate, @Param("toDate") LocalDate toDate);
+                                   @Param("fromDate") LocalDate fromDate,
+                                   @Param("toDate") LocalDate toDate);
     @Query("""
     SELECT lr FROM LeaveRequest lr
     WHERE (:month IS NULL OR MONTH(lr.createdDate) = :month)
@@ -50,7 +51,9 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Inte
    """)
     Page<LeaveRequest> filterByMonthYear(
             @Param("month") Integer month, @Param("year") Integer year, Pageable pageable);
+
     List<LeaveRequest> findByUser_EmployeeCode(String employeeCode);
+
     List<LeaveRequest> findByStatus(LeaveandOTStatus status);
 
     @Query("""
@@ -60,10 +63,9 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Inte
       AND lr.fromDate <= :date
       AND (lr.toDate IS NULL OR lr.toDate >= :date)
 """)
-    Optional<LeaveRequest> findByUserAndDateAndStatus(
-            User user,
-            LocalDate date,
-            String status
+    Optional<LeaveRequest> findByUserAndDateAndStatus(User user,
+                                                      LocalDate date,
+                                                      String status
     );
 
 }

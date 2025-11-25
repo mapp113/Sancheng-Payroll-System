@@ -287,10 +287,7 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
                 user.getEmployeeCode(), monthStart, monthEnd
         );
 
-        int maxMonthlyHours = 40;
-        int remaining = maxMonthlyHours - monthlyHours;
-
-        return Math.max(0, remaining);
+        return monthlyHours;
     }
 
     public void changeOvertimetoLeaveWithMonthlyOverLimit(User user, LocalDate otDate) {
