@@ -19,7 +19,7 @@ public interface OvertimeBalanceRepository extends JpaRepository<OvertimeBalance
         WHERE b.user.employeeCode = :employeeCode
           AND b.year = :year
     """)
-    Integer sumYearlyBalance(@Param("employeeCode") String employeeCode,
+    Long sumYearlyBalance(@Param("employeeCode") String employeeCode,
                              @Param("year") Integer year);
 
     @Query("""

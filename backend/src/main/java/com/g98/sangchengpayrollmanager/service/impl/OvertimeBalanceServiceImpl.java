@@ -49,22 +49,22 @@ public class OvertimeBalanceServiceImpl implements OvertimeBalanceService {
         }
         User username = userRepository.findByEmployeeCode(employeeCode)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên " + employeeCode));
-        Integer total =  overtimeBalanceRepository.sumYearlyBalance(employeeCode, year);
+        Long total =  overtimeBalanceRepository.sumYearlyBalance(employeeCode, year);
         if (total == null) {
-            total = 0 ;
+            total = 0l ;
         }
         List<Object[]> rows = overtimeBalanceRepository.sumMonthlyBalance(employeeCode, year);
         List<MonthlyOvertimeDTO> monthlyOvertimeDTOS = new ArrayList<>();
         for (Object[] row : rows) {
             Integer month = (Integer) row[0];
-            Integer overtime = ((Integer) row[1]).intValue();
+            Integer overtime = ((Number) row[1]).intValue();
             monthlyOvertimeDTOS.add(new MonthlyOvertimeDTO(month, overtime));
         }
         return new OvertimeSummaryDTO(
                 username.getEmployeeCode(),
                 username.getFullName(),
                 year,
-                total,
+                total.intValue(),
                 monthlyOvertimeDTOS
         );
 
@@ -75,7 +75,8 @@ public class OvertimeBalanceServiceImpl implements OvertimeBalanceService {
             year = LocalDate.now().getYear();
         }
 
-        return overtimeBalanceRepository.sumYearlyBalance(employeeCode, year);
+        Long total = overtimeBalanceRepository.sumYearlyBalance(employeeCode, year);
+        return total == null ? 0 : total.intValue();
 
     }
 
