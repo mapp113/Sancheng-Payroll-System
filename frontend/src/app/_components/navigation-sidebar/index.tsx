@@ -7,7 +7,7 @@ export default function NavigationSidebar({select}: { select: number }) {
         <aside className="fixed top-16 bottom-0 left-0 z-40 w-20 bg-[#CCE1F0] p-4 flex flex-col items-center">
             <ul className="space-y-2">
                 <li className={`${select === 1 ? selected : ""}`}>
-                    <a href="/employees" className="hover:underline">
+                    <a href="/contract" className="hover:underline">
                         <Image src="/icons/employee.png" alt="Employees" width={52} height={52}/>
                     </a>
                 </li>
@@ -16,11 +16,11 @@ export default function NavigationSidebar({select}: { select: number }) {
                         <Image src="/icons/attendance.png" alt="Attendance" width={52} height={52}/>
                     </a>
                 </li>
-                <li className={`${select === 3 ? selected : ""}`}>
-                    <a href="/contract" className="hover:underline">
-                        <Image src="/icons/contract.png" alt="Contact" width={52} height={52}/>
-                    </a>
-                </li>
+                {/*<li className={`${select === 3 ? selected : ""}`}>*/}
+                {/*    <a href="/contracts" className="hover:underline">*/}
+                {/*        <Image src="/icons/contract.png" alt="Contact" width={52} height={52}/>*/}
+                {/*    </a>*/}
+                {/*</li>*/}
                 <li className={`${select === 4 ? selected : ""}`}>
                     <a href="/payroll" className="hover:underline ">
                         <Image src="/icons/payroll.png" alt="Payroll" width={52} height={52}/>
