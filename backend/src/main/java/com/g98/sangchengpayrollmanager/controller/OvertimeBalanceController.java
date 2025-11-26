@@ -16,7 +16,7 @@ public class OvertimeBalanceController {
     private final OvertimeBalanceService overtimeBalanceService;
 
     @GetMapping("/summary")
-    public OvertimeSummaryDTO getEmployeeOTSummary(@PathVariable String employeeCode,
+    public OvertimeSummaryDTO getEmployeeOTSummary(@RequestParam String employeeCode,
                                                    @RequestParam(required = false) Integer year) {
         return overtimeBalanceService.getEmployeeOvertimeSummary(employeeCode, year);
     }

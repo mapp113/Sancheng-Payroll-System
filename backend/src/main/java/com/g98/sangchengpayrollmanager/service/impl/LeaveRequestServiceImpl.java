@@ -10,6 +10,7 @@ import com.g98.sangchengpayrollmanager.model.enums.DurationType;
 import com.g98.sangchengpayrollmanager.model.enums.LeaveandOTStatus;
 import com.g98.sangchengpayrollmanager.repository.*;
 import com.g98.sangchengpayrollmanager.service.LeaveRequestService;
+import com.g98.sangchengpayrollmanager.service.NotificationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +34,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     private final LeaveQuotaRepository leaveQuotaRepository;
     private static final String ANNUAL_LEAVE_CODE = "annual";
     private final SpecialDaysRepository specialDaysRepository;
+    private final NotificationService notificationService;
 
     @Override
     public LeaveRequestResponse submitLeaveRequest(LeaveRequestCreateDTO leaveRequestDTO) {
@@ -95,6 +98,20 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
         entity.setToDate(toDate);
         LeaveRequest savedLeaveRequest = LeaveRequestRepository.save(entity);
+
+        List<User> managers  = userRepository.findAllManagers();
+
+        for (User u : managers) {
+            notificationService.createNotification(
+                    managers.getLast().getEmployeeCode(),
+                    "Có đơn xin nghỉ mới từ nhân viên ",
+                    user.getFullName()
+                            + "Đã xin nghỉ từ " + leaveRequestDTO.getFromDate()
+                            + "tới " + leaveRequestDTO.getToDate() ,
+                    "LEAVE_REQUEST",
+                    savedLeaveRequest.getId()
+            );
+        }
 
         return mapToResponse(savedLeaveRequest);
     }
@@ -309,8 +326,19 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         leaveRequest.setStatus(LeaveandOTStatus.APPROVED.name());
         leaveRequest.setNote(note);
         leaveRequest.setApprovedDate(LocalDateTime.now());
+        LeaveRequest savedLeaveRequest = LeaveRequestRepository.save(leaveRequest);
 
-        return mapToResponse(LeaveRequestRepository.save(leaveRequest));
+        User employee = leaveRequest.getUser();
+
+        notificationService.createNotification(
+                employee.getEmployeeCode(),
+                "Đơn xin nghỉ của bạn đã được chấp nhận",
+                "Đơn xin nghỉ ngày" + leaveRequest.getFromDate() +
+                        "Tới ngày" +leaveRequest.getToDate() + "đã được duyệt",
+                "LEAVE_APPROVED",
+                savedLeaveRequest.getId()
+        );
+        return mapToResponse(savedLeaveRequest);
     }
 
     @Override
@@ -340,8 +368,19 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         leaveRequest.setStatus(LeaveandOTStatus.REJECTED.name());
         leaveRequest.setNote(note);
         leaveRequest.setApprovedDate(LocalDateTime.now());
+        LeaveRequest savedLeaveRequest = LeaveRequestRepository.save(leaveRequest);
 
-        return mapToResponse(LeaveRequestRepository.save(leaveRequest));
+        User employee = leaveRequest.getUser();
+
+        notificationService.createNotification(
+                employee.getEmployeeCode(),
+                "Đơn xin nghỉ của bạn đã không được chấp nhận",
+                "Đơn xin nghỉ ngày" + leaveRequest.getFromDate() +
+                        "Tới ngày" +leaveRequest.getToDate() + "không được duyệt",
+                "LEAVE_APPROVED",
+                savedLeaveRequest.getId()
+        );
+        return mapToResponse(savedLeaveRequest);
     }
 
     private boolean isWorkingDay(LocalDate date) {

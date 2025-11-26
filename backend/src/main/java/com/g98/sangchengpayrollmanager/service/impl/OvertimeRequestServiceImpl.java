@@ -6,6 +6,7 @@ import com.g98.sangchengpayrollmanager.model.entity.*;
 import com.g98.sangchengpayrollmanager.model.enums.LeaveandOTStatus;
 import com.g98.sangchengpayrollmanager.repository.*;
 import com.g98.sangchengpayrollmanager.security.ConfirmException;
+import com.g98.sangchengpayrollmanager.service.NotificationService;
 import com.g98.sangchengpayrollmanager.service.OvertimeRequestService;
 import com.g98.sangchengpayrollmanager.service.validator.RequestValidator;
 import jakarta.transaction.Transactional;
@@ -21,6 +22,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -37,6 +39,7 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
     private final OvertimeBalanceRepository overtimeBalanceRepository;
     private final LeaveTypeRepository leaveTypeRepository;
     private final LeaveQuotaRepository leaveQuotaRepository;
+    private final NotificationService notificationService;
 
     @Override
     public OvertimeRequestResponse submitOvertimeRequest(OvertimeRequestCreateDTO overtimeRequestDTO) {
@@ -118,6 +121,17 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
         OvertimeRequest entity = mapToEntity(overtimeRequestDTO, user, otDate, dayType, (int) workedHours);
         OvertimeRequest savedOvertimeRequest = overtimeRequestRespository.save(entity);
 
+        List<User> managers  = userRepository.findAllManagers();
+
+        for (User u : managers) {
+            notificationService.createNotification(
+                    managers.getLast().getEmployeeCode(),
+                    "Có đơn Làm thêm giờ mới",
+                    user.getFullName() + "gửi đơn Làm thêm giờ ngày " + otDate,
+                    "OT_REQUEST",
+                    savedOvertimeRequest.getId()
+            );
+        }
 
         return mapToResponse(savedOvertimeRequest);
     }
@@ -216,6 +230,14 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
         }
 
         changeOvertimetoLeaveWithMonthlyOverLimit(overtimeRequest.getUser(), overtimeRequest.getOtDate());
+
+        User employee = overtimeRequest.getUser();
+        notificationService.createNotification(
+                employee.getEmployeeCode(),
+                "Đơn xin làm thêm giờ của bạn đã được duyệt ",
+                "Đơn làm thêm giờ ngày" + overtimeRequest.getOtDate() +"Đã được duyệt bởi Manager.",
+                "OT_APPROVED",
+                savedOvertimeRequest.getId());
         return mapToResponse(savedOvertimeRequest);
     }
 
@@ -247,7 +269,17 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
         overtimeRequest.setStatus(LeaveandOTStatus.REJECTED.name());
         overtimeRequest.setApprovedDateOT(LocalDateTime.now());
         overtimeRequest.setNoteOT(note);
-        return mapToResponse(overtimeRequestRespository.save(overtimeRequest));
+        OvertimeRequest saveOvertimeRequest = overtimeRequestRespository.save(overtimeRequest);
+
+        User employee = overtimeRequest.getUser();
+        notificationService.createNotification(
+                employee.getEmployeeCode(),
+                "Đơn xin làm thêm giờ của bạn đã được duyệt ",
+                "Đơn làm thêm giờ ngày" + overtimeRequest.getOtDate() +"Đã được duyệt bởi Manager.",
+                "OT_APPROVED",
+                saveOvertimeRequest.getId());
+
+        return mapToResponse(saveOvertimeRequest);
 
     }
 

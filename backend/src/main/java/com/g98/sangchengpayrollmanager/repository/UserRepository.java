@@ -28,4 +28,8 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     List<User> findByStatus(Integer status);
 
+
+    @Query("SELECT u FROM User u WHERE u.role.name = 'Manager'")
+    List<User> findAllManagers();
+
 }
