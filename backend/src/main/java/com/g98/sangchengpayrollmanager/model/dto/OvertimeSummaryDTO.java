@@ -11,6 +11,10 @@ import java.util.List;
 @NoArgsConstructor
 public class OvertimeSummaryDTO {
 
+    private String employeeCode;
+    private String employeeName;
+    private Integer year;
+
     private Integer totalOvertime;
     private List<MonthlyOvertimeDTO> monthly;
 }

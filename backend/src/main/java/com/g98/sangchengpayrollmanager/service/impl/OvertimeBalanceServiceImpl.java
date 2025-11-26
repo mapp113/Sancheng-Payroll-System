@@ -1,6 +1,7 @@
 package com.g98.sangchengpayrollmanager.service.impl;
 
 import com.g98.sangchengpayrollmanager.model.dto.MonthlyOvertimeDTO;
+import com.g98.sangchengpayrollmanager.model.dto.OvertimeSummaryDTO;
 import com.g98.sangchengpayrollmanager.model.entity.OvertimeBalance;
 import com.g98.sangchengpayrollmanager.model.entity.User;
 import com.g98.sangchengpayrollmanager.repository.OvertimeBalanceRepository;
@@ -42,24 +43,31 @@ public class OvertimeBalanceServiceImpl implements OvertimeBalanceService {
     }
 
     @Override
-    public List<MonthlyOvertimeDTO> getEmployeeMonthlyOvertime(String employeeCode, Integer year) {
-
-        if(year == null){
+    public OvertimeSummaryDTO getEmployeeOvertimeSummary(String employeeCode, Integer year) {
+        if (year == null) {
             year = LocalDate.now().getYear();
         }
-        userRepository.findByEmployeeCode(employeeCode)
+        User username = userRepository.findByEmployeeCode(employeeCode)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên " + employeeCode));
-
+        Integer total =  overtimeBalanceRepository.sumYearlyBalance(employeeCode, year);
+        if (total == null) {
+            total = 0 ;
+        }
         List<Object[]> rows = overtimeBalanceRepository.sumMonthlyBalance(employeeCode, year);
-
-        List<MonthlyOvertimeDTO> result = new ArrayList<>();
+        List<MonthlyOvertimeDTO> monthlyOvertimeDTOS = new ArrayList<>();
         for (Object[] row : rows) {
             Integer month = (Integer) row[0];
-            Integer hours = ((Number) row[1]).intValue();
-            result.add(new MonthlyOvertimeDTO(month, hours));
+            Integer overtime = ((Integer) row[1]).intValue();
+            monthlyOvertimeDTOS.add(new MonthlyOvertimeDTO(month, overtime));
         }
+        return new OvertimeSummaryDTO(
+                username.getEmployeeCode(),
+                username.getFullName(),
+                year,
+                total,
+                monthlyOvertimeDTOS
+        );
 
-        return result;
     }
 
     public Integer getYearlyOvertimeByEmployeeCode(String employeeCode, Integer year) {
