@@ -6,9 +6,11 @@ import com.g98.sangchengpayrollmanager.model.dto.RoleSummaryDTO;
 import com.g98.sangchengpayrollmanager.model.dto.UpdateUserRequest;
 import com.g98.sangchengpayrollmanager.model.dto.UserDTO;
 import com.g98.sangchengpayrollmanager.model.dto.api.response.ApiResponse;
+import com.g98.sangchengpayrollmanager.model.entity.LeaveQuota;
 import com.g98.sangchengpayrollmanager.model.entity.Role;
 import com.g98.sangchengpayrollmanager.model.entity.User;
 import com.g98.sangchengpayrollmanager.repository.AdminRepository;
+import com.g98.sangchengpayrollmanager.repository.LeaveQuotaRepository;
 import com.g98.sangchengpayrollmanager.repository.RoleCountProjection;
 import com.g98.sangchengpayrollmanager.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,7 @@ public class AdminService {
 
     private final AdminRepository adminRepository;
     private final BiometricSyncService biometricSyncService;
+    private final LeaveQuotaService leaveQuotaService;
 
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
@@ -158,6 +161,10 @@ public class AdminService {
 
         // Lưu user vào DB
         adminRepository.save(user);
+
+        Integer year = LocalDate.now().getYear();
+        leaveQuotaService.initQuotaForNewEmployee(user.getEmployeeCode(), year);
+
 
         return ApiResponse.builder()
                 .status(200)
