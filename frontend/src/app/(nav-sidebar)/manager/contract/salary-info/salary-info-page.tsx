@@ -10,6 +10,11 @@ type PayrollRow = {
     value: string;
     startDate: string;
     endDate: string;
+    rawStartDate?: string;
+    rawEndDate?: string | null;
+    baseSalaryValue?: number;
+    baseHourlyRate?: number;
+    status?: string;
 };
 
 type AllowanceRow = {
@@ -38,13 +43,13 @@ type SalaryInfoProps = {
 // Helper function to decode JWT token
 function parseJwt(token: string) {
     try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const base64Url = token.split(".")[1];
+        const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
         const jsonPayload = decodeURIComponent(
             atob(base64)
-                .split('')
-                .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-                .join('')
+                .split("")
+                .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+                .join(""),
         );
         return JSON.parse(jsonPayload);
     } catch (e) {
@@ -54,7 +59,6 @@ function parseJwt(token: string) {
 }
 
 export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
-
     const code = useMemo(() => {
         return employeeCode || "";
     }, [employeeCode]);
@@ -120,19 +124,24 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
             }
             const payload = await response.json();
             const salaryRows: PayrollRow[] = (payload?.data ?? []).map(
-                (
-                    item: {
-                        baseSalary?: number;
-                        effectiveFrom?: string;
-                        effectiveTo?: string | null;
-                    },
-                    index: number,
-                ) => ({
-                    id: index + 1,
+                (item: {
+                    id: number;
+                    baseSalary?: number;
+                    baseHourlyRate?: number;
+                    effectiveFrom?: string;
+                    effectiveTo?: string | null;
+                    status?: string;
+                }) => ({
+                    id: item.id,
                     label: "Lương cơ bản",
                     value: formatCurrency(item.baseSalary),
                     startDate: formatDate(item.effectiveFrom),
                     endDate: formatDate(item.effectiveTo),
+                    rawStartDate: item.effectiveFrom,
+                    rawEndDate: item.effectiveTo,
+                    baseSalaryValue: item.baseSalary,
+                    baseHourlyRate: item.baseHourlyRate,
+                    status: item.status,
                 }),
             );
             setRows(salaryRows);
@@ -145,9 +154,19 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
 
     const handleEditSalary = (row: PayrollRow) => {
         setEditingSalaryId(row.id);
-        setBaseSalary(row.value.replace(/[^\d]/g, ''));
-        setStartDate(row.startDate.split('/').reverse().join('-'));
-        setEndDate(row.endDate !== '-' ? row.endDate.split('/').reverse().join('-') : '');
+        setBaseSalary(
+            row.baseSalaryValue !== undefined && row.baseSalaryValue !== null
+                ? String(row.baseSalaryValue)
+                : "",
+        );
+        setBaseHourlyRate(
+            row.baseHourlyRate !== undefined && row.baseHourlyRate !== null
+                ? String(row.baseHourlyRate)
+                : "",
+        );
+        setStartDate(row.rawStartDate || "");
+        setEndDate(row.rawEndDate || "");
+        setSalaryStatus(row.status || "ACTIVE");
         setShowSalaryModal(true);
     };
 
@@ -156,10 +175,13 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
 
         setSubmittingSalary(true);
         try {
+            const isEditing = Boolean(editingSalaryId);
             const response = await fetch(
-                `${API_BASE_URL}/api/v1/hr/users/${code}/salary-information`,
+                isEditing
+                    ? `${API_BASE_URL}/api/v1/hr/users/${code}/salary-information/${editingSalaryId}`
+                    : `${API_BASE_URL}/api/v1/hr/users/${code}/salary-information`,
                 {
-                    method: "POST",
+                    method: isEditing ? "PUT" : "POST",
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({
                         baseSalary: Number(baseSalary),
@@ -201,6 +223,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
     const [allowStart, setAllowStart] = useState("");
     const [allowEnd, setAllowEnd] = useState("");
     const [submittingAllowance, setSubmittingAllowance] = useState(false);
+    const [deletingAllowanceId, setDeletingAllowanceId] = useState<number | null>(null);
 
     const resetAllowanceForm = () => {
         setAllowTypeId("");
@@ -237,18 +260,16 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
             }
             const payload = await response.json();
             const allowances: AllowanceRow[] = (payload?.data ?? []).map(
-                (
-                    item: {
-                        typeId?: number;
-                        typeName?: string;
-                        name?: string;
-                        value?: number;
-                        startDate?: string;
-                        endDate?: string | null;
-                    },
-                    index: number,
-                ) => ({
-                    id: index + 1,
+                (item: {
+                    id: number;
+                    typeId?: number;
+                    typeName?: string;
+                    name?: string;
+                    value?: number;
+                    startDate?: string;
+                    endDate?: string | null;
+                }) => ({
+                    id: item.id,
                     typeId: item.typeId,
                     name: item.name ?? "—",
                     typeName: item.typeName ?? "—",
@@ -271,19 +292,22 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
 
         setSubmittingAllowance(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/api/v1/hr/users/${code}/pay-components`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    typeId: Number(allowTypeId),
-                    name: allowName,
-                    description: allowName,
-                    value: Number(allowAmount),
-                    startDate: allowStart,
-                    endDate: allowEnd || null,
-                    isAddition: true,
-                }),
-            });
+            const response = await fetch(
+                `${API_BASE_URL}/api/v1/hr/users/${code}/pay-components`,
+                {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({
+                        typeId: Number(allowTypeId),
+                        name: allowName,
+                        description: allowName,
+                        value: Number(allowAmount),
+                        startDate: allowStart,
+                        endDate: allowEnd || null,
+                        isAddition: true,
+                    }),
+                },
+            );
 
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`);
@@ -302,6 +326,30 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
     const handleCancelAllowance = () => {
         resetAllowanceForm();
         setShowAllowanceModal(false);
+    };
+
+    const handleDeleteAllowance = async (allowanceId: number) => {
+        if (!code || !allowanceId) return;
+
+        setDeletingAllowanceId(allowanceId);
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/api/v1/hr/users/${code}/pay-components/${allowanceId}`,
+                {
+                    method: "DELETE",
+                },
+            );
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            await fetchAllowances();
+        } catch (error) {
+            console.error("Không thể xoá trợ cấp", error);
+        } finally {
+            setDeletingAllowanceId(null);
+        }
     };
 
     useEffect(() => {
@@ -348,8 +396,10 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                 </p>
                                 {/* ⭐ NEW: Warning for HR viewing own salary */}
                                 {isViewingOwnSalary && (
-                                    <p className="text-sm text-amber-600 font-medium">
-                                        ⚠️ Bạn đang xem thông tin lương của chính mình - Không thể chỉnh sửa
+                                    <p className="text-sm font-medium text-amber-600">
+                                        ⚠️ Bạn đang xem thông tin lương của chính mình - Không thể
+                                        chỉnh sửa
+
                                     </p>
                                 )}
                             </div>
@@ -376,34 +426,50 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                     <tr>
                                         <th className="px-4 py-3 font-semibold">Nội dung</th>
                                         <th className="px-4 py-3 font-semibold">Giá trị</th>
-                                        <th className="px-4 py-3 font-semibold">Ngày bắt đầu</th>
-                                        <th className="px-4 py-3 font-semibold">Ngày kết thúc</th>
+                                        <th className="px-4 py-3 font-semibold">
+                                            Ngày bắt đầu
+                                        </th>
+                                        <th className="px-4 py-3 font-semibold">
+                                            Ngày kết thúc
+                                        </th>
                                         {/* ⭐ NEW: Edit column */}
                                         {!isViewingOwnSalary && (
-                                            <th className="px-4 py-3 font-semibold text-right">Chỉnh sửa</th>
+                                            <th className="px-5 py-3 font-semibold">
+                                                Chỉnh sửa
+                                            </th>
                                         )}
                                     </tr>
                                     </thead>
                                     <tbody className="divide-y divide-[#EAF5FF] bg-white">
                                     {loadingSalary ? (
                                         <tr>
-                                            <td className="px-4 py-3 text-center" colSpan={isViewingOwnSalary ? 4 : 5}>
+                                            <td
+                                                className="px-4 py-3 text-center"
+                                                colSpan={isViewingOwnSalary ? 4 : 5}
+                                            >
                                                 Đang tải thông tin lương...
                                             </td>
                                         </tr>
                                     ) : rows.length ? (
                                         rows.map((row) => (
-                                            <tr key={row.id} className="hover:bg-[#F7FBFF]">
-                                                <td className="px-4 py-3 font-semibold">{row.label}</td>
+                                            <tr
+                                                key={row.id}
+                                                className="hover:bg-[#F7FBFF]"
+                                            >
+                                                <td className="px-4 py-3 font-semibold">
+                                                    {row.label}
+                                                </td>
                                                 <td className="px-4 py-3">{row.value}</td>
                                                 <td className="px-4 py-3">{row.startDate}</td>
                                                 <td className="px-4 py-3">{row.endDate}</td>
                                                 {/* ⭐ NEW: Edit button */}
                                                 {!isViewingOwnSalary && (
-                                                    <td className="px-4 py-3 text-right">
+                                                    <td className="px-10 py-3 align-middle">
                                                         <button
-                                                            onClick={() => handleEditSalary(row)}
-                                                            className="p-2 rounded-full hover:bg-slate-100 text-[#4AB4DE]"
+                                                            onClick={() =>
+                                                                handleEditSalary(row)
+                                                            }
+                                                            className="rounded-full p-2 text-[#4AB4DE] hover:bg-slate-100"
                                                         >
                                                             <Pencil className="h-4 w-4"/>
                                                         </button>
@@ -413,7 +479,10 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td className="px-4 py-3 text-center" colSpan={isViewingOwnSalary ? 4 : 5}>
+                                            <td
+                                                className="px-4 py-3 text-center"
+                                                colSpan={isViewingOwnSalary ? 4 : 5}
+                                            >
                                                 Chưa có thông tin lương để hiển thị
                                             </td>
                                         </tr>
@@ -475,7 +544,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                     <th className="px-4 py-3 font-semibold">Ngày kết thúc</th>
                                     {/* ⭐ UPDATED: Hide column for HR viewing own salary */}
                                     {!isViewingOwnSalary && (
-                                        <th className="px-4 py-3 font-semibold">Chỉnh Sửa</th>
+                                        <th className="px-4 py-3 font-semibold">Chỉnh sửa</th>
                                     )}
                                 </tr>
                                 </thead>
@@ -483,7 +552,10 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                 <tbody className="divide-y divide-[#EAF5FF] bg-white">
                                 {loadingAllowances ? (
                                     <tr>
-                                        <td className="px-4 py-3 text-center" colSpan={isViewingOwnSalary ? 5 : 6}>
+                                        <td
+                                            className="px-4 py-3 text-center"
+                                            colSpan={isViewingOwnSalary ? 5 : 6}
+                                        >
                                             Đang tải trợ cấp...
                                         </td>
                                     </tr>
@@ -496,22 +568,38 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                             <td className="px-4 py-3 font-semibold">
                                                 {allowance.name}
                                             </td>
-                                            <td className="px-4 py-3 text-sm">{allowance.typeName}</td>
+                                            <td className="px-4 py-3 text-sm">
+                                                {allowance.typeName}
+                                            </td>
                                             <td className="px-4 py-3 font-semibold">
                                                 {allowance.amount}
                                             </td>
                                             <td className="px-4 py-3 text-sm">
                                                 {allowance.startDate}
                                             </td>
-                                            <td className="px-4 py-3 text-sm">{allowance.endDate}</td>
+                                            <td className="px-4 py-3 text-sm">
+                                                {allowance.endDate}
+                                            </td>
                                             {/* ⭐ UPDATED: Hide delete button for HR viewing own salary */}
                                             {!isViewingOwnSalary && (
                                                 <td className="px-4 py-3">
                                                     <button
                                                         type="button"
-                                                        className="rounded-full border border-[#CCE1F0] bg-white px-3 py-1 text-xs font-semibold text-[#DC2626] shadow hover:bg-red-50"
+                                                        onClick={() =>
+                                                            handleDeleteAllowance(
+                                                                allowance.id,
+                                                            )
+                                                        }
+                                                        disabled={
+                                                            deletingAllowanceId ===
+                                                            allowance.id
+                                                        }
+                                                        className="rounded-full border border-[#CCE1F0] bg-white px-3 py-1 text-xs font-semibold text-[#DC2626] shadow hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-70"
                                                     >
-                                                        Xoá
+                                                        {deletingAllowanceId ===
+                                                        allowance.id
+                                                            ? "Đang xoá..."
+                                                            : "Xoá"}
                                                     </button>
                                                 </td>
                                             )}
@@ -519,7 +607,10 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td className="px-4 py-3 text-center" colSpan={isViewingOwnSalary ? 5 : 6}>
+                                        <td
+                                            className="px-4 py-3 text-center"
+                                            colSpan={isViewingOwnSalary ? 5 : 6}
+                                        >
                                             Chưa có trợ cấp hoặc thưởng để hiển thị
                                         </td>
                                     </tr>
@@ -536,7 +627,9 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                     <div className="w-full max-w-xl rounded-3xl border border-[#CCE1F0] bg-white p-8 shadow-2xl">
                         <div className="mb-6 flex items-center">
                             <h3 className="flex-1 text-center text-lg font-semibold text-[#003344]">
-                                {editingSalaryId ? "Chỉnh sửa Lương cơ bản" : "Tạo Lương cơ bản mới"}
+                                {editingSalaryId
+                                    ? "Chỉnh sửa Lương cơ bản"
+                                    : "Tạo Lương cơ bản mới"}
                             </h3>
                         </div>
 
@@ -549,6 +642,18 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                     value={baseSalary}
                                     onChange={(e) => setBaseSalary(e.target.value)}
                                     placeholder="VD: 20000000"
+                                />
+                            </div>
+
+                            {/* ⭐ NEW: Lương theo giờ */}
+                            <div className="grid grid-cols-[140px,minmax(0,1fr)] items-center gap-4">
+                                <span>Lương theo giờ</span>
+                                <input
+                                    className="h-10 w-full rounded-full border border-[#CCE1F0] bg-[#F8FAFC] px-4 text-sm font-normal text-[#003344] focus:border-[#4AB4DE] focus:outline-none focus:ring-2 focus:ring-[#4AB4DE]/50"
+                                    type="number"
+                                    value={baseHourlyRate}
+                                    onChange={(e) => setBaseHourlyRate(e.target.value)}
+                                    placeholder="VD: 50000"
                                 />
                             </div>
 
@@ -664,7 +769,8 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                             </div>
 
                             <p className="text-xs font-normal text-[#56749A]">
-                                Lưu ý: Mô tả sẽ được tự động dùng cùng tên, và loại khoản mặc định là khoản cộng.
+                                Lưu ý: Mô tả sẽ được tự động dùng cùng tên, và loại khoản mặc định
+                                là khoản cộng.
                             </p>
                         </div>
 
@@ -686,7 +792,6 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                     </div>
                 </div>
             )}
-            
         </div>
     );
 }

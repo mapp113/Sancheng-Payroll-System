@@ -14,14 +14,7 @@ import com.g98.sangchengpayrollmanager.service.EmployeeService;
 import com.g98.sangchengpayrollmanager.service.PayrollInfoService;
 import com.g98.sangchengpayrollmanager.service.impl.JwtService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -127,6 +120,34 @@ public class HrController {
         String role = jwtService.extractRole(token);
         return employeeService.updateProfile(employeeCode, role, request);
     }
+
+    @PutMapping("/users/{employeeCode}/salary-information/{salaryId}")
+    public ApiResponse<SalaryInformationResponse> updateSalaryInformation(
+            @PathVariable String employeeCode,
+            @PathVariable Integer salaryId,
+            @RequestBody SalaryInformationCreateRequest request
+    ) {
+        SalaryInformationResponse salaryInformation = payrollInfoService.updateSalaryInformation(employeeCode, salaryId, request);
+        return ApiResponse.<SalaryInformationResponse>builder()
+                .status(200)
+                .message("Cập nhật thông tin lương thành công")
+                .data(salaryInformation)
+                .build();
+    }
+
+    @DeleteMapping("/users/{employeeCode}/pay-components/{payComponentId}")
+    public ApiResponse<String> deletePayComponent(
+            @PathVariable String employeeCode,
+            @PathVariable Integer payComponentId
+    ) {
+        payrollInfoService.deletePayComponent(employeeCode, payComponentId);
+        return ApiResponse.<String>builder()
+                .status(200)
+                .message("Xoá phụ cấp thành công")
+                .data("Deleted")
+                .build();
+    }
+
 
     private String extractToken(String authorizationHeader) {
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
