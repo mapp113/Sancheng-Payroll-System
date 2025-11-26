@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import localFont from "next/font/local";
@@ -132,7 +132,7 @@ export default function Navbar() {
 
     // Kiểm tra quyền chuyển đổi view dựa trên role
     const isManagerOrHR = userRole === "MANAGER" || userRole === "HR";
-    const isEmployeeView = pathname?.startsWith("/employees");
+    const isEmployeeView = pathname?.startsWith("/employee");
     const canSwitchView = isManagerOrHR && (isManagerOrHR || isEmployeeView);
 
     const handleSwitchView = () => {
@@ -142,7 +142,7 @@ export default function Navbar() {
             router.push("/manager/timesheet");
         } else if (isManagerOrHR) {
             // Đang ở view quản lý, chuyển sang nhân viên
-            router.push("/employees");
+            router.push("/employee");
         }
     };
 
@@ -183,22 +183,26 @@ export default function Navbar() {
                     <ChevronDown />
                 </button>
 
-                <span className="flex items-center gap-1">
+
+                <Link href="/employee/profile"
+                      className="flex items-center gap-2 rounded-full px-2 py-1 transition hover:bg-white/50">
                     <Avatar className="h-12 w-12">
-                        <AvatarImage src="/logo.jpg" alt="User avatar" />
+                        <AvatarImage src="/logo.jpg" alt="User avatar"/>
                         <AvatarFallback>Avatar</AvatarFallback>
                     </Avatar>
-                    <span id="username">{username || "Loading..."}</span>
-                </span>
+                    <span id="username" className="font-semibold">
+            {username || "Loading..."}
+          </span>
+                </Link>
                 <div className="relative" ref={menuRef}>
-                    <button 
+                    <button
                         className="cursor-pointer hover:opacity-80 transition-opacity"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
                         aria-label="User menu"
                     >
                         <CircleChevronDown />
                     </button>
-                    
+
                     {isMenuOpen && (
                         <div className="absolute right-0 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-50">
                             <div className="py-1">
@@ -210,7 +214,7 @@ export default function Navbar() {
                                         >
                                             <ArrowLeftRight className="h-4 w-4" />
                                             <span>
-                                                {isEmployeeView 
+                                                {isEmployeeView
                                                     ? (language === "vi" ? "Chuyển sang quản lý" : "Switch to Manager")
                                                     : (language === "vi" ? "Chuyển sang nhân viên" : "Switch to Employee")
                                                 }

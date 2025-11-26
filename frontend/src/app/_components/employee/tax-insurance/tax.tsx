@@ -142,7 +142,7 @@ export default function TaxLevelComponent() {
     <div className="flex-1 bg-[#e0f7fa] rounded-lg p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Bậc thuế thu nhập cá nhân</h2>
-        {userRole !== "EMPLOYEE" && (
+        {userRole === "HR" && (
           <button 
             onClick={() => setShowAddForm(true)}
             className="px-4 py-2 bg-[#81d4fa] rounded-md hover:bg-[#4fc3f7] transition-colors cursor-pointer"
@@ -184,7 +184,7 @@ export default function TaxLevelComponent() {
                   <td className="px-4 py-3">{tax.toValue.toLocaleString()}</td>
                   <td className="px-4 py-3">{tax.percentage}%</td>
                   <td className="px-4 py-3">
-                    {userRole !== "EMPLOYEE" && (
+                    {userRole === "HR" && (
                       <div className="flex gap-2">
                         <button 
                           onClick={() => handleEdit(tax)}

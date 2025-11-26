@@ -53,6 +53,16 @@ public class AdminService {
                 .toList();
     }
 
+    public List<UserDTO> getAllEmployees() {
+        return adminRepository.findAll()
+                .stream()
+                .filter(user -> user.getRole() != null &&
+                        "EMPLOYEE".equalsIgnoreCase(user.getRole().getName()))
+                .map(UserMapper::toDTO)
+                .toList();
+    }
+
+
     private boolean portOpen(String host, int port, int timeoutMs) {
         try (Socket s = new Socket()) {
             s.connect(new InetSocketAddress(host, port), timeoutMs);

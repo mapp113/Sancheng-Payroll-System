@@ -255,6 +255,7 @@ function LeaveSummaryCard({
                     value={month.slice(0, 7)}
                     onChange={(e) => onChange(e.target.value, e.target.value)}
                     className="rounded-xl border border-[#CCE1F0] bg-white px-3 py-2 text-sm text-[#1D3E6A] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4AB4DE]"
+                    disabled
                 />
             </div>
 
