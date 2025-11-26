@@ -212,22 +212,32 @@ export default function ManagerApprovalLeavesPage() {
               />
             </div>
           </div>
-            {leaveData.status !== 'APPROVED' && leaveData.status !== 'REJECTED' && (
-            <div className="flex gap-4 justify-center mt-6">
-              <button 
-              onClick={handleApprove}
-              className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded cursor-pointer"
-              >
-              Đồng ý
-              </button>
-              <button 
-              onClick={handleReject}
-              className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded cursor-pointer"
-              >
-              Từ chối
-              </button>
-            </div>
-            )}
+            {leaveData.status !== 'APPROVED' && leaveData.status !== 'REJECTED' && (() => {
+              const userStr = sessionStorage.getItem("scpm.auth.user");
+              if (!userStr) return null;
+              try {
+              const user = JSON.parse(userStr);
+              if (user.role !== 'MANAGER') return null;
+              } catch {
+              return null;
+              }
+              return (
+              <div className="flex gap-4 justify-center mt-6">
+                <button 
+                onClick={handleApprove}
+                className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded cursor-pointer"
+                >
+                Đồng ý
+                </button>
+                <button 
+                onClick={handleReject}
+                className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded cursor-pointer"
+                >
+                Từ chối
+                </button>
+              </div>
+              );
+            })()}
         </div>
       </div>
     </div>

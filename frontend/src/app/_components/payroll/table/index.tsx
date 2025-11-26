@@ -68,7 +68,7 @@ export default function PayrollTable() {
                                 </button>
                             </td>
                             <td className="py-3 px-4 text-gray-500">
-                                <Info size={18} />
+                                <a href={`/payroll-detail?employeeCode=${record.employeeCode}&month=${payrollParams.payrollParams.date}`} className="cursor-pointer"><Info size={18} /></a>
                             </td>
                         </tr>
                     ))}

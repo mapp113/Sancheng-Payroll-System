@@ -36,12 +36,13 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/otp/**").permitAll()
-                        .requestMatchers("/api/v1/admin/**").hasRole("Admin")
+                        .requestMatchers("/api/v1/admin/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow OPTIONS requests (preflight)
                         .requestMatchers("/api/paysummaries/**").permitAll()
                         .requestMatchers("/api/attsummary/**").permitAll()
                         .requestMatchers("/api/employees/**").permitAll()
                         .requestMatchers("/api/leave/**").permitAll()
+                        .requestMatchers("api/v1/hr/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/admin/create-account").permitAll()
 
                         .anyRequest().authenticated()
@@ -62,6 +63,7 @@ public class WebSecurityConfig {
     public CorsFilter corsFilter() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.addAllowedOrigin("http://localhost:3000/"); // Frontend origin
+        corsConfiguration.addAllowedOrigin("http://localhost:3001/"); // Frontend origin
         corsConfiguration.addAllowedMethod("*"); // Allow all HTTP methods (GET, POST, etc.)
         corsConfiguration.addAllowedHeader("*"); // Allow all headers
         corsConfiguration.setAllowCredentials(true); // Allow cookies or authorization headers

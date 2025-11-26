@@ -8,15 +8,16 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
 import java.util.List;
 
-public interface SalaryInformationRepository extends JpaRepository<SalaryInformation,Integer> {
+public interface SalaryInformationRepository extends JpaRepository<SalaryInformation, Integer> {
     @Query("""
-        SELECT s FROM SalaryInformation s
-        WHERE s.user.employeeCode = :employeeCode
-          AND (
-                (s.effectiveTo >= :monthStart AND s.effectiveTo <= :monthEnd)
-                OR (s.effectiveTo is null AND s.effectiveFrom <= :monthEnd)
-              )
-    """)
+                SELECT s FROM SalaryInformation s
+                WHERE s.user.employeeCode = :employeeCode
+                  AND (
+                        (s.effectiveTo >= :monthStart AND s.effectiveTo <= :monthEnd)
+                        OR (s.effectiveTo is null AND s.effectiveFrom <= :monthEnd)
+                      )
+            """)
     List<SalaryInformation> findActiveByEmployeeCode(@Param("employeeCode") String employeeCode, @Param("monthStart") LocalDate monthStart, @Param("monthEnd") LocalDate monthEnd);
 
+    List<SalaryInformation> findByUserEmployeeCodeOrderByEffectiveFromDesc(String employeeCode);
 }
