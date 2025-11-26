@@ -112,6 +112,22 @@ public class HrController {
                 .build();
     }
 
+    @GetMapping("/users/{employeeCode}/profile")
+    public EmployeeProfileResponse getEmployeeProfile(@PathVariable String employeeCode) {
+        return employeeService.getProfile(employeeCode);
+    }
+
+    @PutMapping("/users/{employeeCode}/profile")
+    public EmployeeProfileResponse updateEmployeeProfile(
+            @RequestHeader("Authorization") String authorization,
+            @PathVariable String employeeCode,
+            @RequestBody EmployeeProfileUpdateRequest request
+    ) {
+        String token = extractToken(authorization);
+        String role = jwtService.extractRole(token);
+        return employeeService.updateProfile(employeeCode, role, request);
+    }
+
     private String extractToken(String authorizationHeader) {
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             throw new RuntimeException("Thiếu token xác thực");
