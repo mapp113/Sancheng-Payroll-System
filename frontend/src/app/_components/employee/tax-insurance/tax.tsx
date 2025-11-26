@@ -18,6 +18,8 @@ export default function TaxLevelComponent() {
     fromValue: 0,
     toValue: 0,
     percentage: 0,
+    effectiveFrom: "",
+    effectiveTo: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const taxLevelsContext = useContext(TaxLevelListContext);
@@ -42,16 +44,23 @@ export default function TaxLevelComponent() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    const numericFields = ["fromValue", "toValue", "percentage"];
+    const newValue: string | number = numericFields.includes(name) ? Number(value) : value;
     setFormData(prev => ({
       ...prev,
-      [name]: name === "name" ? value : Number(value)
-    }));
+      [name]: newValue,
+    } as unknown as typeof prev));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    
+    // effectiveFrom is required
+    if (!formData.effectiveFrom) {
+      addNotification("error", "Lỗi", "Vui lòng chọn Ngày hiệu lực (From date)", 4000);
+      setSubmitting(false);
+      return;
+    }
     try {
       const success = await createTaxLevel(formData);
       
@@ -60,7 +69,7 @@ export default function TaxLevelComponent() {
         // Refresh data
         await fetchTaxLevels(taxLevelsContext, setLoading);
         // Reset form and close
-        setFormData({ name: "", fromValue: 0, toValue: 0, percentage: 0 });
+        setFormData({ name: "", fromValue: 0, toValue: 0, percentage: 0, effectiveFrom: "", effectiveTo: "" });
         setShowAddForm(false);
       } else {
         addNotification("error", "Lỗi", "Không thể thêm bậc thuế. Vui lòng thử lại.");
@@ -80,6 +89,8 @@ export default function TaxLevelComponent() {
       fromValue: tax.fromValue,
       toValue: tax.toValue,
       percentage: tax.percentage,
+      effectiveFrom: tax.effectiveFrom,
+      effectiveTo: tax.effectiveTo || "",
     });
     setShowEditForm(true);
   };
@@ -89,6 +100,12 @@ export default function TaxLevelComponent() {
     if (!editingId) return;
     
     setSubmitting(true);
+    // effectiveFrom is required
+    if (!formData.effectiveFrom) {
+      addNotification("error", "Lỗi", "Vui lòng chọn Ngày hiệu lực (From date)", 4000);
+      setSubmitting(false);
+      return;
+    }
     try {
       const success = await updateTaxLevel(editingId, formData);
       
@@ -97,7 +114,7 @@ export default function TaxLevelComponent() {
         // Refresh data
         await fetchTaxLevels(taxLevelsContext, setLoading);
         // Reset form and close
-        setFormData({ name: "", fromValue: 0, toValue: 0, percentage: 0 });
+        setFormData({ name: "", fromValue: 0, toValue: 0, percentage: 0, effectiveFrom: "", effectiveTo: "" });
         setShowEditForm(false);
         setEditingId(null);
       } else {
@@ -139,7 +156,7 @@ export default function TaxLevelComponent() {
   };
 
   return (
-    <div className="flex-1 bg-[#e0f7fa] rounded-lg p-6">
+    <div className="w-full bg-[#e0f7fa] rounded-lg p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Bậc thuế thu nhập cá nhân</h2>
         {userRole === "HR" && (
@@ -160,19 +177,22 @@ export default function TaxLevelComponent() {
               <th className="px-4 py-3 text-left font-medium">Thu nhập tính thuế từ</th>
               <th className="px-4 py-3 text-left font-medium">Thu nhập tính thuế đến</th>
               <th className="px-4 py-3 text-left font-medium">Thuế suất</th>
+              <th className="px-4 py-3 text-left font-medium">Ngày hiệu lực</th>
+              <th className="px-4 py-3 text-left font-medium">Ngày hết hạn</th>
+              <th className="px-4 py-3 text-left font-medium">Trạng thái</th>
               <th className="px-4 py-3 text-left font-medium"></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
                   Đang tải dữ liệu...
                 </td>
               </tr>
             ) : taxLevelsContext?.taxLevels.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
                   Không có dữ liệu
                 </td>
               </tr>
@@ -183,6 +203,13 @@ export default function TaxLevelComponent() {
                   <td className="px-4 py-3">{tax.fromValue.toLocaleString()}</td>
                   <td className="px-4 py-3">{tax.toValue.toLocaleString()}</td>
                   <td className="px-4 py-3">{tax.percentage}%</td>
+                  <td className="px-4 py-3">{tax.effectiveFrom}</td>
+                  <td className="px-4 py-3">{tax.effectiveTo || "-"}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 rounded text-xs ${tax.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                      {tax.active ? 'Đang áp dụng' : 'Không áp dụng'}
+                    </span>
+                  </td>
                   <td className="px-4 py-3">
                     {userRole === "HR" && (
                       <div className="flex gap-2">
@@ -284,6 +311,29 @@ export default function TaxLevelComponent() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-[#1D3E6A]">Ngày hiệu lực</label>
+                <input
+                  type="date"
+                  name="effectiveFrom"
+                  value={formData.effectiveFrom}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border border-[#CCE1F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#81d4fa]"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-[#1D3E6A]">Ngày hết hạn</label>
+                <input
+                  type="date"
+                  name="effectiveTo"
+                  value={formData.effectiveTo}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-[#CCE1F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#81d4fa]"
+                />
+              </div>
+
               {/* Action Buttons */}
               <div className="flex gap-4 pt-4">
                 <button
@@ -317,7 +367,7 @@ export default function TaxLevelComponent() {
                 onClick={() => {
                   setShowEditForm(false);
                   setEditingId(null);
-                  setFormData({ name: "", fromValue: 0, toValue: 0, percentage: 0 });
+                  setFormData({ name: "", fromValue: 0, toValue: 0, percentage: 0, effectiveFrom: "", effectiveTo: "" });
                 }}
                 className="rounded-full p-2 text-[#56749A] hover:bg-[#E6F7FF] transition cursor-pointer"
               >
@@ -386,6 +436,28 @@ export default function TaxLevelComponent() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-[#1D3E6A]">Ngày hiệu lực</label>
+                <input
+                  type="date"
+                  name="effectiveFrom"
+                  value={formData.effectiveFrom}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-[#CCE1F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#81d4fa]"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-[#1D3E6A]">Ngày hết hạn</label>
+                <input
+                  type="date"
+                  name="effectiveTo"
+                  value={formData.effectiveTo}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-[#CCE1F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#81d4fa]"
+                />
+              </div>
+
               {/* Action Buttons */}
               <div className="flex gap-4 pt-4">
                 <button
@@ -393,7 +465,7 @@ export default function TaxLevelComponent() {
                   onClick={() => {
                     setShowEditForm(false);
                     setEditingId(null);
-                    setFormData({ name: "", fromValue: 0, toValue: 0, percentage: 0 });
+                    setFormData({ name: "", fromValue: 0, toValue: 0, percentage: 0, effectiveFrom: "", effectiveTo: "" });
                   }}
                   className="flex-1 px-4 py-2 border border-[#CCE1F0] text-[#56749A] rounded-lg hover:bg-[#F4FBFF] transition cursor-pointer"
                 >

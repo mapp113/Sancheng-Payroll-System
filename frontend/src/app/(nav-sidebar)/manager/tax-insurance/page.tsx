@@ -15,7 +15,7 @@ export default function TaxInsurancePage() {
         Thông tin về Thuế và Bảo Hiểm
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex flex-col gap-6">
         {/* Bảng Thuế */}
         <TaxLevelListContext.Provider value={{ taxLevels, setTaxLevels }}>
           <TaxLevelComponent />

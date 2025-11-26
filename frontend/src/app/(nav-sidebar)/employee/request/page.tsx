@@ -233,7 +233,7 @@ export default function LeavesPage() {
       </div>
       <div className="flex flex-row w-full my-2">
         <h2 className="font-bold">Yêu cầu Overtime</h2>
-        <span className="flex-1 text-center">Số giờ OT còn lại trong tuần:<span className="font-bold">{remainingOT !== null ? remainingOT : "..."}</span></span>
+        <span className="flex-1 text-center">Số giờ đã OT trong tháng: <span className="font-bold">{remainingOT !== null ? remainingOT : "..."}</span></span>
       </div>
       <div className="w-full h-fit my-5 bg-[#d5f1f5] border rounded-lg shadow-md p-2">
         <table className="w-full table-auto border-0">

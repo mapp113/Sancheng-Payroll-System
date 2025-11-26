@@ -8,6 +8,9 @@ export interface TaxListResponse {
   fromValue: number;
   toValue: number;
   percentage: number;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  active: boolean;
 }
 
 export interface CreateTaxLevelRequest {
@@ -15,6 +18,8 @@ export interface CreateTaxLevelRequest {
   fromValue: number;
   toValue: number;
   percentage: number;
+  effectiveFrom?: string;
+  effectiveTo?: string;
 }
 
 export interface TaxLevelListContextType {
@@ -32,6 +37,9 @@ export interface InsuranceListResponse {
   employeePercentage: number;
   companyPercentage: number;
   maxAmount: number;
+  effectiveFrom?: string;
+  effectiveTo?: string;
+  active?: boolean;
 }
 
 export interface CreateInsurancePolicyRequest {
@@ -39,6 +47,8 @@ export interface CreateInsurancePolicyRequest {
   employeePercentage: number;
   companyPercentage: number;
   maxAmount: number;
+  effectiveFrom?: string;
+  effectiveTo?: string;
 }
 
 export interface InsuranceListContextType {
