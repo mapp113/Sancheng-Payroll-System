@@ -2,6 +2,7 @@
 
 import { getUserMeta } from "@/app/_components/utils/getUserData";
 import { useEffect, useState } from "react";
+import OvertimeBalancePopup from "@/app/_components/manager/requests/overtime/overtime-balance-popup";
 import { OTResponseData } from "@/app/_components/employee/request/types";
 import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Info } from "lucide-react";
 
@@ -14,6 +15,7 @@ export default function OvertimePage() {
   const [searchInput, setSearchInput] = useState("");
   const [keyword, setKeyword] = useState("");
   const maxItems = 10;
+  const [showOvertimePopup, setShowOvertimePopup] = useState(false);
 
   useEffect(() => {
     if (getUserMeta("role") !== "MANAGER" && getUserMeta("role") !== "HR") {
@@ -116,6 +118,12 @@ export default function OvertimePage() {
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={handleSearchKeyDown}
         />
+        <button
+          onClick={() => setShowOvertimePopup(true)}
+          className="ml-4 bg-[#88ccfd] text-blue-900 px-4 py-2 rounded hover:bg-[#4cb4fe] transition-colors cursor-pointer"
+        >
+          Quản lí thời gian overtime
+        </button>
       </div>
       <hr className="my-4 border-black" />
       <div className="w-full h-fit border border-black rounded-2xl py-4">
@@ -195,6 +203,9 @@ export default function OvertimePage() {
           <button className="cursor-pointer" onClick={() => changePageHandler("last")}><ChevronLast /></button>
         </div>
       </div>
+      {showOvertimePopup && (
+        <OvertimeBalancePopup onClose={() => setShowOvertimePopup(false)} />
+      )}
     </div>
   );
 }

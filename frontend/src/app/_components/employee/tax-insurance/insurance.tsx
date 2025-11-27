@@ -19,6 +19,8 @@ export default function InsuranceComponent() {
     employeePercentage: 0,
     companyPercentage: 0,
     maxAmount: 0,
+    effectiveFrom: "",
+    effectiveTo: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const { addNotification } = useNotification();
@@ -42,15 +44,23 @@ export default function InsuranceComponent() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    const numericFields = ["employeePercentage", "companyPercentage", "maxAmount"];
+    const newValue: string | number = numericFields.includes(name) ? Number(value) : value;
     setFormData(prev => ({
       ...prev,
-      [name]: name === "insurancePolicyName" ? value : Number(value)
-    }));
+      [name]: newValue,
+    } as unknown as typeof prev));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    // effectiveFrom is required
+    if (!formData.effectiveFrom) {
+      addNotification("error", "Lỗi", "Vui lòng chọn Ngày hiệu lực (From date)", 4000);
+      setSubmitting(false);
+      return;
+    }
     
     try {
       const success = await createInsurancePolicy(formData);
@@ -60,7 +70,7 @@ export default function InsuranceComponent() {
         // Refresh data
         await fetchInsurancePolicies(context, setLoading);
         // Reset form and close
-        setFormData({ insurancePolicyName: "", employeePercentage: 0, companyPercentage: 0, maxAmount: 0 });
+        setFormData({ insurancePolicyName: "", employeePercentage: 0, companyPercentage: 0, maxAmount: 0, effectiveFrom: "", effectiveTo: "" });
         setShowAddForm(false);
       } else {
         addNotification("error", "Lỗi", "Không thể thêm bảo hiểm. Vui lòng thử lại.");
@@ -80,6 +90,8 @@ export default function InsuranceComponent() {
       employeePercentage: insurance.employeePercentage,
       companyPercentage: insurance.companyPercentage,
       maxAmount: insurance.maxAmount,
+      effectiveFrom: insurance.effectiveFrom || "",
+      effectiveTo: insurance.effectiveTo || "",
     });
     setShowEditForm(true);
   };
@@ -89,6 +101,12 @@ export default function InsuranceComponent() {
     if (!editingId) return;
     
     setSubmitting(true);
+    // effectiveFrom is required
+    if (!formData.effectiveFrom) {
+      addNotification("error", "Lỗi", "Vui lòng chọn Ngày hiệu lực (From date)", 4000);
+      setSubmitting(false);
+      return;
+    }
     try {
       const success = await updateInsurancePolicy(editingId, formData);
       
@@ -97,7 +115,7 @@ export default function InsuranceComponent() {
         // Refresh data
         await fetchInsurancePolicies(context, setLoading);
         // Reset form and close
-        setFormData({ insurancePolicyName: "", employeePercentage: 0, companyPercentage: 0, maxAmount: 0 });
+        setFormData({ insurancePolicyName: "", employeePercentage: 0, companyPercentage: 0, maxAmount: 0, effectiveFrom: "", effectiveTo: "" });
         setShowEditForm(false);
         setEditingId(null);
       } else {
@@ -139,7 +157,7 @@ export default function InsuranceComponent() {
   };
   
   return (
-    <div className="flex-1 bg-[#e0f7fa] rounded-lg p-6">
+    <div className="w-full bg-[#e0f7fa] rounded-lg p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Bảo hiểm</h2>
         {userRole === "HR" && (
@@ -160,19 +178,22 @@ export default function InsuranceComponent() {
               <th className="px-4 py-3 text-left font-medium">Tỉ lệ nv</th>
               <th className="px-4 py-3 text-left font-medium">Tỉ lệ dn</th>
               <th className="px-4 py-3 text-left font-medium">Số tiền tối đa</th>
+              <th className="px-4 py-3 text-left font-medium">Ngày hiệu lực</th>
+              <th className="px-4 py-3 text-left font-medium">Ngày hết hạn</th>
+              <th className="px-4 py-3 text-left font-medium">Trạng thái</th>
               <th className="px-4 py-3 text-left font-medium"></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
                   Đang tải dữ liệu...
                 </td>
               </tr>
             ) : context?.insurancePolicies.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
                   Không có dữ liệu
                 </td>
               </tr>
@@ -183,6 +204,13 @@ export default function InsuranceComponent() {
                   <td className="px-4 py-3">{insurance.employeePercentage}%</td>
                   <td className="px-4 py-3">{insurance.companyPercentage}%</td>
                   <td className="px-4 py-3">{insurance.maxAmount.toLocaleString()}</td>
+                  <td className="px-4 py-3">{insurance.effectiveFrom || "-"}</td>
+                  <td className="px-4 py-3">{insurance.effectiveTo || "-"}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 rounded text-xs ${insurance.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                      {insurance.active ? 'Đang áp dụng' : 'Không áp dụng'}
+                    </span>
+                  </td>
                   <td className="px-4 py-3">
                     {userRole === "HR" && (
                       <div className="flex gap-2">
@@ -286,6 +314,29 @@ export default function InsuranceComponent() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-[#1D3E6A]">Ngày hiệu lực</label>
+                <input
+                  type="date"
+                  name="effectiveFrom"
+                  value={formData.effectiveFrom}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border border-[#CCE1F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#81d4fa]"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-[#1D3E6A]">Ngày hết hạn</label>
+                <input
+                  type="date"
+                  name="effectiveTo"
+                  value={formData.effectiveTo}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-[#CCE1F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#81d4fa]"
+                />
+              </div>
+
               {/* Action Buttons */}
               <div className="flex gap-4 pt-4">
                 <button
@@ -319,7 +370,7 @@ export default function InsuranceComponent() {
                 onClick={() => {
                   setShowEditForm(false);
                   setEditingId(null);
-                  setFormData({ insurancePolicyName: "", employeePercentage: 0, companyPercentage: 0, maxAmount: 0 });
+                  setFormData({ insurancePolicyName: "", employeePercentage: 0, companyPercentage: 0, maxAmount: 0, effectiveFrom: "", effectiveTo: "" });
                 }}
                 className="rounded-full p-2 text-[#56749A] hover:bg-[#E6F7FF] transition cursor-pointer"
               >
@@ -390,6 +441,28 @@ export default function InsuranceComponent() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-[#1D3E6A]">Ngày hiệu lực</label>
+                <input
+                  type="date"
+                  name="effectiveFrom"
+                  value={formData.effectiveFrom}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-[#CCE1F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#81d4fa]"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-[#1D3E6A]">Ngày hết hạn</label>
+                <input
+                  type="date"
+                  name="effectiveTo"
+                  value={formData.effectiveTo}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-[#CCE1F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#81d4fa]"
+                />
+              </div>
+
               {/* Action Buttons */}
               <div className="flex gap-4 pt-4">
                 <button
@@ -397,7 +470,7 @@ export default function InsuranceComponent() {
                   onClick={() => {
                     setShowEditForm(false);
                     setEditingId(null);
-                    setFormData({ insurancePolicyName: "", employeePercentage: 0, companyPercentage: 0, maxAmount: 0 });
+                    setFormData({ insurancePolicyName: "", employeePercentage: 0, companyPercentage: 0, maxAmount: 0, effectiveFrom: "", effectiveTo: "" });
                   }}
                   className="flex-1 px-4 py-2 border border-[#CCE1F0] text-[#56749A] rounded-lg hover:bg-[#F4FBFF] transition cursor-pointer"
                 >
