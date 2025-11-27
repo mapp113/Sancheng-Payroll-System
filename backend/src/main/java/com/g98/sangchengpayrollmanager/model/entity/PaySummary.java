@@ -60,7 +60,7 @@ public class PaySummary {
     @Column(name = "net_salary", nullable = false)
     private Integer netSalary;
 
-    @Column(name = "payslip_url", length = 100)
+    @Column(name = "payslip_url", length = 500)
     private String payslipUrl;
 
     @Column(name = "base_salary_amt", nullable = false)

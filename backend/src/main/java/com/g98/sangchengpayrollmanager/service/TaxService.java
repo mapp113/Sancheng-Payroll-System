@@ -38,7 +38,8 @@ public class TaxService {
             String employeeCode,
             int assessableIncome,
             int employeeInsurance,
-            LocalDate asOfDate
+            LocalDate asOfDate,
+            LocalDate payrollDate
     ) {
 
         List<PaySummaryComponentItem> items = new ArrayList<>();
@@ -100,34 +101,43 @@ public class TaxService {
                     .build();
         }
 
-        // 4. Lấy bậc thuế và tính theo lũy tiến
-        List<TaxLevel> levels = taxLevelRepo.findAll();
-        // để chắc kèo thì sort theo toValue tăng dần
-        levels.sort(Comparator.comparing(TaxLevel::getToValue));
+        // 4. Lấy bậc thuế và tính theo lũy tiến từng phần
+        List<TaxLevel> levels = taxLevelRepo.findActiveLevels(payrollDate);
 
+        // Sort theo bậc (fromValue ASC)
+        levels.sort(Comparator.comparing(TaxLevel::getFromValue));
         int totalTax = 0;
 
         for (TaxLevel level : levels) {
-            int to = level.getToValue();       // ví dụ: 5_000_000; 10_000_000 ...
-            double percent = level.getPercentage().doubleValue(); // ví dụ 0.05, 0.1 ...
-            int from = level.getFromValue();    // ví dụ: 0; 5_000_000; 10_000_000 ...
-            if(taxableIncome <= to && taxableIncome >= from) {
-                totalTax = (int) Math.ceil(taxableIncome * percent);
-                break;
-            }
-            // nếu muốn snapshot từng bậc thì add ở đây (optional)
-            // items.add(...)
-        }
 
-        // 5. add snapshot thuế
-//        items.add(
-//                PaySummaryComponentItem.builder()
-//                        .componentName("Thuế TNCN")
-//                        .componentType(PaySummaryComponentType.TAX.name())
-//                        .amount(totalTax)
-//                        .note("")
-//                        .build()
-//        );
+            int from = level.getFromValue();
+            int to = level.getToValue();
+            double percent = level.getPercentage().doubleValue();
+
+            // Nếu thu nhập <= from thì không còn phần chịu thuế cho bậc này
+            if (taxableIncome <= from) break;
+
+            // Xác định phần thu nhập nằm trong bậc này
+            int taxableInLevel = Math.min(taxableIncome, to) - from;
+
+            if (taxableInLevel > 0) {
+                int taxInLevel = (int) Math.round(taxableInLevel * percent);
+                totalTax += taxInLevel;
+                // Nếu bạn muốn snapshot từng bậc -> bật đoạn này
+                /*
+                    items.add(
+                    PaySummaryComponentItem.builder()
+                        .componentName("Thuế TNCN - " + level.getName())
+                        .componentType(PaySummaryComponentType.TAX.name())
+                        .amount(taxInLevel)
+                        .note(String.format("%,d - %,d x %.2f%%",
+                                from, Math.min(remaining, to), percent * 100))
+                        .build()
+                     );
+                 */
+            }
+            // Nếu đã vượt qua bậc này, chuyển sang bậc tiếp theo
+        }
 
         return Result.builder()
                 .taxableIncome(taxableIncome)

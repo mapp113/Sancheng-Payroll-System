@@ -5,7 +5,6 @@ public record PaySummaryResponse(
     String fullName,
     String positionName,
     Integer netSalary,
-    String status,
-    String payslipUrl
+    String status
 ) {
 }

@@ -3,6 +3,7 @@ package com.g98.sangchengpayrollmanager.model.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "tax_level")
@@ -29,5 +30,11 @@ public class TaxLevel {
 
     @Column(precision = 5, scale = 3, nullable = false)
     private BigDecimal percentage;
+
+    @Column(name = "effective_from", nullable = false)
+    private LocalDate effectiveFrom;
+
+    @Column(name = "effective_to")
+    private LocalDate effectiveTo;
 }
 

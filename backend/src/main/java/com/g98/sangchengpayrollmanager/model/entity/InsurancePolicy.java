@@ -3,6 +3,7 @@ package com.g98.sangchengpayrollmanager.model.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "insurance_policy")
@@ -28,5 +29,11 @@ public class InsurancePolicy {
 
     @Column(name = "company_percentage", precision = 5, scale = 3, nullable = false)
     private BigDecimal companyPercentage;
+
+    @Column(name = "effective_from", nullable = false)
+    private LocalDate effectiveFrom;
+
+    @Column(name = "effective_to")
+    private LocalDate effectiveTo;
 }
 
