@@ -112,7 +112,7 @@ export default async function PayrollDetailPage({
                     />
                     <div
                         className="rounded-2xl border border-dashed border-[#4AB4DE] bg-[#F4FBFF] p-10 text-center text-[#1D3E6A]">
-                        No payroll records were found for {periodLabel}. Please choose a different month.
+                        Không tìm được bản ghi bảng lương cho {periodLabel}. Vui lòng chọn tháng khác.
                     </div>
                 </div>
             );
@@ -141,7 +141,7 @@ export default async function PayrollDetailPage({
                 <EmployeePayrollDetailToolbar title="Employee Payroll Detail"/>
                 <div
                     className="rounded-2xl border border-dashed border-[#4AB4DE] bg-[#F4FBFF] p-10 text-center text-[#1D3E6A]">
-                    Unable to load payroll details for the selected employee and month.
+                    Không thể tải chi tiết bảng lương cho nhân viên và tháng đã chọn.
                 </div>
             </div>
         );

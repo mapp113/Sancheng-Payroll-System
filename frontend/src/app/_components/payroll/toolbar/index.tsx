@@ -57,7 +57,7 @@ export default function PayrollToolbar() {
       <div className="flex gap-4 items-end">
         <div className="flex items-center px-2 border border-black rounded-xl">
           <SearchIcon className="inline" />
-          <input type="text" className="pl-2 focus:outline-none" placeholder="Search"
+          <input type="text" className="pl-2 focus:outline-none" placeholder="Tìm kiếm..."
             onInput={searchHandler}
           />
         </div>
@@ -72,7 +72,7 @@ export default function PayrollToolbar() {
           onClick={exportButtonHandler}
         >
           <CloudUpload className="inline" />
-          Export
+          Xuất
         </button>
       </div>
     </div>
