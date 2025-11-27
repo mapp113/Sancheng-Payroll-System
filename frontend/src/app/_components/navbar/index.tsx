@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTranslations } from "@/lib/translations";
 import { Bell, ChevronDown, CircleChevronDown, Clock, Languages, User, Settings, LogOut, ArrowLeftRight } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
+import NotificationPanel from "@/app/_components/common/notification/panel";
 
 const iceland = localFont({
     src: "../../../../public/fonts/Iceland-Regular.ttf",
@@ -58,7 +59,10 @@ export default function Navbar() {
     const [userRole, setUserRole] = useState<string | null>(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [dashboardTitle, setDashboardTitle] = useState("Dashboard");
+    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
     const menuRef = useRef<HTMLDivElement>(null);
+    const notificationRef = useRef<HTMLDivElement>(null);
 
     // Ẩn navbar ở các route không cần layout
     // if (pathname && noLayoutRoutes.includes(pathname)) return null;
@@ -126,8 +130,34 @@ export default function Navbar() {
             setUsername("Unknown User");
         }
         setDashboardTitle(getDashboardTitle());
+        fetchUnreadCount();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Fetch unread notification count
+    const fetchUnreadCount = async () => {
+        try {
+            const userStr = window.sessionStorage.getItem("scpm.auth.user");
+            if (!userStr) return;
+
+            const parsed: UserData = JSON.parse(userStr);
+            const token = parsed?.token;
+            if (!token) return;
+
+            const response = await fetch("/api/notifications/unread-count", {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setUnreadCount(data.count || 0);
+            }
+        } catch (error) {
+            console.error("Failed to fetch unread count:", error);
+        }
+    };
 
     // Đóng menu khi click bên ngoài
     useEffect(() => {
@@ -135,16 +165,19 @@ export default function Navbar() {
             if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
                 setIsMenuOpen(false);
             }
+            if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+                setIsNotificationOpen(false);
+            }
         };
 
-        if (isMenuOpen) {
+        if (isMenuOpen || isNotificationOpen) {
             document.addEventListener("mousedown", handleClickOutside);
         }
 
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [isMenuOpen]);
+    }, [isMenuOpen, isNotificationOpen]);
 
     const handleLogout = () => {
         window.sessionStorage.removeItem("scpm.auth.user");
@@ -195,10 +228,31 @@ export default function Navbar() {
                     <Languages className="h-4 w-4" aria-hidden="true" />
                     <span>{language === "vi" ? "Tiếng Việt" : "English"}</span>
                 </button>
-                <button id="notification" className="flex items-center gap-1">
-                    <Bell />
-                    <ChevronDown />
-                </button>
+                
+                <div className="relative" ref={notificationRef}>
+                    <button 
+                        id="notification" 
+                        className="flex items-center gap-1 hover:opacity-80 transition-opacity relative cursor-pointer"
+                        onClick={() => {
+                            setIsNotificationOpen(!isNotificationOpen);
+                            if (!isNotificationOpen) {
+                                fetchUnreadCount();
+                            }
+                        }}
+                        aria-label="Notifications"
+                    >
+                        <Bell />
+                        {unreadCount > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
+                                {unreadCount > 9 ? "9+" : unreadCount}
+                            </span>
+                        )}
+                        <ChevronDown />
+                    </button>
+                    {isNotificationOpen && (
+                        <NotificationPanel />
+                    )}
+                </div>
 
                 <button id="clock" className="flex items-center gap-1">
                     <Clock />
@@ -245,7 +299,7 @@ export default function Navbar() {
                                         <hr className="my-1 border-gray-200" />
                                     </>
                                 )}
-                                <button
+                                {/* <button
                                     className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                                     onClick={() => {
                                         setIsMenuOpen(false);
@@ -265,7 +319,7 @@ export default function Navbar() {
                                     <Settings className="h-4 w-4" />
                                     <span>{language === "vi" ? "Cài đặt" : "Settings"}</span>
                                 </button>
-                                <hr className="my-1 border-gray-200" />
+                                <hr className="my-1 border-gray-200" /> */}
                                 <button
                                     className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                                     onClick={handleLogout}
