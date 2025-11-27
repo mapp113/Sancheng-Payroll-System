@@ -7,6 +7,8 @@ import com.g98.sangchengpayrollmanager.repository.UserRepository;
 import com.g98.sangchengpayrollmanager.security.InvalidCredentialsException;
 import com.g98.sangchengpayrollmanager.service.impl.JwtService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -41,6 +43,14 @@ public class AuthService {
                 .token(token)
                 .message("Login successful")
                 .build();
+    }
+
+    public static String getCurrentUsername() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
+            throw new RuntimeException("ko co nguoi dung");
+        }
+        return auth.getName();
     }
 }
 

@@ -23,8 +23,7 @@ public interface PaySummaryRepository extends JpaRepository<PaySummary,Integer> 
                 si.user.fullName,
                 p.name,
                 ps.netSalary,
-                ps.status,
-                ps.payslipUrl
+                ps.status
             )
             FROM PaySummary ps
             JOIN SalaryInformation si ON ps.salaryInformation.id = si.id
