@@ -17,9 +17,11 @@ export default function ManagerApprovalLeavesPage() {
     if (!id) return;
     
     try {
+      const token = sessionStorage.getItem("scpm.auth.token");
       const response = await fetch(`http://localhost:8080/api/leave/approve/${id}`, {
         method: 'PUT',
         headers: {
+          "Authorization": `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ note }),
@@ -40,9 +42,11 @@ export default function ManagerApprovalLeavesPage() {
     if (!id) return;
     
     try {
+      const token = sessionStorage.getItem("scpm.auth.token");
       const response = await fetch(`http://localhost:8080/api/leave/reject/${id}`, {
         method: 'PUT',
         headers: {
+          "Authorization": `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ note }),
