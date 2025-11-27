@@ -22,6 +22,7 @@ public class OvertimeRequestResponse {
     private LocalDateTime fromTime;
     private LocalDateTime toTime;
     private Integer workedTime;
+    private Integer dayTypeId;
 
     private String reason;
 

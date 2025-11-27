@@ -471,6 +471,7 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
                 .toTime(entity.getToTime())
                 .workedTime(entity.getWorkedTime())
                 .reason(entity.getReason())
+                .dayTypeId(entity.getDayType().getId())
                 .status(LeaveandOTStatus.valueOf(entity.getStatus()))
                 .createdDateOT(entity.getCreatedDateOT())
                 .approvedDateOT(entity.getApprovedDateOT())
