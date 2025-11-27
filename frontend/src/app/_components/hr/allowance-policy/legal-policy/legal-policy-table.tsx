@@ -46,7 +46,7 @@ export default function LegalPolicyTable() {
   }
 
   return (
-    <div className="w-full h-full overflow-auto rounded-2xl">
+    <div className="w-full h-full overflow-y-auto rounded-2xl">
       <table className="w-full border-collapse">
         <thead className="sticky top-0 bg-[#b8e9f7] z-10">
           <tr>
@@ -58,6 +58,9 @@ export default function LegalPolicyTable() {
             </th>
             <th className="px-4 py-3 text-left text-sm font-semibold text-[#1D3E6A] border-b-2 border-[#8dd5ea]">
               Quy tắc tính
+            </th>
+            <th className="px-4 py-3 text-right text-sm font-semibold text-[#1D3E6A] border-b-2 border-[#8dd5ea]">
+              Số lượng
             </th>
             <th className="px-4 py-3 text-right text-sm font-semibold text-[#1D3E6A] border-b-2 border-[#8dd5ea]">
               Giá trị phần trăm
@@ -92,14 +95,17 @@ export default function LegalPolicyTable() {
                 <td className="px-4 py-3 text-sm text-[#1D3E6A]">
                   {policy.calculationType}
                 </td>
+                <td className="px-4 py-3 text-sm text-end text-[#1D3E6A]">
+                  {policy.amount ? policy.amount.toLocaleString() : "--"}
+                </td>
                 <td className="px-4 py-3 text-sm text-[#1D3E6A] text-right">
-                  {policy.percent}%
+                  {policy.percent ? policy.percent + "%" : "--"}
                 </td>
                 <td className="px-4 py-3 text-sm text-[#1D3E6A]">
                   {policy.effectiveFrom}
                 </td>
-                <td className="px-4 py-3 text-sm text-[#1D3E6A]">
-                  {policy.effectiveTo}
+                <td className="px-4 py-3 text-sm text-center text-[#1D3E6A]">
+                  {policy.effectiveTo || "--"}
                 </td>
               </tr>
             ))

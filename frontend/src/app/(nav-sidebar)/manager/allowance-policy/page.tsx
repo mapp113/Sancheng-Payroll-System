@@ -14,7 +14,7 @@ export default function AllowancePolicyPage() {
       <div className="">
         <div className="flex flex-row justify-between items-center mb-2 mt-1">
           <h2 className="text-xl font-semibold mb-2">Các loại khoản trợ cấp</h2>
-          <button className="bg-[#89cdfe] hover:bg-[#63ade3] text-blue-900 border border-blue-900 rounded-lg p-2 mr-4 cursor-pointer">+ Thêm trợ cấp, khoản mới</button>
+          {/* <button className="bg-[#89cdfe] hover:bg-[#63ade3] text-blue-900 border border-blue-900 rounded-lg p-2 mr-4 cursor-pointer">+ Thêm trợ cấp, khoản mới</button> */}
         </div>
         <div className="w-full h-[30dvh] bg-[#d5f1f5] rounded-2xl">
           <AllowanceTable />

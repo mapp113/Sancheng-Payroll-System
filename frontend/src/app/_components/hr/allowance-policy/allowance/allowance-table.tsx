@@ -99,9 +99,9 @@ export default function AllowanceTable() {
             <th className="px-4 py-3 text-left text-sm font-semibold text-[#1D3E6A] border-b-2 border-[#8dd5ea]">
               Cách tính thuế
             </th>
-            <th className="px-4 py-3 text-center text-sm font-semibold text-[#1D3E6A] border-b-2 border-[#8dd5ea]">
+            {/* <th className="px-4 py-3 text-center text-sm font-semibold text-[#1D3E6A] border-b-2 border-[#8dd5ea]">
               Thao tác
-            </th>
+            </th> */}
           </tr>
         </thead>
         <tbody className="divide-y divide-[#b8e9f7]">
@@ -144,7 +144,7 @@ export default function AllowanceTable() {
                 <td className="px-4 py-3 text-sm text-[#1D3E6A]">
                   {allowance.taxTreatmentCode || "-"}
                 </td>
-                <td className="px-4 py-3 text-sm">
+                {/* <td className="px-4 py-3 text-sm">
                   <div className="flex items-center justify-center gap-2">
                     <button
                       onClick={() => handleEdit(allowance.id)}
@@ -161,7 +161,7 @@ export default function AllowanceTable() {
                       <Trash2 className="w-4 h-4 text-red-600" />
                     </button>
                   </div>
-                </td>
+                </td> */}
               </tr>
             ))
           )}

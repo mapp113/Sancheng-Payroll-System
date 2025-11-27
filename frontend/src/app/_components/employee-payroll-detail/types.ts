@@ -7,6 +7,7 @@ export interface PayrollLineItem {
     label: string;
     description?: string;
     value: number;
+    subItems?: PayrollLineItem[];
 }
 
 export interface EmployeePayrollTotals {
