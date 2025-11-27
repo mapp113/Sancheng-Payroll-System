@@ -126,8 +126,8 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
         for (User u : managers) {
             notificationService.createNotification(
                     managers.getLast().getEmployeeCode(),
-                    "Có đơn Làm thêm giờ mới",
-                    user.getFullName() + "gửi đơn Làm thêm giờ ngày " + otDate,
+                    "Có đơn Làm thêm giờ mới ",
+                    user.getFullName() + " gửi đơn Làm thêm giờ ngày " + otDate,
                     "OT_REQUEST",
                     savedOvertimeRequest.getId()
             );
@@ -235,7 +235,7 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
         notificationService.createNotification(
                 employee.getEmployeeCode(),
                 "Đơn xin làm thêm giờ của bạn đã được duyệt ",
-                "Đơn làm thêm giờ ngày" + overtimeRequest.getOtDate() +"Đã được duyệt bởi Manager.",
+                " Đơn làm thêm giờ ngày " + overtimeRequest.getOtDate() +" Đã được duyệt bởi Manager.",
                 "OT_APPROVED",
                 savedOvertimeRequest.getId());
         return mapToResponse(savedOvertimeRequest);
@@ -274,8 +274,8 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
         User employee = overtimeRequest.getUser();
         notificationService.createNotification(
                 employee.getEmployeeCode(),
-                "Đơn xin làm thêm giờ của bạn đã được duyệt ",
-                "Đơn làm thêm giờ ngày" + overtimeRequest.getOtDate() +"Đã được duyệt bởi Manager.",
+                "Đơn xin làm thêm giờ của bạn đã không được duyệt ",
+                " Đơn làm thêm giờ ngày " + overtimeRequest.getOtDate() +" Đã không được duyệt bởi Manager.",
                 "OT_APPROVED",
                 saveOvertimeRequest.getId());
 
@@ -323,6 +323,7 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
         return monthlyHours;
     }
 
+    // Cái này đang dùng bảng carried_over để lưu số gi dư
     public void changeOvertimetoLeaveWithMonthlyOverLimit(User user, LocalDate otDate) {
         String empCode = user.getEmployeeCode();
         int year = otDate.getYear();

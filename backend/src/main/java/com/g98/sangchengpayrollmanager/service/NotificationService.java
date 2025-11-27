@@ -36,7 +36,7 @@ public class NotificationService {
                 .type(type)
                 .referenceId(refId)
                 .isRead(false)
-                .createdAt(LocalDate.now().atStartOfDay())
+                .createdAt(LocalDateTime.now())
                 .build();
 
         notificationRepository.save(notification);
