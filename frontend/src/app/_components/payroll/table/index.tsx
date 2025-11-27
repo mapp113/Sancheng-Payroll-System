@@ -63,7 +63,13 @@ export default function PayrollTable() {
                                 >{record.status}</span>
                             </td>
                             <td className="py-3 px-4">
-                                <button className="bg-cyan-300 hover:bg-cyan-400 text-sm text-gray-800 font-medium py-1 px-3 rounded-md shadow">
+                                <button 
+                                    onClick={() => {
+                                        const downloadUrl = `http://localhost:8080/api/paysummaries/download?employeeCode=${record.employeeCode}&month=${payrollParams.payrollParams.date}-01`;
+                                        window.open(downloadUrl, '_blank');
+                                    }}
+                                    className="bg-cyan-300 hover:bg-cyan-400 text-sm text-gray-800 font-medium py-1 px-3 rounded-md shadow"
+                                >
                                     Download
                                 </button>
                             </td>
