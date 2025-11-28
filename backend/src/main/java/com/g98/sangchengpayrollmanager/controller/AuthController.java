@@ -1,6 +1,7 @@
 package com.g98.sangchengpayrollmanager.controller;
 
 import com.g98.sangchengpayrollmanager.model.dto.api.response.ApiResponse;
+import com.g98.sangchengpayrollmanager.model.dto.auth.ChangePasswordRequest;
 import com.g98.sangchengpayrollmanager.model.dto.auth.LoginRequest;
 import com.g98.sangchengpayrollmanager.model.dto.auth.LoginResponse;
 import com.g98.sangchengpayrollmanager.model.dto.auth.PasswordResetRequests;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -80,6 +82,30 @@ public class AuthController {
                     .build());
         } catch (IllegalArgumentException | IllegalStateException exception) {
             log.warn("Reset password failed for email {}: {}", request.email(), exception.getMessage());
+            return ResponseEntity.badRequest().body(ApiResponse.<Void>builder()
+                    .status(HttpStatus.BAD_REQUEST.value())
+                    .message(exception.getMessage())
+                    .build());
+        }
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(@RequestBody @Valid ChangePasswordRequest request,
+                                                            Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.<Void>builder()
+                    .status(HttpStatus.UNAUTHORIZED.value())
+                    .message("Bạn cần đăng nhập để đổi mật khẩu")
+                    .build());
+        }
+
+        try {
+            authService.changePassword(authentication.getName(), request);
+            return ResponseEntity.ok(ApiResponse.<Void>builder()
+                    .message("Đổi mật khẩu thành công")
+                    .build());
+        } catch (IllegalArgumentException exception) {
+            log.warn("Change password failed for user {}: {}", authentication.getName(), exception.getMessage());
             return ResponseEntity.badRequest().body(ApiResponse.<Void>builder()
                     .status(HttpStatus.BAD_REQUEST.value())
                     .message(exception.getMessage())

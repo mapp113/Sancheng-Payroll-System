@@ -122,6 +122,7 @@ export default function DetailEmployeePage() {
     const [role, setRole] = useState<string>("EMPLOYEE");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [token, setToken] = useState<string>("");
 
     useEffect(() => {
@@ -187,6 +188,8 @@ export default function DetailEmployeePage() {
         confirmPassword: "",
     });
 
+    const [passwordError, setPasswordError] = useState<string | null>(null);
+
     const handleChange =
         (field: keyof EmployeeProfile) =>
             (e: ChangeEvent<HTMLInputElement>) => {
@@ -244,9 +247,11 @@ export default function DetailEmployeePage() {
             setEmployee(mapProfileResponse(data));
             setIsEditing(false);
             setError(null);
+            setSuccessMessage("Cập nhật hồ sơ thành công");
         } catch (err) {
             console.error(err);
             setError("Cập nhật hồ sơ thất bại");
+            setSuccessMessage(null);
         }
     };
 
@@ -257,13 +262,59 @@ export default function DetailEmployeePage() {
             };
 
     const handlePasswordSave = () => {
-        // TODO: validate + call API đổi mật khẩu
-        setIsChangingPassword(false);
-        setPasswordForm({
-            oldPassword: "",
-            newPassword: "",
-            confirmPassword: "",
-        });
+        setPasswordError(null);
+
+        if (!passwordForm.oldPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+            setPasswordError("Vui lòng nhập đầy đủ thông tin mật khẩu");
+            return;
+        }
+
+        if (passwordForm.newPassword.length < 6) {
+            setPasswordError("Mật khẩu mới phải có ít nhất 6 ký tự");
+            return;
+        }
+
+        if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+            setPasswordError("Mật khẩu mới và xác nhận không khớp");
+            return;
+        }
+
+        if (!token) {
+            setPasswordError("Không tìm thấy token đăng nhập");
+            return;
+        }
+
+        fetch(`${API_BASE_URL}/api/v1/auth/change-password`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                currentPassword: passwordForm.oldPassword,
+                newPassword: passwordForm.newPassword,
+            }),
+        })
+            .then(async (response) => {
+                const payload = await response.json().catch(() => null);
+                if (!response.ok) {
+                    const message = (payload as { message?: string } | null)?.message ?? "Đổi mật khẩu thất bại";
+                    throw new Error(message);
+                }
+
+                setSuccessMessage((payload as { message?: string } | null)?.message ?? "Đổi mật khẩu thành công");
+                setIsChangingPassword(false);
+                setPasswordForm({
+                    oldPassword: "",
+                    newPassword: "",
+                    confirmPassword: "",
+                });
+            })
+            .catch((err) => {
+                console.error(err);
+                setPasswordError(err instanceof Error ? err.message : "Đổi mật khẩu thất bại");
+                setSuccessMessage(null);
+            });
     };
 
     return (
@@ -281,7 +332,10 @@ export default function DetailEmployeePage() {
 
                     <button
                         type="button"
-                        onClick={() => setIsChangingPassword(true)}
+                        onClick={() => {
+                            setPasswordError(null);
+                            setIsChangingPassword(true);
+                        }}
                         className="inline-flex items-center gap-2 rounded-full bg-[#FFDD7D] px-4 py-2 text-sm font-semibold text-[#1F2A44] shadow-sm transition hover:bg-[#fbd568] hover:shadow-md"
                     >
                         <Shield className="h-4 w-4"/>
@@ -291,6 +345,11 @@ export default function DetailEmployeePage() {
 
                 {/* Thông tin nhân viên */}
                 <div className="grid gap-6">
+                    {successMessage ? (
+                        <div className="rounded-3xl bg-green-50 p-4 text-sm text-green-700 shadow-sm">
+                            {successMessage}
+                        </div>
+                    ) : null}
                     {error ? (
                         <div className="rounded-3xl bg-red-50 p-4 text-sm text-red-700 shadow-sm">
                             {error}
@@ -541,6 +600,11 @@ export default function DetailEmployeePage() {
                             Đổi mật khẩu
                         </h3>
                         <div className="space-y-4">
+                            {passwordError ? (
+                                <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">
+                                    {passwordError}
+                                </p>
+                            ) : null}
                             <EditField
                                 label="Mật khẩu hiện tại"
                                 value={passwordForm.oldPassword}

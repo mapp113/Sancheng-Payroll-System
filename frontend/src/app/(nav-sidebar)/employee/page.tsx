@@ -1,14 +1,84 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { CalendarDays } from "lucide-react";
+import {useEffect, useState} from "react";
+import {CalendarDays, Clock4, TimerReset} from "lucide-react";
+
+type FirstCheckInResponse = {
+    firstCheckIn: string;
+    checkInTime: string | null;
+};
 import { getUserData } from "@/app/_components/utils/getUserData";
 import AttendanceTable from "@/app/_components/employee/attendance-table";
 import type { EmployeeInfomation, AttendanceSummary } from "@/app/_components/manager-timesheet-detail/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+type JwtPayload = {
+    full_name?: string;
+    employee_code?: string;
+    [key: string]: any;
+};
+
+// Decode JWT base64url
+function decodeJWT(token: string): JwtPayload | null {
+    try {
+        const payload = token.split(".")[1];
+        if (!payload) return null;
+        const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+        const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
+        const json = atob(padded);
+        return JSON.parse(json);
+    } catch (e) {
+        console.error("Decode JWT error:", e);
+        return null;
+    }
+}
+
+const timesheets = [
+    {
+        day: "Thứ 2",
+        date: "12/08/2024",
+        checkIn: "08:50",
+        checkOut: "17:40",
+        total: "8h 30p",
+        note: "Đúng giờ",
+    },
+    {
+        day: "Thứ 3",
+        date: "13/08/2024",
+        checkIn: "08:47",
+        checkOut: "17:35",
+        total: "8h 20p",
+        note: "Đúng giờ",
+    },
+    {
+        day: "Thứ 4",
+        date: "14/08/2024",
+        checkIn: "09:10",
+        checkOut: "18:05",
+        total: "8h 55p",
+        note: "Đi trễ",
+    },
+    {
+        day: "Thứ 5",
+        date: "15/08/2024",
+        checkIn: "08:45",
+        checkOut: "17:25",
+        total: "8h 10p",
+        note: "Đúng giờ",
+    },
+    {
+        day: "Thứ 6",
+        date: "16/08/2024",
+        checkIn: "08:58",
+        checkOut: "16:50",
+        total: "7h 52p",
+        note: "Về sớm",
+    },
+];
 
 export default function EmployeesDashboardPage() {
+    const [employee, setEmployee] = useState<JwtPayload | null>(null);
+
     const [showCalendar, setShowCalendar] = useState(false);
     const [selectedMonth, setSelectedMonth] = useState<string>("");
     const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -91,12 +161,99 @@ export default function EmployeesDashboardPage() {
         fetchAttendanceSummary();
     }, [employeeCode, currentMonth]);
 
+    const [firstCheckIn, setFirstCheckIn] = useState<string | null>(null);
+    const [loadingCheckIn, setLoadingCheckIn] = useState(false);
+    const [errorCheckIn, setErrorCheckIn] = useState<string | null>(null);
+
+    const formatTime = (raw: string | null): string | null => {
+        if (!raw) return null;
+        if (raw.length >= 5) return raw.slice(0, 5);
+        return raw;
+    };
+
+    async function fetchFirstCheckIn(empCode: string, dateStr: string) {
+        try {
+            setLoadingCheckIn(true);
+            setErrorCheckIn(null);
+
+            const params = new URLSearchParams({
+                employeeCode: empCode,
+                date: dateStr,
+            }).toString();
+
+            const API_URL = `http://localhost:8080/api/att-records/first-check-in?${params}`;
+
+            console.log("🔍 Calling API:", API_URL);
+
+            const res = await fetch(API_URL, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                }
+            });
+
+            console.log("📡 Response status:", res.status);
+
+            if (!res.ok) {
+                const errorText = await res.text();
+                console.error("❌ API Error:", errorText);
+                throw new Error(`HTTP ${res.status}: ${errorText}`);
+            }
+
+            const data: FirstCheckInResponse = await res.json();
+            console.log("✅ Data received:", data);
+
+            setFirstCheckIn(formatTime(data.firstCheckIn));
+        } catch (e: any) {
+            console.error("🚨 Fetch error:", e);
+            setErrorCheckIn(e.message || "Không lấy được giờ vào");
+            setFirstCheckIn(null);
+        } finally {
+            setLoadingCheckIn(false);
+        }
+    }
+
+    // Lấy token từ localStorage → decode JWT
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+
+        const decoded = decodeJWT(token);
+        if (decoded) {
+            setEmployee(decoded);
+        }
+    }, []);
+
+    // Khi có employee_code → auto fetch hôm nay
+    useEffect(() => {
+        if (!employee?.employee_code) return;
+
+        const today = new Date().toISOString().slice(0, 10);
+        setSelectedDate(today);
+        fetchFirstCheckIn(employee.employee_code, today);
+    }, [employee?.employee_code]);
+
     const handleChoose = () => {
+        if (!employee?.employee_code) return;
+
+        if (viewMode === "day") {
+            fetchFirstCheckIn(employee.employee_code, selectedDate);
+        } else {
+            console.log("Xem theo tuần:", selectedWeek);
+            // TODO: API theo tuần
         if (selectedMonth) {
             setCurrentMonth(selectedMonth);
         }
         setShowCalendar(false);
     };
+
+    const timelineNotes = [
+        {
+            title: "Giờ vào",
+            value: firstCheckIn ?? (loadingCheckIn ? "Đang tải..." : "--:--"),
+        },
+    ];
 
     return (
         <div className="relative flex min-h-full flex-col gap-6 p-6 text-[#1F2A44]">
@@ -125,6 +282,7 @@ export default function EmployeesDashboardPage() {
                             </div>
                         </dl>
                     </section>
+                </aside>
 
                     {/* Summary Cards */}
                     {attendanceSummary && (
@@ -179,8 +337,8 @@ export default function EmployeesDashboardPage() {
                         </header>
 
                         {employeeCode && (
-                            <AttendanceTable 
-                                employeeCode={employeeCode} 
+                            <AttendanceTable
+                                employeeCode={employeeCode}
                                 month={currentMonth}
                             />
                         )}

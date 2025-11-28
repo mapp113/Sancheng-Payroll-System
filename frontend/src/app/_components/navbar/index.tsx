@@ -3,11 +3,10 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import localFont from "next/font/local";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useTranslations } from "@/lib/translations";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {useTranslations} from "@/lib/translations";
 import { Bell, ChevronDown, CircleChevronDown, Clock, Languages, User, Settings, LogOut, ArrowLeftRight } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
-import NotificationPanel from "@/app/_components/common/notification/panel";
 
 const iceland = localFont({
     src: "../../../../public/fonts/Iceland-Regular.ttf",
@@ -228,10 +227,10 @@ export default function Navbar() {
                     <Languages className="h-4 w-4" aria-hidden="true" />
                     <span>{language === "vi" ? "Tiếng Việt" : "English"}</span>
                 </button>
-                
+
                 <div className="relative" ref={notificationRef}>
-                    <button 
-                        id="notification" 
+                    <button
+                        id="notification"
                         className="flex items-center gap-1 hover:opacity-80 transition-opacity relative cursor-pointer"
                         onClick={() => {
                             setIsNotificationOpen(!isNotificationOpen);

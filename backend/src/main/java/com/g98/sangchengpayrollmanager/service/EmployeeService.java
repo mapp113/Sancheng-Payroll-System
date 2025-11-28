@@ -14,7 +14,13 @@ import com.g98.sangchengpayrollmanager.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.Objects;
 
@@ -207,6 +213,37 @@ public class EmployeeService {
 
         if (hasRestrictedChange) {
             throw new RuntimeException("Nhân viên chỉ được phép cập nhật số điện thoại, địa chỉ và email");
+        }
+    }
+
+    @Transactional
+    public String uploadContractPdf(String employeeCode, MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new RuntimeException("File hợp đồng không được để trống");
+        }
+
+        if (!Objects.equals(file.getContentType(), "application/pdf")) {
+            throw new RuntimeException("Chỉ chấp nhận tập tin PDF");
+        }
+
+        Contract contract = contractRepository.findFirstByUserEmployeeCodeOrderByStartDateDesc(employeeCode)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng của nhân viên"));
+
+        try {
+            String originalName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+            String fileName = employeeCode + "-" + System.currentTimeMillis() + "-" + originalName;
+            Path uploadDir = Paths.get("uploads", "contracts");
+            Files.createDirectories(uploadDir);
+
+            Path destination = uploadDir.resolve(fileName);
+            file.transferTo(destination);
+
+            contract.setPdfPath(destination.toString());
+            contractRepository.save(contract);
+
+            return destination.toString();
+        } catch (IOException e) {
+            throw new RuntimeException("Tải lên file hợp đồng thất bại", e);
         }
     }
 }

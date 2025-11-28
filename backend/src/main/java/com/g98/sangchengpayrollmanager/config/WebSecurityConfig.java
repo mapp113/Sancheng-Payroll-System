@@ -34,7 +34,12 @@ public class WebSecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(withDefaults()) // Enable CORS
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers(
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/forgot-password",
+                                "/api/v1/auth/verify-reset-code",
+                                "/api/v1/auth/reset-password"
+                        ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/otp/**").permitAll()
                         .requestMatchers("/api/v1/admin/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow OPTIONS requests (preflight)
@@ -42,7 +47,8 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/attsummary/**").permitAll()
                         .requestMatchers("/api/employees/**").permitAll()
                         .requestMatchers("/api/leave/**").permitAll()
-                        .requestMatchers("api/v1/hr/**").permitAll()
+                        .requestMatchers("/api/v1/hr/**").permitAll()
+                        .requestMatchers("/api/att-records/first-check-in").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/admin/create-account").permitAll()
                         .requestMatchers("api/payroll-export/**").permitAll()
                         .requestMatchers("api/employee/payroll/**").permitAll()

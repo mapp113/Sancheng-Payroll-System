@@ -133,6 +133,8 @@ export default function UserManagement() {
     const [selectedProfile, setSelectedProfile] = useState<EmployeeProfile>(emptyProfile);
     const [profileLoading, setProfileLoading] = useState(false);
     const [profileError, setProfileError] = useState<string | null>(null);
+    const [contractUploadError, setContractUploadError] = useState<string | null>(null);
+    const [uploadingContract, setUploadingContract] = useState(false);
 
     // ⭐ NEW: State to track current user info
     const [currentUserRole, setCurrentUserRole] = useState<string>("");
@@ -307,6 +309,59 @@ export default function UserManagement() {
             setProfileError("Cập nhật hồ sơ thất bại");
         } finally {
             setProfileLoading(false);
+        }
+    };
+
+    const handleContractUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+            setContractUploadError("Vui lòng chọn tệp PDF");
+            event.target.value = "";
+            return;
+        }
+
+        if (!selectedEmployeeCode) {
+            setContractUploadError("Chưa có mã nhân viên để tải hợp đồng");
+            event.target.value = "";
+            return;
+        }
+
+        setUploadingContract(true);
+        setContractUploadError(null);
+
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const res = await fetch(
+                `${API_BASE}/api/v1/hr/users/${selectedEmployeeCode}/contract/upload`,
+                {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
+                    },
+                    body: formData,
+                }
+            );
+
+            if (!res.ok) {
+                throw new Error("Tải lên hợp đồng thất bại");
+            }
+
+            const json = await res.json();
+            const uploadedPath = json.data as string | undefined;
+
+            if (uploadedPath) {
+                setSelectedProfile((prev) => ({...prev, contractUrl: uploadedPath}));
+            }
+        } catch (error) {
+            console.error(error);
+            setContractUploadError("Tải lên hợp đồng thất bại");
+        } finally {
+            setUploadingContract(false);
+            event.target.value = "";
         }
     };
 
@@ -607,13 +662,32 @@ export default function UserManagement() {
                             </label>
 
                             <label className="flex flex-col gap-1 text-sm">
-                                Tải lên hợp đồng
-                                <input
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
-                                    value={selectedProfile.contractUrl}
-                                    onChange={handleProfileChange("contractUrl")}
-                                    disabled={profileLoading || isEditingOwnProfile}
-                                />
+                                Tải lên hợp đồng (PDF)
+                                <div className="flex flex-col gap-2">
+                                    <input
+                                        type="file"
+                                        accept="application/pdf"
+                                        className="rounded-lg border border-[#E2E8F0] px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-500"
+                                        onChange={handleContractUpload}
+                                        disabled={profileLoading || uploadingContract || isEditingOwnProfile}
+                                    />
+                                    {selectedProfile.contractUrl && (
+                                        <a
+                                            href={selectedProfile.contractUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-sm text-[#4AB4DE] hover:underline"
+                                        >
+                                            Xem hợp đồng hiện tại
+                                        </a>
+                                    )}
+                                    {contractUploadError && (
+                                        <p className="text-sm text-red-600">{contractUploadError}</p>
+                                    )}
+                                    {uploadingContract && (
+                                        <p className="text-sm text-slate-500">Đang tải lên...</p>
+                                    )}
+                                </div>
                             </label>
                         </div>
 
