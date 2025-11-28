@@ -1,17 +1,31 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { File } from "lucide-react";
 import type { LeaveDetailResponse } from "@/app/_components/employee/request/types";
 
 export default function ManagerApprovalLeavesPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const id = searchParams.get("id");
   const [leaveData, setLeaveData] = useState<LeaveDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState("");
+
+  const handleBack = () => {
+    const page = searchParams.get("page") || "0";
+    const month = searchParams.get("month") || "";
+    const search = searchParams.get("search") || "";
+    
+    const params = new URLSearchParams();
+    params.set("page", page);
+    if (month) params.set("month", month);
+    if (search) params.set("search", search);
+    
+    router.push(`/manager/requests/leaves?${params.toString()}`);
+  };
 
   const handleApprove = async () => {
     if (!id) return;
@@ -32,7 +46,7 @@ export default function ManagerApprovalLeavesPage() {
       }
 
       alert("Đã phê duyệt thành công");
-      window.location.href = "./";
+      handleBack();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Đã xảy ra lỗi");
     }
@@ -57,7 +71,7 @@ export default function ManagerApprovalLeavesPage() {
       }
 
       alert("Đã từ chối yêu cầu");
-      window.location.href = "./";
+      handleBack();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Đã xảy ra lỗi");
     }
@@ -112,10 +126,12 @@ export default function ManagerApprovalLeavesPage() {
 
   return (
     <div className="p-4 flex flex-col gap-4">
-      <a className="w-fit h-fit border border-black bg-[#8acefd] text-[#4577a0] hover:bg-[#66befc] py-2 px-4 rounded cursor-pointer"
-        href="./">
+      <button 
+        onClick={handleBack}
+        className="w-fit h-fit border border-black bg-[#8acefd] text-[#4577a0] hover:bg-[#66befc] py-2 px-4 rounded cursor-pointer"
+      >
         Back
-      </a>
+      </button>
       <div className="flex justify-center">
         <div className="w-[60rem] bg-[#d5f1f5] rounded-2xl py-5 px-10">
           <h1 className="text-2xl font-bold text-center mb-6">Yêu cầu xin nghỉ</h1>

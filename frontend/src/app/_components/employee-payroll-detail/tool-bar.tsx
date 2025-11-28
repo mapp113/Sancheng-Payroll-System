@@ -1,6 +1,6 @@
 "use client";
 
-import {useRouter} from "next/navigation";
+import {useRouter, useSearchParams} from "next/navigation";
 import {ArrowLeft, Download} from "lucide-react";
 
 interface EmployeePayrollDetailToolbarProps {
@@ -13,6 +13,22 @@ export default function EmployeePayrollDetailToolbar({
                                                          subtitle,
                                                      }: EmployeePayrollDetailToolbarProps) {
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    const handleBack = () => {
+        const page = searchParams.get("page") || "0";
+        const month = searchParams.get("month") || "";
+        const search = searchParams.get("search") || "";
+        const sortBy = searchParams.get("sortBy") || "";
+        
+        const params = new URLSearchParams();
+        params.set("page", page);
+        if (month) params.set("month", month);
+        if (search) params.set("search", search);
+        if (sortBy) params.set("sortBy", sortBy);
+        
+        router.push(`/payroll?${params.toString()}`);
+    };
 
     return (
         <div className="rounded-2xl border border-black bg-[#E6F7FF] p-4 shadow-[6px_6px_0_#CCE1F0]">
@@ -20,7 +36,7 @@ export default function EmployeePayrollDetailToolbar({
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
                     <button
                         type="button"
-                        onClick={() => router.back()}
+                        onClick={handleBack}
                         className="inline-flex items-center justify-center gap-2 rounded-lg border border-black bg-[#89CDFE] px-5 py-2 text-sm font-semibold uppercase tracking-[0.25em] text-[#1D3E6A] transition hover:bg-[#7ABFEF]"
                     >
                         <ArrowLeft className="h-4 w-4"/>

@@ -2,7 +2,8 @@
 
 import TimesheetToolbar from "@/app/_components/manager/timesheet/toolbar";
 import TimesheetTable from "@/app/_components/manager/timesheet/table";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CreateDraftParams, TimesheetParam, TimesheetRecord } from "@/app/_components/manager/timesheet/type";
 import { CreateDraftParamContext, ParamsContext } from "@/app/_components/manager/timesheet/timesheet-context";
 import { DataContext } from "@/app/_components/manager/timesheet/timesheet-context";
@@ -13,16 +14,31 @@ import { NotificationProvider, useNotification } from "@/app/_components/common/
 import BottomRightNotification from "@/app/_components/common/pop-box/notification/bottom-right";
 
 function TimesheetPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { addNotification } = useNotification();
+  
+  // Khôi phục state từ URL params
   const [timesheetParams, setTimesheetParams] = useState<TimesheetParam>({
-    keyword: "",
-    date: true ? new Date().toISOString().slice(0, 7) : "2025-10",
-    index: "0",
+    keyword: searchParams.get("search") || "",
+    date: searchParams.get("month") || (true ? new Date().toISOString().slice(0, 7) : "2025-10"),
+    index: searchParams.get("page") || "0",
     totalPages: "",
   });
   const [timesheetData, setTimesheetData] = useState<TimesheetRecord[]>([]);
   const [showFormPopBox, setShowFormPopBox] = useState(false);
   const [createDraftParams, setCreateDraftParams] = useState<CreateDraftParams | null>(null);
+
+  // Cập nhật URL params khi state thay đổi
+  useEffect(() => {
+    const urlParams = new URLSearchParams();
+    urlParams.set("page", timesheetParams.index);
+    urlParams.set("month", timesheetParams.date);
+    if (timesheetParams.keyword) {
+      urlParams.set("search", timesheetParams.keyword);
+    }
+    router.replace(`?${urlParams.toString()}`, { scroll: false });
+  }, [timesheetParams.index, timesheetParams.date, timesheetParams.keyword, router]);
 
   const handleCreateDraft = async () => {
     if (!createDraftParams) {
