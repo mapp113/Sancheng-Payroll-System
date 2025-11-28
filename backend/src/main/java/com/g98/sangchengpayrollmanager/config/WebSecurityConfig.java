@@ -44,7 +44,8 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/leave/**").permitAll()
                         .requestMatchers("api/v1/hr/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/admin/create-account").permitAll()
-
+                        .requestMatchers("api/payroll-export/**").permitAll()
+                        .requestMatchers("api/employee/payroll/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
