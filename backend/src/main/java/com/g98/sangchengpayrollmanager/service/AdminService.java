@@ -60,7 +60,11 @@ public class AdminService {
         return adminRepository.findAll()
                 .stream()
                 .filter(user -> user.getRole() != null &&
-                        "EMPLOYEE".equalsIgnoreCase(user.getRole().getName()))
+                        (
+                                "EMPLOYEE".equalsIgnoreCase(user.getRole().getName()) ||
+                                        "HR".equalsIgnoreCase(user.getRole().getName()) ||
+                                        "MANAGER".equalsIgnoreCase(user.getRole().getName())
+                        ))
                 .map(UserMapper::toDTO)
                 .toList();
     }

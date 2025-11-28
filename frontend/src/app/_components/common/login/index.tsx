@@ -30,7 +30,7 @@ type JwtPayload = {
 // ánh xạ role → đường dẫn
 const ROLE_REDIRECTS: Record<string, string> = {
     ADMIN: "/admin",
-    HR: "/payroll",
+    HR: "/contract",
     MANAGER: "/payroll",
     ACCOUNTANT: "/home",
     EMPLOYEE: "/employee",

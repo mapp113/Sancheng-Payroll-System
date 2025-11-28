@@ -2,9 +2,7 @@
 
 import {Pencil, Plus, Search, X} from "lucide-react";
 import {ChangeEvent, useEffect, useMemo, useState} from "react";
-import {useRouter} from "next/navigation";   // ⭐ NEW
-
-type Role = "HR" | "EMPLOYEE" | "ADMIN" | "MANAGER" | "ACCOUNTANT";
+import {useRouter} from "next/navigation";
 
 type UserItem = {
     userId: string;
@@ -104,8 +102,26 @@ function mapProfileResponse(data: EmployeeProfileResponse): EmployeeProfile {
     };
 }
 
+// Helper function to decode JWT token
+function parseJwt(token: string) {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+            atob(base64)
+                .split('')
+                .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                .join('')
+        );
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        console.error("Error parsing JWT:", e);
+        return null;
+    }
+}
+
 export default function UserManagement() {
-    const router = useRouter(); // ⭐ NEW
+    const router = useRouter();
 
     const [filterRole, setFilterRole] = useState<string>("all");
     const [users, setUsers] = useState<UserItem[]>([]);
@@ -117,6 +133,22 @@ export default function UserManagement() {
     const [selectedProfile, setSelectedProfile] = useState<EmployeeProfile>(emptyProfile);
     const [profileLoading, setProfileLoading] = useState(false);
     const [profileError, setProfileError] = useState<string | null>(null);
+
+    // ⭐ NEW: State to track current user info
+    const [currentUserRole, setCurrentUserRole] = useState<string>("");
+    const [currentUserEmployeeCode, setCurrentUserEmployeeCode] = useState<string>("");
+
+    // ⭐ NEW: Extract token info on mount
+    useEffect(() => {
+        const token = localStorage.getItem("access_token");
+        if (token) {
+            const decoded = parseJwt(token);
+            if (decoded) {
+                setCurrentUserRole(decoded.role_name || "");
+                setCurrentUserEmployeeCode(decoded.employee_code || "");
+            }
+        }
+    }, []);
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -278,6 +310,17 @@ export default function UserManagement() {
         }
     };
 
+    // ⭐ NEW: Check if current user is HR viewing their own profile
+    const isEditingOwnProfile = useMemo(() => {
+        if (!currentUserRole || !currentUserEmployeeCode || !selectedEmployeeCode) {
+            return false;
+        }
+        if (currentUserRole.toLowerCase() === "hr") {
+            return currentUserEmployeeCode.toLowerCase() === selectedEmployeeCode.toLowerCase();
+        }
+        return false;
+    }, [currentUserRole, currentUserEmployeeCode, selectedEmployeeCode]);
+
     return (
         <div className="flex h-full flex-col gap-4 p-4 text-[#1F2A44]">
             <header className="flex flex-col gap-2 rounded-2xl bg-white p-6 shadow-sm">
@@ -379,7 +422,6 @@ export default function UserManagement() {
                                             {user.phoneNo}
                                         </td>
 
-                                        {/* ⭐ NEW COLUMN — EDIT BUTTON */}
                                         <td className="whitespace-nowrap px-4 py-3 text-right">
                                             <button
                                                 onClick={() => {
@@ -404,19 +446,25 @@ export default function UserManagement() {
                 </section>
             </div>
 
-            {/* ===== PROFILE MODAL (GIỮ NGUYÊN) ===== */}
+            {/* ===== PROFILE MODAL (UPDATED) ===== */}
             {profileModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
                     <div className="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-xl">
                         <div className="mb-4 flex items-start justify-between">
                             <div>
                                 <h3 className="text-xl font-semibold text-[#1F2A44]">
-                                    Chỉnh sửa hồ sơ
+                                    {isEditingOwnProfile ? "Xem hồ sơ" : "Chỉnh sửa hồ sơ"}
                                 </h3>
                                 <p className="text-sm text-slate-500">
                                     Hồ sơ được tải và cập nhật theo mã nhân viên:{" "}
                                     {selectedEmployeeCode ?? "-"}
                                 </p>
+                                {/* ⭐ NEW: Warning message for HR viewing own profile */}
+                                {isEditingOwnProfile && (
+                                    <p className="mt-1 text-sm text-amber-600">
+                                        Bạn không thể chỉnh sửa hồ sơ của chính mình
+                                    </p>
+                                )}
                             </div>
                             <button
                                 className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100"
@@ -436,30 +484,30 @@ export default function UserManagement() {
                             <label className="flex flex-col gap-1 text-sm">
                                 Họ và tên
                                 <input
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2"
+                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
                                     value={selectedProfile.name}
                                     onChange={handleProfileChange("name")}
-                                    disabled={profileLoading}
+                                    disabled={profileLoading || isEditingOwnProfile}
                                 />
                             </label>
 
                             <label className="flex flex-col gap-1 text-sm">
                                 Email
                                 <input
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2"
+                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
                                     value={selectedProfile.personalEmail}
                                     onChange={handleProfileChange("personalEmail")}
-                                    disabled={profileLoading}
+                                    disabled={profileLoading || isEditingOwnProfile}
                                 />
                             </label>
 
                             <label className="flex flex-col gap-1 text-sm">
                                 Chức vụ
                                 <input
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2"
+                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
                                     value={selectedProfile.position}
                                     onChange={handleProfileChange("position")}
-                                    disabled={profileLoading}
+                                    disabled={profileLoading || isEditingOwnProfile}
                                 />
                             </label>
 
@@ -467,10 +515,10 @@ export default function UserManagement() {
                                 Ngày vào làm
                                 <input
                                     type="date"
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2"
+                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
                                     value={selectedProfile.joinDate}
                                     onChange={handleProfileChange("joinDate")}
-                                    disabled={profileLoading}
+                                    disabled={profileLoading || isEditingOwnProfile}
                                 />
                             </label>
 
@@ -478,50 +526,50 @@ export default function UserManagement() {
                                 Ngày sinh
                                 <input
                                     type="date"
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2"
+                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
                                     value={selectedProfile.dob}
                                     onChange={handleProfileChange("dob")}
-                                    disabled={profileLoading}
+                                    disabled={profileLoading || isEditingOwnProfile}
                                 />
                             </label>
 
                             <label className="flex flex-col gap-1 text-sm">
                                 Số điện thoại
                                 <input
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2"
+                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
                                     value={selectedProfile.phone}
                                     onChange={handleProfileChange("phone")}
-                                    disabled={profileLoading}
+                                    disabled={profileLoading || isEditingOwnProfile}
                                 />
                             </label>
 
                             <label className="flex flex-col gap-1 text-sm">
                                 Địa chỉ
                                 <input
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2"
+                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
                                     value={selectedProfile.address}
                                     onChange={handleProfileChange("address")}
-                                    disabled={profileLoading}
+                                    disabled={profileLoading || isEditingOwnProfile}
                                 />
                             </label>
 
                             <label className="flex flex-col gap-1 text-sm">
                                 Loại hợp đồng
                                 <input
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2"
+                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
                                     value={selectedProfile.contractType}
                                     onChange={handleProfileChange("contractType")}
-                                    disabled={profileLoading}
+                                    disabled={profileLoading || isEditingOwnProfile}
                                 />
                             </label>
 
                             <label className="flex flex-col gap-1 text-sm">
                                 CCCD
                                 <input
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2"
+                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
                                     value={selectedProfile.citizenId}
                                     onChange={handleProfileChange("citizenId")}
-                                    disabled={profileLoading}
+                                    disabled={profileLoading || isEditingOwnProfile}
                                 />
                             </label>
 
@@ -529,10 +577,10 @@ export default function UserManagement() {
                                 Ngày hết hạn hợp đồng
                                 <input
                                     type="date"
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2"
+                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
                                     value={selectedProfile.visaExpiry}
                                     onChange={handleProfileChange("visaExpiry")}
-                                    disabled={profileLoading}
+                                    disabled={profileLoading || isEditingOwnProfile}
                                 />
                             </label>
 
@@ -541,30 +589,30 @@ export default function UserManagement() {
                                 <input
                                     type="number"
                                     min={0}
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2"
+                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
                                     value={selectedProfile.dependentsNo}
                                     onChange={handleProfileChange("dependentsNo")}
-                                    disabled={profileLoading}
+                                    disabled={profileLoading || isEditingOwnProfile}
                                 />
                             </label>
 
                             <label className="flex flex-col gap-1 text-sm">
                                 Mã số thuế
                                 <input
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2"
+                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
                                     value={selectedProfile.taxCode}
                                     onChange={handleProfileChange("taxCode")}
-                                    disabled={profileLoading}
+                                    disabled={profileLoading || isEditingOwnProfile}
                                 />
                             </label>
 
                             <label className="flex flex-col gap-1 text-sm">
                                 Tải lên hợp đồng
                                 <input
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2"
+                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
                                     value={selectedProfile.contractUrl}
                                     onChange={handleProfileChange("contractUrl")}
-                                    disabled={profileLoading}
+                                    disabled={profileLoading || isEditingOwnProfile}
                                 />
                             </label>
                         </div>
@@ -577,13 +625,16 @@ export default function UserManagement() {
                             >
                                 Đóng
                             </button>
-                            <button
-                                className="inline-flex items-center gap-2 rounded-full bg-[#4AB4DE] px-5 py-2 text-sm font-medium text-white transition hover:bg-[#3c9ec3] disabled:cursor-not-allowed disabled:opacity-70"
-                                onClick={saveProfile}
-                                disabled={profileLoading}
-                            >
-                                {profileLoading ? "Đang lưu..." : "Lưu thay đổi"}
-                            </button>
+                            {/* ⭐ NEW: Hide save button if editing own profile */}
+                            {!isEditingOwnProfile && (
+                                <button
+                                    className="inline-flex items-center gap-2 rounded-full bg-[#4AB4DE] px-5 py-2 text-sm font-medium text-white transition hover:bg-[#3c9ec3] disabled:cursor-not-allowed disabled:opacity-70"
+                                    onClick={saveProfile}
+                                    disabled={profileLoading}
+                                >
+                                    {profileLoading ? "Đang lưu..." : "Lưu thay đổi"}
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

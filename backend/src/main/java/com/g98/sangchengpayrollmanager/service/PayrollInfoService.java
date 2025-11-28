@@ -109,16 +109,54 @@ public class PayrollInfoService {
         return mapPayComponent(saved);
     }
 
+    public void deletePayComponent(String employeeCode, Integer payComponentId) {
+        PayComponent payComponent = payComponentRepository.findById(payComponentId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phụ cấp với ID: " + payComponentId));
+
+        if (!payComponent.getUser().getEmployeeCode().equals(employeeCode)) {
+            throw new RuntimeException("Phụ cấp không thuộc về nhân viên có mã: " + employeeCode);
+        }
+
+        payComponentRepository.delete(payComponent);
+    }
+
+    public SalaryInformationResponse updateSalaryInformation(String employeeCode, Integer salaryId, SalaryInformationCreateRequest request) {
+        SalaryInformation salaryInformation = salaryInformationRepository.findById(salaryId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin lương với ID: " + salaryId));
+
+        if (!salaryInformation.getUser().getEmployeeCode().equals(employeeCode)) {
+            throw new RuntimeException("Thông tin lương không thuộc về nhân viên có mã: " + employeeCode);
+        }
+
+        if (request.getBaseSalary() == null || request.getBaseHourlyRate() == null || request.getEffectiveFrom() == null) {
+            throw new RuntimeException("Thiếu thông tin bắt buộc về lương cơ bản");
+        }
+
+        salaryInformation.setBaseSalary(request.getBaseSalary());
+        salaryInformation.setBaseHourlyRate(request.getBaseHourlyRate());
+        salaryInformation.setEffectiveFrom(request.getEffectiveFrom());
+        salaryInformation.setEffectiveTo(request.getEffectiveTo());
+        salaryInformation.setStatus(request.getStatus());
+        salaryInformation.setDate(LocalDate.now());
+
+        SalaryInformation updated = salaryInformationRepository.save(salaryInformation);
+        return mapSalaryInfo(updated);
+    }
+
     private SalaryInformationResponse mapSalaryInfo(SalaryInformation salaryInformation) {
         return new SalaryInformationResponse(
+                salaryInformation.getId(),
                 salaryInformation.getBaseSalary(),
+                salaryInformation.getBaseHourlyRate(),
                 salaryInformation.getEffectiveFrom(),
-                salaryInformation.getEffectiveTo()
+                salaryInformation.getEffectiveTo(),
+                salaryInformation.getStatus()
         );
     }
 
     private PayComponentResponse mapPayComponent(PayComponent payComponent) {
         return new PayComponentResponse(
+                payComponent.getId(),
                 payComponent.getType() != null ? payComponent.getType().getId() : null,
                 payComponent.getType() != null ? payComponent.getType().getName() : null,
                 payComponent.getName(),
