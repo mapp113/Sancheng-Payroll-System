@@ -7,6 +7,7 @@ import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {useTranslations} from "@/lib/translations";
 import { Bell, ChevronDown, CircleChevronDown, Clock, Languages, User, Settings, LogOut, ArrowLeftRight } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
+import NotificationPanel from "../common/notification/panel";
 
 const iceland = localFont({
     src: "../../../../public/fonts/Iceland-Regular.ttf",

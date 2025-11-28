@@ -1,7 +1,7 @@
 "use client";
 
-import {useEffect, useState} from "react";
-import {CalendarDays, Clock4, TimerReset} from "lucide-react";
+import { useEffect, useState } from "react";
+import { CalendarDays } from "lucide-react";
 
 type FirstCheckInResponse = {
     firstCheckIn: string;
@@ -15,7 +15,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 type JwtPayload = {
     full_name?: string;
     employee_code?: string;
-    [key: string]: any;
+    [key: string]: unknown;
 };
 
 // Decode JWT base64url
@@ -33,49 +33,6 @@ function decodeJWT(token: string): JwtPayload | null {
     }
 }
 
-const timesheets = [
-    {
-        day: "Thứ 2",
-        date: "12/08/2024",
-        checkIn: "08:50",
-        checkOut: "17:40",
-        total: "8h 30p",
-        note: "Đúng giờ",
-    },
-    {
-        day: "Thứ 3",
-        date: "13/08/2024",
-        checkIn: "08:47",
-        checkOut: "17:35",
-        total: "8h 20p",
-        note: "Đúng giờ",
-    },
-    {
-        day: "Thứ 4",
-        date: "14/08/2024",
-        checkIn: "09:10",
-        checkOut: "18:05",
-        total: "8h 55p",
-        note: "Đi trễ",
-    },
-    {
-        day: "Thứ 5",
-        date: "15/08/2024",
-        checkIn: "08:45",
-        checkOut: "17:25",
-        total: "8h 10p",
-        note: "Đúng giờ",
-    },
-    {
-        day: "Thứ 6",
-        date: "16/08/2024",
-        checkIn: "08:58",
-        checkOut: "16:50",
-        total: "7h 52p",
-        note: "Về sớm",
-    },
-];
-
 export default function EmployeesDashboardPage() {
     const [employee, setEmployee] = useState<JwtPayload | null>(null);
 
@@ -85,6 +42,13 @@ export default function EmployeesDashboardPage() {
     const [employeeCode, setEmployeeCode] = useState<string>("");
     const [employeeInfo, setEmployeeInfo] = useState<EmployeeInfomation | null>(null);
     const [attendanceSummary, setAttendanceSummary] = useState<AttendanceSummary | null>(null);
+    const [selectedDate, setSelectedDate] = useState<string>("");
+    const [selectedWeek] = useState<string>("");
+    const [viewMode] = useState<"day" | "week">("day");
+    const [firstCheckIn, setFirstCheckIn] = useState<string | null>(null);
+    const [loadingCheckIn, setLoadingCheckIn] = useState(false);
+    const [errorCheckIn, setErrorCheckIn] = useState<string | null>(null);
+
 
     // Get employee code from session
     useEffect(() => {
@@ -132,7 +96,7 @@ export default function EmployeesDashboardPage() {
             if (!employeeCode || !currentMonth) return;
 
             try {
-                const token = localStorage.getItem("access_token");
+                const token = localStorage.getItem("scpm.auth.token");
                 const monthParam = `${currentMonth}-01`;
                 const response = await fetch(
                     `${API_BASE_URL}/api/attsummary/month?month=${monthParam}&employeeCode=${employeeCode}`,
@@ -160,10 +124,6 @@ export default function EmployeesDashboardPage() {
 
         fetchAttendanceSummary();
     }, [employeeCode, currentMonth]);
-
-    const [firstCheckIn, setFirstCheckIn] = useState<string | null>(null);
-    const [loadingCheckIn, setLoadingCheckIn] = useState(false);
-    const [errorCheckIn, setErrorCheckIn] = useState<string | null>(null);
 
     const formatTime = (raw: string | null): string | null => {
         if (!raw) return null;
@@ -204,9 +164,9 @@ export default function EmployeesDashboardPage() {
             console.log("✅ Data received:", data);
 
             setFirstCheckIn(formatTime(data.firstCheckIn));
-        } catch (e: any) {
+        } catch (e) {
             console.error("🚨 Fetch error:", e);
-            setErrorCheckIn(e.message || "Không lấy được giờ vào");
+            setErrorCheckIn(e instanceof Error ? e.message : "Không lấy được giờ vào");
             setFirstCheckIn(null);
         } finally {
             setLoadingCheckIn(false);
@@ -232,6 +192,7 @@ export default function EmployeesDashboardPage() {
         const today = new Date().toISOString().slice(0, 10);
         setSelectedDate(today);
         fetchFirstCheckIn(employee.employee_code, today);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [employee?.employee_code]);
 
     const handleChoose = () => {
@@ -242,6 +203,8 @@ export default function EmployeesDashboardPage() {
         } else {
             console.log("Xem theo tuần:", selectedWeek);
             // TODO: API theo tuần
+        }
+
         if (selectedMonth) {
             setCurrentMonth(selectedMonth);
         }
@@ -262,7 +225,7 @@ export default function EmployeesDashboardPage() {
                     <section
                         className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#4AB4DE] via-[#5cc6ef] to-[#c1f2ff] p-6 text-white shadow-lg">
                         <div className="absolute -right-16 -top-10 h-44 w-44 rounded-full bg-white/20"
-                             aria-hidden="true"/>
+                            aria-hidden="true" />
                         <div className="flex items-start gap-4">
                             <div>
                                 <h2 className="mt-1 text-2xl font-semibold">
@@ -282,7 +245,6 @@ export default function EmployeesDashboardPage() {
                             </div>
                         </dl>
                     </section>
-                </aside>
 
                     {/* Summary Cards */}
                     {attendanceSummary && (
@@ -316,6 +278,38 @@ export default function EmployeesDashboardPage() {
                 </aside>
 
                 <section className="flex flex-col gap-6">
+                    <div className="rounded-3xl bg-white p-6 shadow-sm">
+                        <div className="rounded-3xl bg-white p-4 shadow-sm">
+                            <header>
+                                <h2 className="text-lg font-semibold text-[#1F2A44]">
+                                    Theo dõi chấm công
+                                </h2>
+                                <p className="mt-1 text-xs text-[#1F2A44]/60">
+                                    Kiểm tra giờ làm việc của bạn trong hôm nay
+                                </p>
+                                {errorCheckIn && (
+                                    <p className="mt-1 text-xs text-red-500">{errorCheckIn}</p>
+                                )}
+                            </header>
+
+                            <div className="grid gap-3 sm:grid-cols-2 mt-4">
+                                {timelineNotes.map((item) => (
+                                    <div
+                                        key={item.title}
+                                        className="rounded-xl border border-dashed border-[#CCE1F0] p-3 text-center"
+                                    >
+                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[#4AB4DE]">
+                                            {item.title}
+                                        </p>
+                                        <p className="mt-2 text-xl font-semibold text-[#1F2A44]">
+                                            {item.value}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
                     {/* DANH SÁCH CHẤM CÔNG */}
                     <section className="rounded-3xl bg-white p-6 shadow-sm">
                         <header
@@ -331,12 +325,16 @@ export default function EmployeesDashboardPage() {
                                 onClick={() => setShowCalendar(true)}
                                 className="inline-flex items-center gap-2 rounded-full border border-[#4AB4DE] px-4 py-2 text-sm font-medium text-[#4AB4DE] transition hover:bg-[#EAF5FF]"
                             >
-                                <CalendarDays className="h-4 w-4"/>
+                                <CalendarDays className="h-4 w-4" />
                                 Xem lịch tháng
                             </button>
                         </header>
 
-                        {employeeCode && (
+                        {!employeeCode ? (
+                            <div className="mt-6 flex items-center justify-center py-8">
+                                <p className="text-gray-500">Đang tải thông tin nhân viên...</p>
+                            </div>
+                        ) : (
                             <AttendanceTable
                                 employeeCode={employeeCode}
                                 month={currentMonth}
