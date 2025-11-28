@@ -25,6 +25,8 @@ type AllowanceRow = {
     amount: string;
     startDate: string;
     endDate: string;
+    rawStartDate?: string;
+    rawEndDate?: string | null;
     status: string;
 };
 
@@ -223,7 +225,12 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
     const [allowStart, setAllowStart] = useState("");
     const [allowEnd, setAllowEnd] = useState("");
     const [submittingAllowance, setSubmittingAllowance] = useState(false);
-    const [deletingAllowanceId, setDeletingAllowanceId] = useState<number | null>(null);
+
+    // ⭐ NEW: Modal riêng để cập nhật ngày kết thúc trợ cấp
+    const [showAllowanceEndDateModal, setShowAllowanceEndDateModal] = useState(false);
+    const [editingAllowance, setEditingAllowance] = useState<AllowanceRow | null>(null);
+    const [editAllowanceEnd, setEditAllowanceEnd] = useState("");
+    const [savingAllowanceEnd, setSavingAllowanceEnd] = useState(false);
 
     const resetAllowanceForm = () => {
         setAllowTypeId("");
@@ -276,6 +283,8 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                     amount: formatCurrency(item.value),
                     startDate: formatDate(item.startDate),
                     endDate: formatDate(item.endDate),
+                    rawStartDate: item.startDate,
+                    rawEndDate: item.endDate,
                     status: "",
                 }),
             );
@@ -328,15 +337,29 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
         setShowAllowanceModal(false);
     };
 
-    const handleDeleteAllowance = async (allowanceId: number) => {
-        if (!code || !allowanceId) return;
+    // ⭐ NEW: Mở modal chỉnh ngày kết thúc trợ cấp
+    const handleOpenAllowanceEndDateModal = (allowance: AllowanceRow) => {
+        setEditingAllowance(allowance);
+        setEditAllowanceEnd(allowance.rawEndDate ?? "");
+        setShowAllowanceEndDateModal(true);
+    };
 
-        setDeletingAllowanceId(allowanceId);
+    // ⭐ NEW: Lưu ngày kết thúc trợ cấp trong modal
+    const handleSaveAllowanceEndDate = async () => {
+        if (!code || !editingAllowance) return;
+
+        setSavingAllowanceEnd(true);
         try {
+            const trimmedValue = editAllowanceEnd.trim();
+
             const response = await fetch(
-                `${API_BASE_URL}/api/v1/hr/users/${code}/pay-components/${allowanceId}`,
+                `${API_BASE_URL}/api/v1/hr/users/${code}/pay-components/${editingAllowance.id}`,
                 {
-                    method: "DELETE",
+                    method: "PUT",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({
+                        endDate: trimmedValue === "" ? null : trimmedValue,
+                    }),
                 },
             );
 
@@ -345,11 +368,20 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
             }
 
             await fetchAllowances();
+            setShowAllowanceEndDateModal(false);
+            setEditingAllowance(null);
+            setEditAllowanceEnd("");
         } catch (error) {
-            console.error("Không thể xoá trợ cấp", error);
+            console.error("Không thể cập nhật ngày kết thúc trợ cấp", error);
         } finally {
-            setDeletingAllowanceId(null);
+            setSavingAllowanceEnd(false);
         }
+    };
+
+    const handleCancelAllowanceEndDate = () => {
+        setShowAllowanceEndDateModal(false);
+        setEditingAllowance(null);
+        setEditAllowanceEnd("");
     };
 
     useEffect(() => {
@@ -399,7 +431,6 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                     <p className="text-sm font-medium text-amber-600">
                                         ⚠️ Bạn đang xem thông tin lương của chính mình - Không thể
                                         chỉnh sửa
-
                                     </p>
                                 )}
                             </div>
@@ -580,26 +611,18 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                             <td className="px-4 py-3 text-sm">
                                                 {allowance.endDate}
                                             </td>
-                                            {/* ⭐ UPDATED: Hide delete button for HR viewing own salary */}
                                             {!isViewingOwnSalary && (
                                                 <td className="px-4 py-3">
                                                     <button
                                                         type="button"
                                                         onClick={() =>
-                                                            handleDeleteAllowance(
-                                                                allowance.id,
+                                                            handleOpenAllowanceEndDateModal(
+                                                                allowance,
                                                             )
                                                         }
-                                                        disabled={
-                                                            deletingAllowanceId ===
-                                                            allowance.id
-                                                        }
-                                                        className="rounded-full border border-[#CCE1F0] bg-white px-3 py-1 text-xs font-semibold text-[#DC2626] shadow hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-70"
+                                                        className="rounded-full border border-[#CCE1F0] bg-white px-3 py-1 text-xs font-semibold text-[blue] shadow hover:bg-red-50"
                                                     >
-                                                        {deletingAllowanceId ===
-                                                        allowance.id
-                                                            ? "Đang xoá..."
-                                                            : "Xoá"}
+                                                        Cập nhật
                                                     </button>
                                                 </td>
                                             )}
@@ -768,10 +791,6 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                 />
                             </div>
 
-                            <p className="text-xs font-normal text-[#56749A]">
-                                Lưu ý: Mô tả sẽ được tự động dùng cùng tên, và loại khoản mặc định
-                                là khoản cộng.
-                            </p>
                         </div>
 
                         <div className="mt-8 flex justify-center gap-6">
@@ -784,6 +803,57 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                             </button>
                             <button
                                 onClick={handleCancelAllowance}
+                                className="min-w-[120px] rounded-full border border-[#CCE1F0] bg-white px-6 py-2 text-sm font-semibold text-[#004C5E] shadow hover:bg-[#F1F5F9]"
+                            >
+                                Hủy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ⭐ NEW: Modal chỉnh sửa ngày kết thúc trợ cấp */}
+            {showAllowanceEndDateModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+                    <div className="w-full max-w-md rounded-3xl border border-[#CCE1F0] bg-white p-8 shadow-2xl">
+                        <div className="mb-6 text-center">
+                            <h3 className="text-lg font-semibold text-[#003344]">
+                                Cập nhật ngày kết thúc trợ cấp
+                            </h3>
+                            <p className="mt-1 text-xs text-slate-500">
+                                Để trống ngày kết thúc nếu bạn muốn áp dụng trợ cấp vô thời hạn.
+                            </p>
+                        </div>
+
+                        <div className="space-y-4 text-sm font-semibold text-[#003344]">
+                            <div className="grid grid-cols-[120px,minmax(0,1fr)] items-center gap-4">
+                                <span>Trợ cấp</span>
+                                <span className="font-normal">
+                                    {editingAllowance?.name ?? "-"}
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-[120px,minmax(0,1fr)] items-center gap-4">
+                                <span>Ngày kết thúc</span>
+                                <input
+                                    type="date"
+                                    className="h-10 w-full rounded-full border border-[#CCE1F0] bg-[#F8FAFC] px-4 text-sm font-normal text-[#003344] focus:border-[#4AB4DE] focus:outline-none focus:ring-2 focus:ring-[#4AB4DE]/50"
+                                    value={editAllowanceEnd}
+                                    onChange={(e) => setEditAllowanceEnd(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="mt-8 flex justify-center gap-6">
+                            <button
+                                onClick={handleSaveAllowanceEndDate}
+                                className="min-w-[120px] rounded-full bg-[#4AB4DE] px-6 py-2 text-sm font-semibold text-white shadow hover:bg-[#3A9BC2] disabled:cursor-not-allowed disabled:opacity-70"
+                                disabled={savingAllowanceEnd}
+                            >
+                                {savingAllowanceEnd ? "Đang lưu..." : "Lưu"}
+                            </button>
+                            <button
+                                onClick={handleCancelAllowanceEndDate}
                                 className="min-w-[120px] rounded-full border border-[#CCE1F0] bg-white px-6 py-2 text-sm font-semibold text-[#004C5E] shadow hover:bg-[#F1F5F9]"
                             >
                                 Hủy

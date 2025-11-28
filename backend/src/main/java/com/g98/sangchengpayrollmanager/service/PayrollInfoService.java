@@ -5,6 +5,7 @@ import com.g98.sangchengpayrollmanager.model.dto.payroll.PayComponentResponse;
 import com.g98.sangchengpayrollmanager.model.dto.payroll.PayComponentTypeResponse;
 import com.g98.sangchengpayrollmanager.model.dto.payroll.SalaryInformationCreateRequest;
 import com.g98.sangchengpayrollmanager.model.dto.payroll.SalaryInformationResponse;
+import com.g98.sangchengpayrollmanager.model.dto.payroll.request.PayComponentEndDateUpdateRequest;
 import com.g98.sangchengpayrollmanager.model.entity.PayComponent;
 import com.g98.sangchengpayrollmanager.model.entity.PayComponentType;
 import com.g98.sangchengpayrollmanager.model.entity.SalaryInformation;
@@ -92,6 +93,9 @@ public class PayrollInfoService {
         PayComponentType type = payComponentTypeRepository.findById(request.getTypeId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy loại phụ cấp với ID: " + request.getTypeId()));
 
+        boolean isAddition = !Integer.valueOf(8).equals(request.getTypeId());
+
+
         PayComponent payComponent = PayComponent.builder()
                 .user(user)
                 .type(type)
@@ -102,14 +106,18 @@ public class PayrollInfoService {
                 .endDate(request.getEndDate())
                 .occurrences(request.getOccurrences() != null ? request.getOccurrences() : 1)
                 .percent(request.getPercent())
-                .isAddition(request.getIsAddition() != null ? request.getIsAddition() : Boolean.TRUE)
+                .isAddition(isAddition)
                 .build();
 
         PayComponent saved = payComponentRepository.save(payComponent);
         return mapPayComponent(saved);
     }
 
-    public void deletePayComponent(String employeeCode, Integer payComponentId) {
+    public PayComponentResponse updatePayComponentEndDate(
+            String employeeCode,
+            Integer payComponentId,
+            PayComponentEndDateUpdateRequest request
+    ) {
         PayComponent payComponent = payComponentRepository.findById(payComponentId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phụ cấp với ID: " + payComponentId));
 
@@ -117,7 +125,10 @@ public class PayrollInfoService {
             throw new RuntimeException("Phụ cấp không thuộc về nhân viên có mã: " + employeeCode);
         }
 
-        payComponentRepository.delete(payComponent);
+        payComponent.setEndDate(request.getEndDate());
+
+        PayComponent updated = payComponentRepository.save(payComponent);
+        return mapPayComponent(updated);
     }
 
     public SalaryInformationResponse updateSalaryInformation(String employeeCode, Integer salaryId, SalaryInformationCreateRequest request) {

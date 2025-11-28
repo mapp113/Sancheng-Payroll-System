@@ -1,12 +1,22 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import {useEffect, useRef, useState} from "react";
+import {usePathname, useRouter} from "next/navigation";
 import localFont from "next/font/local";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {useTranslations} from "@/lib/translations";
-import { Bell, ChevronDown, CircleChevronDown, Clock, Languages, User, Settings, LogOut, ArrowLeftRight } from "lucide-react";
-import { useLanguage } from "@/lib/language-context";
+import {
+    Bell,
+    ChevronDown,
+    CircleChevronDown,
+    Clock,
+    Languages,
+    User,
+    Settings,
+    LogOut,
+    ArrowLeftRight
+} from "lucide-react";
+import {useLanguage} from "@/lib/language-context";
 
 const iceland = localFont({
     src: "../../../../public/fonts/Iceland-Regular.ttf",
@@ -61,7 +71,7 @@ export default function Navbar() {
 
     // Ẩn navbar ở các route không cần layout
     // if (pathname && noLayoutRoutes.includes(pathname)) return null;
-    const { language, toggleLanguage } = useLanguage();
+    const {language, toggleLanguage} = useLanguage();
     // const dashboardTitle = pathname?.startsWith("/manager")
     //     ? "Manager Dashboard"
     //     : "HR Dashboard";
@@ -154,7 +164,7 @@ export default function Navbar() {
             {/* trái: logo + tiêu đề */}
             <div className="flex items-center gap-3">
                 <Avatar className="h-12 w-12">
-                    <AvatarImage src="/logo.jpg" alt="Logo" />
+                    <AvatarImage src="/logo.jpg" alt="Logo"/>
                     <AvatarFallback>Logo</AvatarFallback>
                 </Avatar>
                 <span className={`${iceland.className} text-2xl font-bold`}>
@@ -164,23 +174,14 @@ export default function Navbar() {
 
             {/* phải: chuông, đồng hồ, user */}
             <div className="flex items-center gap-4">
-                <button
-                    type="button"
-                    onClick={toggleLanguage}
-                    className="flex items-center gap-2 rounded-full bg-white/40 px-3 py-1 text-sm font-semibold text-[#345EA8] transition hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#345EA8]"
-                    aria-label={`Switch to ${language === "vi" ? "English" : "Vietnamese"}`}
-                >
-                    <Languages className="h-4 w-4" aria-hidden="true" />
-                    <span>{language === "vi" ? "Tiếng Việt" : "English"}</span>
-                </button>
                 <button id="notification" className="flex items-center gap-1">
-                    <Bell />
-                    <ChevronDown />
+                    <Bell/>
+                    <ChevronDown/>
                 </button>
 
                 <button id="clock" className="flex items-center gap-1">
-                    <Clock />
-                    <ChevronDown />
+                    <Clock/>
+                    <ChevronDown/>
                 </button>
 
 
@@ -200,11 +201,12 @@ export default function Navbar() {
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
                         aria-label="User menu"
                     >
-                        <CircleChevronDown />
+                        <CircleChevronDown/>
                     </button>
 
                     {isMenuOpen && (
-                        <div className="absolute right-0 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+                        <div
+                            className="absolute right-0 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-50">
                             <div className="py-1">
                                 {canSwitchView && (
                                     <>
@@ -212,7 +214,7 @@ export default function Navbar() {
                                             className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                                             onClick={handleSwitchView}
                                         >
-                                            <ArrowLeftRight className="h-4 w-4" />
+                                            <ArrowLeftRight className="h-4 w-4"/>
                                             <span>
                                                 {isEmployeeView
                                                     ? (language === "vi" ? "Chuyển sang quản lý" : "Switch to Manager")
@@ -220,7 +222,7 @@ export default function Navbar() {
                                                 }
                                             </span>
                                         </button>
-                                        <hr className="my-1 border-gray-200" />
+                                        <hr className="my-1 border-gray-200"/>
                                     </>
                                 )}
                                 <button
@@ -230,7 +232,7 @@ export default function Navbar() {
                                         // Navigate to profile
                                     }}
                                 >
-                                    <User className="h-4 w-4" />
+                                    <User className="h-4 w-4"/>
                                     <span>{language === "vi" ? "Hồ sơ" : "Profile"}</span>
                                 </button>
                                 <button
@@ -240,15 +242,15 @@ export default function Navbar() {
                                         // Navigate to settings
                                     }}
                                 >
-                                    <Settings className="h-4 w-4" />
+                                    <Settings className="h-4 w-4"/>
                                     <span>{language === "vi" ? "Cài đặt" : "Settings"}</span>
                                 </button>
-                                <hr className="my-1 border-gray-200" />
+                                <hr className="my-1 border-gray-200"/>
                                 <button
                                     className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                                     onClick={handleLogout}
                                 >
-                                    <LogOut className="h-4 w-4" />
+                                    <LogOut className="h-4 w-4"/>
                                     <span>{language === "vi" ? "Đăng xuất" : "Logout"}</span>
                                 </button>
                             </div>

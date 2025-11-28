@@ -1,5 +1,6 @@
 package com.g98.sangchengpayrollmanager.service;
 
+import com.g98.sangchengpayrollmanager.model.dto.auth.ChangePasswordRequest;
 import com.g98.sangchengpayrollmanager.model.dto.auth.LoginRequest;
 import com.g98.sangchengpayrollmanager.model.dto.auth.LoginResponse;
 import com.g98.sangchengpayrollmanager.model.entity.User;
@@ -41,6 +42,27 @@ public class AuthService {
                 .token(token)
                 .message("Login successful")
                 .build();
+    }
+
+    public void changePassword(String username, ChangePasswordRequest request) {
+        User user = userRepository.findByUsernameWithRole(username)
+                .orElseThrow(() -> new IllegalArgumentException("User không tồn tại"));
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Mật khẩu hiện tại không chính xác");
+        }
+
+        String newPassword = request.newPassword().trim();
+        if (newPassword.length() < 6) {
+            throw new IllegalArgumentException("Mật khẩu mới phải có ít nhất 6 ký tự");
+        }
+
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Mật khẩu mới phải khác mật khẩu hiện tại");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 }
 
