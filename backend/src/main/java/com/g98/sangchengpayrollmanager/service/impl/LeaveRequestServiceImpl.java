@@ -106,8 +106,8 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                     managers.getLast().getEmployeeCode(),
                     "Có đơn xin nghỉ mới từ nhân viên ",
                     user.getFullName()
-                            + "Đã xin nghỉ từ " + leaveRequestDTO.getFromDate()
-                            + "tới " + leaveRequestDTO.getToDate() ,
+                            + " Đã xin nghỉ từ " + leaveRequestDTO.getFromDate()
+                            + " tới " + leaveRequestDTO.getToDate() ,
                     "LEAVE_REQUEST",
                     savedLeaveRequest.getId()
             );
@@ -332,9 +332,9 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
         notificationService.createNotification(
                 employee.getEmployeeCode(),
-                "Đơn xin nghỉ của bạn đã được chấp nhận",
-                "Đơn xin nghỉ ngày" + leaveRequest.getFromDate() +
-                        "Tới ngày" +leaveRequest.getToDate() + "đã được duyệt",
+                "Đơn xin nghỉ của bạn đã được chấp nhận ",
+                " Đơn xin nghỉ ngày " + leaveRequest.getFromDate() +
+                        " Tới ngày " +leaveRequest.getToDate() + " đã được duyệt ",
                 "LEAVE_APPROVED",
                 savedLeaveRequest.getId()
         );
@@ -374,9 +374,9 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
         notificationService.createNotification(
                 employee.getEmployeeCode(),
-                "Đơn xin nghỉ của bạn đã không được chấp nhận",
-                "Đơn xin nghỉ ngày" + leaveRequest.getFromDate() +
-                        "Tới ngày" +leaveRequest.getToDate() + "không được duyệt",
+                "Đơn xin nghỉ của bạn đã không được chấp nhận ",
+                " Đơn xin nghỉ ngày " + leaveRequest.getFromDate() +
+                        " Tới ngày " +leaveRequest.getToDate() + " không được duyệt ",
                 "LEAVE_APPROVED",
                 savedLeaveRequest.getId()
         );
