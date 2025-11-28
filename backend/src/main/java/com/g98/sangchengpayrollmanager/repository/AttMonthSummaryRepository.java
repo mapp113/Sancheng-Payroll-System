@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public interface AttMonthSummaryRepository extends JpaRepository<AttMonthSummary,Integer> {
@@ -53,4 +54,9 @@ public interface AttMonthSummaryRepository extends JpaRepository<AttMonthSummary
         """
     )
     Page<TimeSheetResponse> findTimeSheetByMonth(@Param("date") LocalDate date, @Param("keyword") String keyword, Pageable pageable);
+    List<AttMonthSummary> findByUserEmployeeCodeAndMonthBetween(
+            String employeeCode,
+            LocalDate start,
+            LocalDate end
+    );
 }

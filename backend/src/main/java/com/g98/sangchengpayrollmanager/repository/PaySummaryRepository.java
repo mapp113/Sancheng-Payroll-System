@@ -87,4 +87,10 @@ public interface PaySummaryRepository extends JpaRepository<PaySummary,Integer> 
     """)
     List<PayrollRecord> findPayrollRecordsByMonth(@Param("month") LocalDate month);
 
+    List<PaySummary> findByUserEmployeeCodeAndDateBetweenAndStatus(
+            String employeeCode,
+            LocalDate start,
+            LocalDate end,
+            String status
+    );
 }
