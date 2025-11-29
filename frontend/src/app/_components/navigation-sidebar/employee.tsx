@@ -17,7 +17,7 @@ export default function NavigationSidebar({select}: { select: number }) {
           </a>
         </li>
         <li className={`${select === 3 ? selected : ""}`}>
-          <a href="/salary" className="hover:underline">
+          <a href="/employee/payroll" className="hover:underline">
             <Image src="/icons/employee/payroll.png" alt="Salary" width={52} height={52} />
           </a>
         </li>
