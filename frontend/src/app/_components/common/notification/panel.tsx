@@ -23,7 +23,7 @@ export default function NotificationPanel() {
       const token = parsed?.token;
       if (!token) return;
 
-      const response = await fetch("/api/notifications", {
+      const response = await fetch("http://localhost:8080/api/notifications", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
