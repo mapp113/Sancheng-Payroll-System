@@ -109,7 +109,7 @@ export default function AdminPage() {
         <div className="flex h-full flex-col gap-4 p-4 text-[#1F2A44]">
             <header className="flex flex-col gap-2 rounded-2xl bg-white p-6 shadow-sm">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <h1 className="text-2xl font-semibold">Account Management</h1>
+                    <h1 className="text-2xl font-semibold">Quản Lý Tài Khoản</h1>
                     <button
                         onClick={() => setOpenCreate(true)}
                         className="inline-flex items-center gap-2 self-start rounded-full bg-[#4AB4DE] px-4 py-2 text-white transition hover:bg-[#3c9ec3]"
@@ -132,7 +132,7 @@ export default function AdminPage() {
                         </div>
                     </article>
                 ))}
-                {["Admin", "HR", "Employee", "Manager", "Accountant"]
+                {["Admin", "HR", "Employee", "Manager"]
                     .filter((r) => !roleSummaries.some((item) => item.name === r))
                     .map((missingRole) => (
                         <article key={missingRole} className="rounded-2xl bg-white p-4 shadow-sm opacity-70">
@@ -168,7 +168,7 @@ export default function AdminPage() {
                                 <option value="HR">HR</option>
                                 <option value="Manager">Manager</option>
                                 <option value="Employee">Employee</option>
-                                <option value="Accountant">Accountant</option>
+
                             </select>
                         </div>
                     </div>
@@ -177,13 +177,13 @@ export default function AdminPage() {
                         <table className="min-w-full divide-y divide-[#E2E8F0] text-sm">
                             <thead className="bg-[#F8FAFC] text-left">
                             <tr>
-                                <th className="px-4 py-3 font-medium">UserID</th>
-                                <th className="px-4 py-3 font-medium">EmployeeCode</th>
-                                <th className="px-4 py-3 font-medium">Name</th>
-                                <th className="px-4 py-3 font-medium">Position</th>
-                                <th className="px-4 py-3 font-medium">Status</th>
-                                <th className="px-4 py-3 font-medium">Phone</th>
-                                <th className="px-4 py-3 font-medium text-right">Edit</th>
+                                <th className="px-4 py-3 font-medium">ID</th>
+                                <th className="px-4 py-3 font-medium">Mã Nhân Viên</th>
+                                <th className="px-4 py-3 font-medium">Tên</th>
+                                <th className="px-4 py-3 font-medium">Vị Trí</th>
+                                <th className="px-4 py-3 font-medium">Trạng Thái</th>
+                                <th className="px-4 py-3 font-medium">Điện Thoại</th>
+                                <th className="px-4 py-3 font-medium text-right">Chỉnh Sửa</th>
                             </tr>
                             </thead>
                             <tbody className="divide-y divide-[#E2E8F0]">
@@ -256,7 +256,7 @@ export default function AdminPage() {
                             HR: 2,
                             Employee: 3,
                             Manager: 4,
-                            Accountant: 5,
+
                         };
 
                         const payload = {
@@ -367,7 +367,7 @@ function CreateAccountModal({
                 <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4">
                     {/* UserID (máy chấm công) */}
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">UserID</label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">ID</label>
                         <input
                             value={userId}
                             onChange={(e) => setUserId(e.target.value)}
@@ -378,7 +378,7 @@ function CreateAccountModal({
 
                     {/* EmployeeCode (PK) */}
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">EmployeeCode</label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Mã Nhân Viên</label>
                         <input
                             value={employeeCode}
                             onChange={(e) => setEmployeeCode(e.target.value)}
@@ -388,7 +388,7 @@ function CreateAccountModal({
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Name</label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Tên</label>
                         <input
                             value={name}
                             onChange={(e) => setName(e.target.value)}
@@ -399,7 +399,7 @@ function CreateAccountModal({
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Username</label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Tên Đăng Nhập</label>
                         <input
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
@@ -410,7 +410,7 @@ function CreateAccountModal({
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Password</label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Mật Khẩu</label>
                         <input
                             type="password"
                             value={password}
@@ -422,17 +422,17 @@ function CreateAccountModal({
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Role</label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Vị Trí</label>
                         <select
                             value={role}
                             onChange={(e) => setRole(e.target.value as Role)}
                             className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
                         >
                             <option value="HR">HR</option>
-                            <option value="EMPLOYEE">Employee</option>
+                            <option value="EMPLOYEE">Nhân Viên</option>
                             <option value="ADMIN">Admin</option>
-                            <option value="MANAGER">Manager</option>
-                            <option value="ACCOUNTANT">Accountant</option>
+                            <option value="MANAGER">Quản Lý</option>
+
                         </select>
                     </div>
 
@@ -448,7 +448,7 @@ function CreateAccountModal({
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Phone</label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Điện Thoại</label>
                         <input
                             type="text"
                             value={phone}
@@ -542,7 +542,7 @@ function EditUserModal({
 
                     {/* EmployeeCode (view only) */}
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">EmployeeCode (PK)</label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Mã Nhân Viên </label>
                         <input
                             value={user.employeeCode}
                             disabled
@@ -551,7 +551,7 @@ function EditUserModal({
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Name</label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Tên</label>
                         <input
                             value={name}
                             onChange={(e) => setName(e.target.value)}
@@ -561,7 +561,7 @@ function EditUserModal({
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Position</label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Vị Trí</label>
                         <select
                             value={role}
                             onChange={(e) => setRole(e.target.value)}
@@ -571,12 +571,11 @@ function EditUserModal({
                             <option value="HR">HR</option>
                             <option value="Manager">Manager</option>
                             <option value="Employee">Employee</option>
-                            <option value="Accountant">Accountant</option>
                         </select>
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Status</label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Trạng Thái</label>
                         <select
                             value={status}
                             onChange={(e) => setStatus(e.target.value as "Hoạt động" | "Tạm khóa")}
@@ -588,7 +587,7 @@ function EditUserModal({
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Phone</label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Điện Thoại</label>
                         <input
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}

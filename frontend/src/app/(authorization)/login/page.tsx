@@ -59,7 +59,7 @@ export default function LoginPage() {
 
     return (
         <AuthCard className="max-w-[400px]">
-            <AuthCardHeader title="Login" subtitle="Welcome!"/>
+            <AuthCardHeader title="Đăng Nhập" subtitle="Sangcheng Xin Chào!"/>
 
             <form onSubmit={handleSubmit} className="mt-8 space-y-5">
                 {/* Username */}
@@ -68,13 +68,13 @@ export default function LoginPage() {
                         className="mb-2 block text-sm text-white/90"
                         htmlFor="username"
                     >
-                        Username :
+                        Tên Đăng Nhập :
                     </label>
                     <input
                         id="username"
                         value={username}
                         onChange={(event) => setUsername(event.target.value)}
-                        placeholder="Enter your username"
+                        placeholder="Nhập Tài Khoản"
                         required
                         className="w-full rounded-xl px-4 py-3 text-black outline-none placeholder-black/50 focus:ring-2 focus:ring-white/40"
                         style={{background: AUTH_INPUT_BACKGROUND}}
@@ -87,14 +87,14 @@ export default function LoginPage() {
                         className="mb-2 block text-sm text-white/90"
                         htmlFor="password"
                     >
-                        Password :
+                        Mật Khẩu:
                     </label>
                     <input
                         id="password"
                         type="password"
                         value={password}
                         onChange={(event) => setPassword(event.target.value)}
-                        placeholder="Enter your password"
+                        placeholder="Nhập Mật Khẩu"
                         required
                         className="w-full rounded-xl px-4 py-3 text-black outline-none placeholder-black/50 focus:ring-2 focus:ring-white/40"
                         style={{background: AUTH_INPUT_BACKGROUND}}
@@ -107,7 +107,7 @@ export default function LoginPage() {
                         href="/forgotpassword"
                         className="text-sm text-white/90 hover:underline"
                     >
-                        Forgot password?
+                        Quên Mật Khẩu?
                     </Link>
                 </div>
 
@@ -118,7 +118,7 @@ export default function LoginPage() {
                     className="w-full rounded-md py-2 text-lg font-semibold text-white shadow-[0_6px_0_rgba(46,115,201,0.35)] hover:opacity-95 disabled:opacity-60"
                     style={{background: AUTH_PRIMARY_GRADIENT}}
                 >
-                    {loading ? "Processing..." : "Login"}
+                    {loading ? "Chờ..." : "Đăng Nhập"}
                 </button>
 
                 {/* Error message */}

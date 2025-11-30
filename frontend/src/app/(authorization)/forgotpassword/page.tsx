@@ -143,7 +143,7 @@ export default function ForgotPasswordPage() {
 
     return (
         <AuthCard className="max-w-[420px]">
-            <AuthCardHeader title="Forgot password"/>
+            <AuthCardHeader title="Quên Mật Khẩu"/>
 
             <div className="space-y-6">
                 <div>
@@ -168,7 +168,7 @@ export default function ForgotPasswordPage() {
                             className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-3 py-1 text-sm text-white shadow disabled:opacity-60"
                             style={{background: AUTH_PRIMARY_GRADIENT}}
                         >
-                            {sending ? "Sending..." : countdown > 0 ? `${countdown}s` : "Send"}
+                            {sending ? "Sending..." : countdown > 0 ? `${countdown}s` : "Gửi"}
                         </button>
                     </div>
 

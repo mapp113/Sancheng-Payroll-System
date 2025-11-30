@@ -24,8 +24,12 @@ public class AuthService {
     public LoginResponse authenticate(LoginRequest request) {
         // lấy user + role
         User user = userRepository.findByUsernameWithRole(request.getUsername())
-                .orElseThrow(InvalidCredentialsException::new);
+                .orElseThrow(() -> new IllegalStateException("Tài khoản đang tạm khóa. Vui lòng liên hệ quản trị viên để kích hoạt lại."));
 
+        // kiểm tra trạng thái tài khoản (1 = hoạt động, 0 = tạm khóa)
+        if (!Integer.valueOf(1).equals(user.getStatus())) {
+            throw new IllegalStateException("Tài khoản đang tạm khóa.");
+        }
         // so sánh mật khẩu đã mã hóa
         boolean matched = passwordEncoder.matches(request.getPassword(), user.getPassword());
         if (!matched) {

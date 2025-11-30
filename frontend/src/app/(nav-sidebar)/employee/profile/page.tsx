@@ -80,17 +80,6 @@ function formatDateDisplay(value: string) {
     return new Intl.DateTimeFormat("vi-VN").format(date);
 }
 
-// function formatCurrency(value: string) {
-//     if (!value) return "";
-//     const numeric = Number(value);
-//     if (Number.isNaN(numeric)) return value;
-//     return new Intl.NumberFormat("vi-VN", {
-//         style: "currency",
-//         currency: "VND",
-//         maximumFractionDigits: 0,
-//     }).format(numeric);
-// }
-
 function mapProfileResponse(data: EmployeeProfileResponse): EmployeeProfile {
     return {
         id: data.employeeCode ?? "",
@@ -124,6 +113,11 @@ export default function DetailEmployeePage() {
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [token, setToken] = useState<string>("");
+
+    // --- VALIDATION STATE ---
+    const [validationErrors, setValidationErrors] = useState<
+        Partial<Record<keyof EmployeeProfile, string>>
+    >({});
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -194,12 +188,80 @@ export default function DetailEmployeePage() {
         (field: keyof EmployeeProfile) =>
             (e: ChangeEvent<HTMLInputElement>) => {
                 setEmployee((prev) => ({...prev, [field]: e.target.value}));
+                // clear error của field đó khi user sửa
+                setValidationErrors((prev) => ({...prev, [field]: undefined}));
             };
 
     const canEditField = (field: keyof EmployeeProfile) =>
         field !== "position" && (role === "HR" || EMPLOYEE_EDITABLE_FIELDS.has(field));
 
+    // --- VALIDATE PROFILE ---
+    const validateProfile = () => {
+        const errors: Partial<Record<keyof EmployeeProfile, string>> = {};
+        const today = new Date();
+
+        if (!employee.name.trim()) {
+            errors.name = "Họ và tên không được để trống";
+        }
+
+        if (!employee.personalEmail.trim()) {
+            errors.personalEmail = "E-mail không được để trống";
+        } else {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(employee.personalEmail)) {
+                errors.personalEmail = "E-mail không hợp lệ";
+            }
+        }
+
+        if (employee.phone.trim()) {
+            const phoneRegex = /^\d{9,11}$/;
+            if (!phoneRegex.test(employee.phone.trim())) {
+                errors.phone = "Số điện thoại chỉ gồm 9–11 chữ số";
+            }
+        }
+
+        if (employee.dob) {
+            const dob = new Date(employee.dob);
+            if (Number.isNaN(dob.getTime())) {
+                errors.dob = "Ngày sinh không hợp lệ";
+            } else if (dob > today) {
+                errors.dob = "Ngày sinh không được lớn hơn ngày hiện tại";
+            }
+        }
+
+        if (employee.joinDate) {
+            const joinDate = new Date(employee.joinDate);
+            if (Number.isNaN(joinDate.getTime())) {
+                errors.joinDate = "Ngày bắt đầu không hợp lệ";
+            } else if (joinDate > today) {
+                errors.joinDate = "Ngày bắt đầu không được lớn hơn ngày hiện tại";
+            }
+        }
+
+        if (employee.visaExpiry) {
+            const visa = new Date(employee.visaExpiry);
+            if (Number.isNaN(visa.getTime())) {
+                errors.visaExpiry = "Thời hạn kết thúc không hợp lệ";
+            }
+        }
+
+        if (role === "HR") {
+            if (!employee.status.trim()) {
+                errors.status = "Tình trạng không được để trống";
+            }
+        }
+
+        setValidationErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
     const handleSave = async () => {
+        // chạy validate trước
+        if (!validateProfile()) {
+            setError("Vui lòng kiểm tra lại các trường còn lỗi");
+            return;
+        }
+
         if (!token) {
             setError("Không tìm thấy token đăng nhập");
             return;
@@ -246,6 +308,7 @@ export default function DetailEmployeePage() {
             const data = (await response.json()) as EmployeeProfileResponse;
             setEmployee(mapProfileResponse(data));
             setIsEditing(false);
+            setValidationErrors({});
             setError(null);
             setSuccessMessage("Cập nhật hồ sơ thành công");
         } catch (err) {
@@ -369,7 +432,10 @@ export default function DetailEmployeePage() {
                             </h2>
                             <button
                                 type="button"
-                                onClick={() => setIsEditing(true)}
+                                onClick={() => {
+                                    setIsEditing(true);
+                                    setValidationErrors({});
+                                }}
                                 className="inline-flex items-center gap-2 rounded-full bg-[#4AB4DE] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#3ba1ca] hover:shadow-md"
                             >
                                 ✏️ Chỉnh sửa
@@ -503,18 +569,21 @@ export default function DetailEmployeePage() {
                                 value={employee.name}
                                 onChange={handleChange("name")}
                                 disabled={!canEditField("name")}
+                                error={validationErrors.name}
                             />
                             <EditField
                                 label="Chức vụ"
                                 value={employee.position}
                                 onChange={handleChange("position")}
                                 disabled={!canEditField("position")}
+                                error={validationErrors.position}
                             />
                             <EditField
                                 label="E-Mail"
                                 value={employee.personalEmail}
                                 onChange={handleChange("personalEmail")}
                                 disabled={!canEditField("personalEmail")}
+                                error={validationErrors.personalEmail}
                             />
                             <EditField
                                 label="Ngày Sinh"
@@ -522,12 +591,14 @@ export default function DetailEmployeePage() {
                                 onChange={handleChange("dob")}
                                 type="date"
                                 disabled={!canEditField("dob")}
+                                error={validationErrors.dob}
                             />
                             <EditField
                                 label="Loại hợp đồng"
                                 value={employee.contractType}
                                 onChange={handleChange("contractType")}
                                 disabled={!canEditField("contractType")}
+                                error={validationErrors.contractType}
                             />
 
                             <EditField
@@ -535,24 +606,28 @@ export default function DetailEmployeePage() {
                                 value={employee.phone}
                                 onChange={handleChange("phone")}
                                 disabled={!canEditField("phone")}
+                                error={validationErrors.phone}
                             />
                             <EditField
                                 label="Mã Số Thuế"
                                 value={employee.taxCode}
                                 onChange={handleChange("taxCode")}
                                 disabled={!canEditField("taxCode")}
+                                error={validationErrors.taxCode}
                             />
                             <EditField
                                 label="Tình trạng"
                                 value={employee.status}
                                 onChange={handleChange("status")}
                                 disabled={!canEditField("status")}
+                                error={validationErrors.status}
                             />
                             <EditField
                                 label="Địa chỉ"
                                 value={employee.address}
                                 onChange={handleChange("address")}
                                 disabled={!canEditField("address")}
+                                error={validationErrors.address}
                             />
                             <EditField
                                 label="Thời hạn kết thúc"
@@ -560,6 +635,7 @@ export default function DetailEmployeePage() {
                                 onChange={handleChange("visaExpiry")}
                                 type="date"
                                 disabled={!canEditField("visaExpiry")}
+                                error={validationErrors.visaExpiry}
                             />
                             <EditField
                                 label="Ngày bắt đầu"
@@ -567,6 +643,7 @@ export default function DetailEmployeePage() {
                                 onChange={handleChange("joinDate")}
                                 type="date"
                                 disabled={!canEditField("joinDate")}
+                                error={validationErrors.joinDate}
                             />
 
 
@@ -675,19 +752,28 @@ interface EditFieldProps {
     onChange: (e: ChangeEvent<HTMLInputElement>) => void;
     type?: string;
     disabled?: boolean;
+    error?: string;
 }
 
-function EditField({label, value, onChange, type = "text", disabled}: EditFieldProps) {
+function EditField({label, value, onChange, type = "text", disabled, error}: EditFieldProps) {
     return (
         <label className="space-y-1 text-sm">
             <span className="font-semibold text-[#1F2A44]">{label}</span>
             <input
-                className="w-full rounded-xl border border-[#D1D5DB] bg-white px-3 py-2 text-sm text-[#111827] shadow-sm outline-none focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/40"
+                className={
+                    `w-full rounded-xl border border-[#D1D5DB] bg-white px-3 py-2 text-sm text-[#111827] shadow-sm outline-none focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/40` +
+                    (error ? " border-red-500 focus:border-red-500" : "")
+                }
                 value={value}
                 onChange={onChange}
                 type={type}
                 disabled={disabled}
             />
+            {error ? (
+                <p className="text-xs text-red-600">
+                    {error}
+                </p>
+            ) : null}
         </label>
     );
 }

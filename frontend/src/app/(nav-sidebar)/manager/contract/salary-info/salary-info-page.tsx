@@ -442,7 +442,6 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                     <div className="space-y-4">
                         <div className="rounded-3xl bg-white p-6 shadow-sm">
                             <div className="mb-4 flex items-center gap-3">
-                                <div className="h-10 w-10 rounded-full bg-[#CCE1F0]/80"/>
                                 <div>
                                     <h2 className="text-lg font-semibold text-[#1F2A44]">
                                         Thông tin Lương nhân viên
@@ -542,7 +541,6 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                     <div className="rounded-3xl bg-white p-6 shadow-sm">
                         <div className="mb-4 flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 rounded-full bg-[#CCE1F0]/80"/>
                                 <div>
                                     <h2 className="text-lg font-semibold text-[#1F2A44]">
                                         Trợ cấp nhân viên hiện có
@@ -670,14 +668,14 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
 
                             {/* ⭐ NEW: Lương theo giờ */}
                             <div className="grid grid-cols-[140px,minmax(0,1fr)] items-center gap-4">
-                                <span>Lương theo giờ</span>
-                                <input
-                                    className="h-10 w-full rounded-full border border-[#CCE1F0] bg-[#F8FAFC] px-4 text-sm font-normal text-[#003344] focus:border-[#4AB4DE] focus:outline-none focus:ring-2 focus:ring-[#4AB4DE]/50"
-                                    type="number"
-                                    value={baseHourlyRate}
-                                    onChange={(e) => setBaseHourlyRate(e.target.value)}
-                                    placeholder="VD: 50000"
-                                />
+                                {/*<span>Lương theo giờ</span>*/}
+                                {/*<input*/}
+                                {/*    className="h-10 w-full rounded-full border border-[#CCE1F0] bg-[#F8FAFC] px-4 text-sm font-normal text-[#003344] focus:border-[#4AB4DE] focus:outline-none focus:ring-2 focus:ring-[#4AB4DE]/50"*/}
+                                {/*    type="number"*/}
+                                {/*    value={baseHourlyRate}*/}
+                                {/*    onChange={(e) => setBaseHourlyRate(e.target.value)}*/}
+                                {/*    placeholder="VD: 50000"*/}
+                                {/*/>*/}
                             </div>
 
                             <div className="grid grid-cols-[140px,minmax(0,1fr)] items-center gap-4">

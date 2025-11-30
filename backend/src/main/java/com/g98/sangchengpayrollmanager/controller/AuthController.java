@@ -5,6 +5,7 @@ import com.g98.sangchengpayrollmanager.model.dto.auth.ChangePasswordRequest;
 import com.g98.sangchengpayrollmanager.model.dto.auth.LoginRequest;
 import com.g98.sangchengpayrollmanager.model.dto.auth.LoginResponse;
 import com.g98.sangchengpayrollmanager.model.dto.auth.PasswordResetRequests;
+import com.g98.sangchengpayrollmanager.security.InvalidCredentialsException;
 import com.g98.sangchengpayrollmanager.service.AuthService;
 import com.g98.sangchengpayrollmanager.service.PasswordResetService;
 import jakarta.validation.Valid;
@@ -35,9 +36,24 @@ public class AuthController {
             LoginResponse response = authService.authenticate(loginRequest);
             log.info("Login successful for user: {}", loginRequest.getUsername());
             return ResponseEntity.ok(response);
+        } catch (IllegalStateException exception) {
+            log.warn("Login denied for user {}: {}", loginRequest.getUsername(), exception.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.builder()
+                    .status(HttpStatus.UNAUTHORIZED.value())
+                    .message(exception.getMessage())
+                    .build());
+        } catch (InvalidCredentialsException exception) {
+            log.warn("Login failed for user {}: {}", loginRequest.getUsername(), exception.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.builder()
+                    .status(HttpStatus.UNAUTHORIZED.value())
+                    .message(exception.getMessage())
+                    .build());
         } catch (Exception exception) {
             log.error("Login failed for user: {}", loginRequest.getUsername(), exception);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.builder()
+                    .status(HttpStatus.UNAUTHORIZED.value())
+                    .message("Đăng nhập không thành công")
+                    .build());
         }
     }
 
