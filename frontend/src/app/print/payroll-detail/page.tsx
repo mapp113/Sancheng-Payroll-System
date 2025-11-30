@@ -1,22 +1,10 @@
 import EmployeePayrollDetail from "@/app/_components/employee-payroll-detail";
-//import {hrPayrollDetail} from "@/app/_components/employee-payroll-detail/data/hr";
-import EmployeePayrollDetailToolbar from "@/app/_components/employee-payroll-detail/tool-bar";
 import type {
     EmployeePayrollDetailData,
     PayrollInfoField,
     PayrollLineItem,
 } from "@/app/_components/employee-payroll-detail/types";
 
-// export default function PayrollDetailPage() {
-//     return (
-//         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 pb-12">
-//             <EmployeePayrollDetailToolbar
-//                 title={hrPayrollDetail.title}
-//                 subtitle={hrPayrollDetail.periodLabel}
-//             />
-//             <EmployeePayrollDetail detail={hrPayrollDetail}/>
-//         </div>
-//     );
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
 type PayrollDetailSearchParams = {
@@ -87,9 +75,9 @@ const dateFormatter = new Intl.DateTimeFormat("en-GB", {
     year: "numeric",
 });
 
-export default async function PayrollDetailPage({
-                                                    searchParams,
-                                                }: {
+export default async function PayrollDetailPrintPage({
+                                                          searchParams,
+                                                      }: {
     searchParams?: PayrollDetailSearchParams;
 }) {
     const employeeCode = searchParams?.employeeCode?.trim();
@@ -105,14 +93,10 @@ export default async function PayrollDetailPage({
 
         if (!resolvedEmployeeCode) {
             return (
-                <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 pb-12">
-                    <EmployeePayrollDetailToolbar
-                        title="Employee Payroll Detail"
-                        subtitle={periodLabel}
-                    />
+                <div className="flex flex-col gap-6">
                     <div
                         className="rounded-2xl border border-dashed border-[#4AB4DE] bg-[#F4FBFF] p-10 text-center text-[#1D3E6A]">
-                        Không tìm được bản ghi bảng lương cho {periodLabel}. Vui lòng chọn tháng khác.
+                        No payroll records were found for {periodLabel}. Please choose a different month.
                     </div>
                 </div>
             );
@@ -126,22 +110,17 @@ export default async function PayrollDetailPage({
         const detail = mapToEmployeePayrollDetail(paySummary, employeeInfo ?? undefined);
 
         return (
-            <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 pb-12">
-                <EmployeePayrollDetailToolbar
-                    title={detail.title}
-                    subtitle={detail.periodLabel}
-                />
+            <div className="flex flex-col gap-6">
                 <EmployeePayrollDetail detail={detail}/>
             </div>
         );
     } catch (error) {
         console.error("Failed to load payroll detail", error);
         return (
-            <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 pb-12">
-                <EmployeePayrollDetailToolbar title="Employee Payroll Detail"/>
+            <div className="flex flex-col gap-6">
                 <div
                     className="rounded-2xl border border-dashed border-[#4AB4DE] bg-[#F4FBFF] p-10 text-center text-[#1D3E6A]">
-                    Không thể tải chi tiết bảng lương cho nhân viên và tháng đã chọn.
+                    Unable to load payroll details for the selected employee and month.
                 </div>
             </div>
         );
@@ -319,7 +298,7 @@ function splitComponentItems(
     components.forEach((component) => {
         const item = mapComponentToLineItem(component);
         const componentType = component.type?.toUpperCase?.() ?? "";
-        
+
         switch (componentType) {
             case "ADDITION":
                 incomeItems.push(item);

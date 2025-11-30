@@ -18,7 +18,7 @@ export default function TimesheetToolbar() {
       data.setTimesheetData(dataResponse.content);
       param.setTimesheetParams((prev) => ({
         ...prev,
-        totalPages: dataResponse.size.toString(),
+        totalPages: dataResponse.size?.toString(),
       }));
     });
   }

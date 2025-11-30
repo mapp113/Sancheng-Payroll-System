@@ -6,10 +6,10 @@ import { DataContext, ParamsContext } from "../payroll-context";
 import { PayrollQuery } from "../query";
 
 const OPTIONS = [
-  { value: "id", label: "Employee Code" },
-  { value: "fullName", label: "Name" },
-  { value: "positionName", label: "Position" },
-  { value: "netSalary", label: "Salary" },
+  { value: "id", label: "Mã nhân viên" },
+  { value: "fullName", label: "Tên" },
+  { value: "positionName", label: "Chức vụ" },
+  { value: "netSalary", label: "Lương" },
 ];
 
 export default function FilterButton() {
@@ -61,7 +61,7 @@ export default function FilterButton() {
         className="flex items-center gap-1 border border-black rounded-sm px-2 py-1 cursor-pointer select-none bg-white text-sm leading-none"
       >
         <Funnel className="inline-block w-4 h-4" />
-        <span>Filters</span>
+        <span>Lọc</span>
       </button>
 
       {/* dropdown panel */}

@@ -4,9 +4,14 @@ interface OTDetailProps {
   otData: OTResponseData | null;
   loading: boolean;
   children: React.ReactNode;
+  note?: string;
+  onNoteChange?: (note: string) => void;
+  isEditable?: boolean;
 }
 
-export default function OTDetail({ otData, loading, children }: OTDetailProps) {
+export default function OTDetail({ otData, loading, children, note = "", onNoteChange, isEditable = false }: OTDetailProps) {
+  
+  
   if (loading) {
     return (
       <div className="bg-gradient-to-br from-cyan-100 to-blue-100 rounded-2xl shadow-lg p-8">
@@ -133,6 +138,18 @@ export default function OTDetail({ otData, loading, children }: OTDetailProps) {
               <span className={`px-4 py-2 rounded-lg bg-cyan-200/50 font-semibold ${getStatusColor(otData.status)}`}>
                 {getStatusText(otData.status)}
               </span>
+            </div>
+
+            <div className="flex gap-4">
+              <label className="w-32 font-medium">Note từ quản lí:</label>
+              <textarea
+                disabled={!isEditable}
+                rows={4}
+                value={isEditable ? note : (otData.note || "")}
+                onChange={(e) => isEditable && onNoteChange?.(e.target.value)}
+                className="flex-1 px-4 py-2 rounded-lg bg-cyan-200/50 border-0 resize-none"
+                placeholder={isEditable ? "Nhập note cho yêu cầu OT..." : ""}
+              />
             </div>
 
             <div className="w-full">

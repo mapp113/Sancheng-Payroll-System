@@ -4,11 +4,13 @@ import { PayrollQuery } from "../query";
 import { Info } from "lucide-react";
 import Pagination from "./pagination";
 import Link from "next/link";
+import { useNotification } from "../../common/pop-box/notification/notification-context";
 
 
 export default function PayrollTable() {
     const payrollParams = useContext(ParamsContext)!;
     const payrollData = useContext(DataContext)!;
+    const { addNotification } = useNotification();;
 
     useEffect(() => {
         PayrollQuery(payrollParams.payrollParams).then((data) => {
@@ -36,16 +38,16 @@ export default function PayrollTable() {
 
     return (
         <div className="p-4 rounded-xl bg-white border border-black">
-            <h1 className="text-xl font-bold mb-5">Employees Payroll</h1>
+            <h1 className="text-xl font-bold mb-5">Bảng lương nhân viên</h1>
             <table className="w-full border-collapse text-sm text-gray-800">
                 <thead>
                     <tr className="bg-[#CCE1F0] text-left rounded-t-xl">
                         <th className="py-3 px-4 font-semibold rounded-tl-xl">ID</th>
-                        <th className="py-3 px-4 font-semibold">Name</th>
-                        <th className="py-3 px-4 font-semibold">Position</th>
-                        <th className="py-3 px-4 font-semibold">Salary</th>
-                        <th className="py-3 px-4 font-semibold">Status</th>
-                        <th className="py-3 px-4 font-semibold">Payslip</th>
+                        <th className="py-3 px-4 font-semibold">Tên</th>
+                        <th className="py-3 px-4 font-semibold">Chức vụ</th>
+                        <th className="py-3 px-4 font-semibold">Lương</th>
+                        <th className="py-3 px-4 font-semibold">Trạng thái</th>
+                        <th className="py-3 px-4 font-semibold">Phiếu lương</th>
                         <th className="py-3 px-4 rounded-tr-xl"></th>
                     </tr>
                 </thead>
@@ -63,8 +65,39 @@ export default function PayrollTable() {
                                 >{record.status}</span>
                             </td>
                             <td className="py-3 px-4">
-                                <button className="bg-cyan-300 hover:bg-cyan-400 text-sm text-gray-800 font-medium py-1 px-3 rounded-md shadow">
-                                    Download
+                                <button 
+                                    onClick={() => {
+                                        const downloadUrl = `http://localhost:8080/api/paysummaries/download?employeeCode=${record.employeeCode}&month=${payrollParams.payrollParams.date}-01`;
+                                        const token = sessionStorage.getItem("scpm.auth.token"); // or however you store your token
+                                        fetch(downloadUrl, {
+                                            headers: {
+                                                'Authorization': `Bearer ${token}`
+                                            }
+                                        })
+                                        .then(response => {
+                                            if (response.ok) {
+                                                return response.blob();
+                                            }
+                                            throw new Error('Download failed');
+                                        })
+                                        .then(blob => {
+                                            const url = window.URL.createObjectURL(blob);
+                                            window.open(url, '_blank');
+                                            window.URL.revokeObjectURL(url);
+                                        })
+                                        .catch(error => {
+                                            console.error('Error downloading file:', error);
+                                            addNotification(
+                                                "error",
+                                                "Tải xuống thất bại",
+                                                "Không thể tải phiếu lương. Vui lòng thử lại.",
+                                                5000
+                                            );
+                                        });
+                                    }}
+                                    className="bg-cyan-300 hover:bg-cyan-400 text-sm text-gray-800 font-medium py-1 px-3 rounded-md shadow"
+                                >
+                                    Tải về
                                 </button>
                             </td>
                             <td className="py-3 px-4 text-gray-500">

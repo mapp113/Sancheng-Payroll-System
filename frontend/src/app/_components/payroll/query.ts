@@ -32,13 +32,19 @@ export async function PayrollQuery(param: PayrollParam) : Promise<{content: Payr
   if (USE_SAMPLE_DATA) {
     return { content: SAMPLE_DATA, size: SAMPLE_DATA.length };
   }
+  const token = sessionStorage.getItem("scpm.auth.token");
   const queryParams = new URLSearchParams();
   if (param.keyword) queryParams.set('keyword', param.keyword);
   if (param.sortBy) queryParams.set('sortBy', param.sortBy);
   if (param.date) queryParams.set('date', param.date + "-01");
   if (param.page) queryParams.set('page', param.page);
   const requestUrl = `${API_URL}?${queryParams.toString()}`;
-  const response = await fetch(requestUrl);
+  const response = await fetch(requestUrl, {
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
   const data = await response.json();
   return { content: data.content, size: data.totalPages };
 }
