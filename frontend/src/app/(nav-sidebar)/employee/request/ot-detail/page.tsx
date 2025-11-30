@@ -4,6 +4,9 @@ import OTDetail from "@/app/_components/employee/request/overtime/detail";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { OTResponseData } from "@/app/_components/employee/request/types";
+import DeleteConfirmation from "@/app/_components/common/pop-box/delete-confirmation";
+import SuccessNotification from "@/app/_components/common/pop-box/notification/success";
+import ErrorNotification from "@/app/_components/common/pop-box/notification/error";
 
 export default function OTDetailPage() {
   const searchParams = useSearchParams();
@@ -11,6 +14,9 @@ export default function OTDetailPage() {
   const id = searchParams.get("id");
   const [otData, setOtData] = useState<OTResponseData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     async function fetchOTDetail() {
@@ -41,9 +47,6 @@ export default function OTDetailPage() {
 
   const handleDelete = async () => {
     if (!id) return;
-    
-    const confirmed = confirm("Bạn có chắc chắn muốn xóa yêu cầu OT này?");
-    if (!confirmed) return;
 
     try {
       const token = sessionStorage.getItem("scpm.auth.token");
@@ -56,14 +59,14 @@ export default function OTDetailPage() {
       });
 
       if (response.ok) {
-        alert("Xóa yêu cầu OT thành công!");
-        router.push("/employee/request");
+        setSuccessMessage("Đã xóa yêu cầu OT thành công!");
+        setTimeout(() => router.push("/employee/request"), 2000);
       } else {
-        alert("Xóa yêu cầu OT thất bại!");
+        throw new Error("Xóa yêu cầu OT thất bại!");
       }
     } catch (error) {
       console.error("Error deleting OT request:", error);
-      alert("Có lỗi xảy ra khi xóa yêu cầu OT!");
+      setErrorMessage(error instanceof Error ? error.message : "Có lỗi xảy ra khi xóa yêu cầu OT!");
     }
   };
   
@@ -80,7 +83,7 @@ export default function OTDetailPage() {
           {otData?.status === "PENDING" && (
             <div className="flex justify-center">
               <button 
-                onClick={handleDelete}
+                onClick={() => setShowDeleteConfirm(true)}
                 className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors cursor-pointer"
               >
                 Xóa
@@ -89,6 +92,27 @@ export default function OTDetailPage() {
           )}
         </OTDetail>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmation
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDelete}
+        message="Bạn có chắc chắn muốn xóa yêu cầu OT này không?"
+        itemName={otData ? `OT ngày ${new Date(otData.otDate).toLocaleDateString('vi-VN')}` : ""}
+      />
+
+      {/* Notifications */}
+      <SuccessNotification
+        isOpen={!!successMessage}
+        onClose={() => setSuccessMessage("")}
+        message={successMessage}
+      />
+      <ErrorNotification
+        isOpen={!!errorMessage}
+        onClose={() => setErrorMessage("")}
+        message={errorMessage}
+      />
     </div>
   );
 }

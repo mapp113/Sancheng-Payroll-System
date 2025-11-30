@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { File } from "lucide-react";
 import type { LeaveDetailResponse } from "@/app/_components/employee/request/types";
+import DeleteConfirmation from "@/app/_components/common/pop-box/delete-confirmation";
+import SuccessNotification from "@/app/_components/common/pop-box/notification/success";
+import ErrorNotification from "@/app/_components/common/pop-box/notification/error";
 
 export default function LeavesDetailPage() {
   const searchParams = useSearchParams();
@@ -11,6 +14,9 @@ export default function LeavesDetailPage() {
   const [leaveData, setLeaveData] = useState<LeaveDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     if (!id) {
@@ -87,10 +93,6 @@ export default function LeavesDetailPage() {
   const handleDelete = async () => {
     if (!id) return;
     
-    if (!confirm("Bạn có chắc chắn muốn xóa yêu cầu này?")) {
-      return;
-    }
-    
     try {
       const token = sessionStorage.getItem("scpm.auth.token");
       const response = await fetch(`http://localhost:8080/api/leave/myrequest/${id}`, {
@@ -105,10 +107,12 @@ export default function LeavesDetailPage() {
         throw new Error("Không thể xóa yêu cầu");
       }
 
-      alert("Đã xóa yêu cầu thành công");
-      window.location.href = "../request";
+      setSuccessMessage("Đã xóa yêu cầu nghỉ phép thành công!");
+      setTimeout(() => {
+        window.location.href = "../request";
+      }, 2000);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Đã xảy ra lỗi");
+      setErrorMessage(err instanceof Error ? err.message : "Đã xảy ra lỗi");
     }
   };
 
@@ -121,7 +125,7 @@ export default function LeavesDetailPage() {
         </a>
         {leaveData.status === "PENDING" && (
           <button 
-            onClick={handleDelete}
+            onClick={() => setShowDeleteConfirm(true)}
             className="w-fit h-fit border border-black bg-red-500 text-white hover:bg-red-600 py-2 px-4 rounded cursor-pointer"
           >
             Delete
@@ -252,6 +256,27 @@ export default function LeavesDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmation
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDelete}
+        message="Bạn có chắc chắn muốn xóa yêu cầu nghỉ phép này không?"
+        itemName={leaveData ? `Nghỉ ${leaveData.leaveTypeCode} từ ${new Date(leaveData.fromDate).toLocaleDateString('vi-VN')}` : ""}
+      />
+
+      {/* Notifications */}
+      <SuccessNotification
+        isOpen={!!successMessage}
+        onClose={() => setSuccessMessage("")}
+        message={successMessage}
+      />
+      <ErrorNotification
+        isOpen={!!errorMessage}
+        onClose={() => setErrorMessage("")}
+        message={errorMessage}
+      />
     </div>
   );
 }
