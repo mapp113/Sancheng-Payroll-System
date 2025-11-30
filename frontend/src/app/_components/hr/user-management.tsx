@@ -380,14 +380,14 @@ export default function UserManagement() {
         <div className="flex h-full flex-col gap-4 p-4 text-[#1F2A44]">
             <header className="flex flex-col gap-2 rounded-2xl bg-white p-6 shadow-sm">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <h1 className="text-2xl font-semibold">Employee Management</h1>
+                    <h1 className="text-2xl font-semibold">Quản Lý Nhân Viên</h1>
                 </div>
             </header>
 
             <div className="flex flex-1 flex-col gap-4 xl:flex-row xl:overflow-hidden">
                 <section className="flex-1 overflow-hidden rounded-2xl bg-white p-4 shadow-sm">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <h2 className="text-lg font-semibold">List User</h2>
+                        <h2 className="text-lg font-semibold">Danh Sách</h2>
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                             <label className="relative flex items-center">
                                 <Search className="absolute left-3 h-4 w-4 text-[#94A3B8]"/>
@@ -408,7 +408,7 @@ export default function UserManagement() {
                                 <option value="HR">HR</option>
                                 <option value="Manager">Manager</option>
                                 <option value="Employee">Employee</option>
-                                <option value="Accountant">Accountant</option>
+
                             </select>
                         </div>
                     </div>
@@ -417,13 +417,13 @@ export default function UserManagement() {
                         <table className="min-w-full divide-y divide-[#E2E8F0] text-sm">
                             <thead className="bg-[#F8FAFC] text-left">
                             <tr>
-                                <th className="px-4 py-3 font-medium">UserID</th>
-                                <th className="px-4 py-3 font-medium">EmployeeCode</th>
-                                <th className="px-4 py-3 font-medium">Name</th>
-                                <th className="px-4 py-3 font-medium">Position</th>
-                                <th className="px-4 py-3 font-medium">Status</th>
-                                <th className="px-1 py-3 font-medium">Phone</th>
-                                <th className="px-4 py-3 font-medium text-right">Edit</th>
+                                <th className="px-4 py-3 font-medium">ID</th>
+                                <th className="px-4 py-3 font-medium">Mã Nhân Viên</th>
+                                <th className="px-4 py-3 font-medium">Tên</th>
+                                <th className="px-4 py-3 font-medium">Trức Vụ</th>
+                                <th className="px-4 py-3 font-medium">Trạng Thái</th>
+                                <th className="px-1 py-3 font-medium">Điện Thoại</th>
+                                <th className="px-4 py-3 font-medium text-right">Chỉnh Sửa</th>
                             </tr>
                             </thead>
 
