@@ -1,6 +1,6 @@
 "use client";
 
-import {Pencil, Plus, Search, X} from "lucide-react";
+import {Search, X} from "lucide-react";
 import {ChangeEvent, useEffect, useMemo, useState} from "react";
 import {useRouter} from "next/navigation";
 
@@ -423,7 +423,7 @@ export default function UserManagement() {
                                 <th className="px-4 py-3 font-medium">Trức Vụ</th>
                                 <th className="px-4 py-3 font-medium">Trạng Thái</th>
                                 <th className="px-1 py-3 font-medium">Điện Thoại</th>
-                                <th className="px-4 py-3 font-medium text-right">Chỉnh Sửa</th>
+                                <th className="px-4 py-3 font-medium text-right">Thông Tin Lương</th>
                             </tr>
                             </thead>
 
@@ -487,9 +487,9 @@ export default function UserManagement() {
                                                         )}`,
                                                     );
                                                 }}
-                                                className="p-2 rounded-full hover:bg-slate-100 text-[#4AB4DE]"
+                                                className="rounded-full border border-[#4AB4DE] px-4 py-1 text-xs font-medium text-[#4AB4DE] hover:bg-[#E0F2FE]"
                                             >
-                                                <Pencil className="h-4 w-4"/>
+                                                Xem
                                             </button>
                                         </td>
                                     </tr>

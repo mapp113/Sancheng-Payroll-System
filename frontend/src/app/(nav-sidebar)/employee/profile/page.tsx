@@ -387,9 +387,9 @@ export default function DetailEmployeePage() {
                 <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <Link
                         href="/employee"
-                        className="inline-flex items-center gap-2 rounded-full bg.white px-4 py-2 text-sm font-semibold text-[#1F2A44] shadow-sm transition hover:shadow-md"
+                        className="flex items-center gap-3 text-sm font-semibold text-[#4AB4DE]"
                     >
-                        <span className="text-lg leading-none">⬅</span>
+                        <span className="h-5 w-5">⬅</span>
                         Back
                     </Link>
 

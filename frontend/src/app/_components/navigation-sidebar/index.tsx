@@ -38,12 +38,12 @@ export default function NavigationSidebar({select}: { select: number }) {
                 </li>
                 <li className={`${select === 7 ? selected : ""}`}>
                     <a href="/manager/requests/overtime" className="hover:underline">
-                        <Image src="/icons/overtime-request.png" alt="Overtime Request" width={52} height={52}/>
+                        <Image src="/icons/overtime-request.png" alt="Overtime Request" width={50} height={50}/>
                     </a>
                 </li>
                 <li className={`${select === 8 ? selected : ""}`}>
                     <a href="/manager/tax-insurance" className="hover:underline">
-                        <Image src="/icons/employee/tax.png" alt="Overtime Request" width={52} height={52}/>
+                        <Image src="/icons/employee/tax.png" alt="Overtime Request" width={50} height={50}/>
                     </a>
                 </li>
             </ul>
