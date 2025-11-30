@@ -125,7 +125,7 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
 
         for (User u : managers) {
             notificationService.createNotification(
-                    managers.getLast().getEmployeeCode(),
+                    u.getEmployeeCode(),
                     "Có đơn Làm thêm giờ mới ",
                     user.getFullName() + " gửi đơn Làm thêm giờ ngày " + otDate,
                     "OT_REQUEST",

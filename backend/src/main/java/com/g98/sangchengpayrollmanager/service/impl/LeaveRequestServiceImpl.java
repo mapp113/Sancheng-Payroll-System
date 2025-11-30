@@ -103,7 +103,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
         for (User u : managers) {
             notificationService.createNotification(
-                    managers.getLast().getEmployeeCode(),
+                    u.getEmployeeCode(),
                     "Có đơn xin nghỉ mới từ nhân viên ",
                     user.getFullName()
                             + " Đã xin nghỉ từ " + leaveRequestDTO.getFromDate()
