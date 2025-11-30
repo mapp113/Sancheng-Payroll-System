@@ -217,8 +217,9 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     @Override
     public Page<LeaveRequestResponse> findByStatus(LeaveandOTStatus status, Pageable pageable) {
         return LeaveRequestRepository
-                .findByStatus(LeaveandOTStatus.valueOf(String.valueOf(status)), pageable)
+                .findByStatus(status, pageable)
                 .map(this::mapToResponse);
+
 
     }
 
@@ -269,7 +270,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         String roleName = approver.getRole().getName();
 
         if ("HR".equals(roleName)) {
-            throw new RuntimeException("HR chỉ được xem, không được từ chối đơn nghỉ.");
+            throw new RuntimeException("HR chỉ được xem, không được phê duyệt đơn nghỉ.");
         }
 
         if (!"Manager".equals(roleName)) {
