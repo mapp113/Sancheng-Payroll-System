@@ -55,7 +55,7 @@ export default function ManagerLeavesPage() {
         <div className="w-full p-4">
           <div className="flex flex-row">
             <input 
-              placeholder="Search" 
+              placeholder="Tìm kiếm" 
               className="ml-10 border border-gray-300 rounded px-3 py-1" 
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}

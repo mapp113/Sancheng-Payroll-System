@@ -137,7 +137,7 @@ export default function OvertimePage() {
       <div>
         <input 
           className="border border-black rounded-2xl px-4 py-2" 
-          placeholder="Search" 
+          placeholder="Tìm kiếm" 
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={handleSearchKeyDown}

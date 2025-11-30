@@ -6,6 +6,7 @@ import LeavesToolBar from "@/app/_components/leaves/tool-bar";
 import { dateSlashToHyphen } from "@/app/_components/utils/dateSlashToHyphen";
 import { NotificationProvider, useNotification } from "@/app/_components/common/pop-box/notification/notification-context";
 import BottomRightNotification from "@/app/_components/common/pop-box/notification/bottom-right";
+import SubmitConfirmation from "@/app/_components/common/pop-box/submit-confirmation";
 
 interface LeaveTypeOption {
   code: string;
@@ -25,6 +26,7 @@ function LeavesPageContent() {
     attachment: null,
   });
   const [leaveTypeOptions, setLeaveTypeOptions] = useState<LeaveTypeOption[]>([]);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
   useEffect(() => {
     async function fetchLeaveTypeOptions() {
@@ -72,6 +74,22 @@ function LeavesPageContent() {
       reason: "",
       attachment: null,
     }));
+  };
+
+  const handleSubmitClick = () => {
+    // Validate required fields
+    if (!formData.fromDate) {
+      addNotification("error", "Lỗi", "Vui lòng chọn ngày bắt đầu", 4000);
+      return;
+    }
+
+    if (!formData.reason.trim()) {
+      addNotification("error", "Lỗi", "Vui lòng nhập lý do nghỉ phép", 4000);
+      return;
+    }
+
+    // Hiện confirmation dialog
+    setShowSubmitConfirm(true);
   };
 
   const handleSubmit = async () => {
@@ -206,13 +224,21 @@ function LeavesPageContent() {
           <div className="ml-auto">
             <button
               className="border border-black rounded px-4 py-2 bg-green-500 text-white hover:bg-green-600 cursor-pointer"
-              onClick={handleSubmit}
+              onClick={handleSubmitClick}
             >
               Gửi yêu cầu
             </button>
           </div>
         </div>
       </div>
+
+      <SubmitConfirmation
+        isOpen={showSubmitConfirm}
+        onClose={() => setShowSubmitConfirm(false)}
+        onConfirm={handleSubmit}
+        message="Bạn có chắc chắn muốn gửi yêu cầu nghỉ phép này không?"
+        details={`Loại: ${leaveTypeOptions.find(opt => opt.code === formData.leaveType)?.name || formData.leaveType} | Từ: ${formData.fromDate ? new Date(formData.fromDate).toLocaleDateString('vi-VN') : ''} đến: ${formData.toDate ? new Date(formData.toDate).toLocaleDateString('vi-VN') : new Date(formData.fromDate).toLocaleDateString('vi-VN')}`}
+      />
     </div>
   );
 }

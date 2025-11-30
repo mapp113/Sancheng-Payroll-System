@@ -6,7 +6,7 @@ export default function PayrollEmployeeLayout({children}: { children: ReactNode 
     return (
         <div className="flex flex-1">
             <div className="w-20">
-                <Sidebar select={1}/>
+                <Sidebar select={3}/>
             </div>
             <main className="flex-1 overflow-hidden">{children}</main>
         </div>

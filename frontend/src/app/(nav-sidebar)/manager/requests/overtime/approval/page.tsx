@@ -4,6 +4,9 @@ import OTDetail from "@/app/_components/employee/request/overtime/detail";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { OTResponseData } from "@/app/_components/employee/request/types";
+import RequestConfirmation from "@/app/_components/common/pop-box/request-confirmation";
+import SuccessNotification from "@/app/_components/common/pop-box/notification/success";
+import ErrorNotification from "@/app/_components/common/pop-box/notification/error";
 
 export default function OTApprovalPage() {
   const searchParams = useSearchParams();
@@ -12,6 +15,10 @@ export default function OTApprovalPage() {
   const [otData, setOtData] = useState<OTResponseData | null>(null);
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState("");
+  const [showApproveConfirm, setShowApproveConfirm] = useState(false);
+  const [showRejectConfirm, setShowRejectConfirm] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     async function fetchOTDetail() {
@@ -43,9 +50,6 @@ export default function OTApprovalPage() {
   const handleApprove = async () => {
     if (!id) return;
 
-    const confirmed = confirm("Bạn có chắc chắn muốn duyệt yêu cầu OT này?");
-    if (!confirmed) return;
-
     try {
       const token = sessionStorage.getItem("scpm.auth.token");
       const response = await fetch(`http://localhost:8080/api/overtime/approve/${id}?note=${encodeURIComponent(note)}`, {
@@ -57,22 +61,19 @@ export default function OTApprovalPage() {
       });
 
       if (response.ok) {
-        alert("Duyệt yêu cầu OT thành công!");
-        router.push("/manager/requests/overtime");
+        setSuccessMessage("Đã duyệt yêu cầu làm thêm giờ thành công!");
+        setTimeout(() => router.push("/manager/requests/overtime"), 2000);
       } else {
-        alert("Duyệt yêu cầu OT thất bại!");
+        throw new Error("Duyệt yêu cầu OT thất bại!");
       }
     } catch (error) {
       console.error("Error approving OT request:", error);
-      alert("Có lỗi xảy ra khi duyệt yêu cầu OT!");
+      setErrorMessage(error instanceof Error ? error.message : "Có lỗi xảy ra khi duyệt yêu cầu OT!");
     }
   };
 
   const handleReject = async () => {
     if (!id) return;
-
-    const confirmed = confirm("Bạn có chắc chắn muốn từ chối yêu cầu OT này?");
-    if (!confirmed) return;
 
     try {
       const token = sessionStorage.getItem("scpm.auth.token");
@@ -85,14 +86,14 @@ export default function OTApprovalPage() {
       });
 
       if (response.ok) {
-        alert("Từ chối yêu cầu OT thành công!");
-        router.push("/manager/requests/overtime");
+        setSuccessMessage("Đã từ chối yêu cầu làm thêm giờ!");
+        setTimeout(() => router.push("/manager/requests/overtime"), 2000);
       } else {
-        alert("Từ chối yêu cầu OT thất bại!");
+        throw new Error("Từ chối yêu cầu OT thất bại!");
       }
     } catch (error) {
       console.error("Error rejecting OT request:", error);
-      alert("Có lỗi xảy ra khi từ chối yêu cầu OT!");
+      setErrorMessage(error instanceof Error ? error.message : "Có lỗi xảy ra khi từ chối yêu cầu OT!");
     }
   };
 
@@ -139,13 +140,13 @@ export default function OTApprovalPage() {
           return (
             <div className="w-full flex items-center justify-center gap-4">
               <button
-                onClick={handleApprove}
+                onClick={() => setShowApproveConfirm(true)}
                 className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded cursor-pointer"
               >
                 Approve
               </button>
               <button
-                onClick={handleReject}
+                onClick={() => setShowRejectConfirm(true)}
                 className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded cursor-pointer"
               >
                 Reject
@@ -154,6 +155,34 @@ export default function OTApprovalPage() {
           )
         })()}
       </OTDetail>
+
+      {/* Confirmation Dialogs */}
+      <RequestConfirmation
+        isOpen={showApproveConfirm}
+        onClose={() => setShowApproveConfirm(false)}
+        onConfirm={handleApprove}
+        type="approve"
+        requestType="overtime"
+      />
+      <RequestConfirmation
+        isOpen={showRejectConfirm}
+        onClose={() => setShowRejectConfirm(false)}
+        onConfirm={handleReject}
+        type="reject"
+        requestType="overtime"
+      />
+
+      {/* Notifications */}
+      <SuccessNotification
+        isOpen={!!successMessage}
+        onClose={() => setSuccessMessage("")}
+        message={successMessage}
+      />
+      <ErrorNotification
+        isOpen={!!errorMessage}
+        onClose={() => setErrorMessage("")}
+        message={errorMessage}
+      />
     </div>
   );
 }
