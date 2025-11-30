@@ -142,7 +142,7 @@ export function ManagerLeavesTable() {
                   </td>
                   <td className="px-4 py-2 text-left">{leave.reason}</td>
                   <td className="px-4 py-2 text-center">
-                    <a href={`/manager/requests/leaves/approval?id=${leave.id}`} className="cursor-pointer">
+                    <a href={`/manager/requests/leaves/approval?id=${leave.id}&page=${params.indexPage}&month=${params.date}${params.keyword ? `&search=${encodeURIComponent(params.keyword)}` : ''}`} className="cursor-pointer">
                       <Info />
                     </a>
                   </td>

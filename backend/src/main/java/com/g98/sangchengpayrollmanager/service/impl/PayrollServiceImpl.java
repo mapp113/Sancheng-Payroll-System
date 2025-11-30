@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,9 +25,6 @@ public class PayrollServiceImpl implements PayrollService {
 
     private final SalaryInformationRepository salaryRepo;
     private final AttMonthSummaryRepository attMonthRepo;
-    private final PayComponentRepository payComponentRepo;
-    private final InsurancePolicyRepository insuranceRepo;
-    private final TaxLevelRepository taxRepo;
     private final PaySummaryRepository paySummaryRepo;
     private final AttDailySummaryRepository attDailyRepo;
     private final BaseSalaryService baseSalaryService;
@@ -78,7 +76,7 @@ public class PayrollServiceImpl implements PayrollService {
         // 6.BHXH,BHYT,BHTN
         // lương tính bảo hiểm =  Lương cơ bản + insuredBaseExtra
         int insuranceBase = baseSalaryAmount + insuredBaseExtra;
-        InsuranceService.Result insResult = insuranceService.calculateInsurance(insuranceBase);
+        InsuranceService.Result insResult = insuranceService.calculateInsurance(insuranceBase, month);
         snapshot.addAll(insResult.getPaySummaryComponentItems());           // 👉 chỉ add thêm
         int employeeInsurance = insResult.getEmployeeInsurance();
 
@@ -91,7 +89,7 @@ public class PayrollServiceImpl implements PayrollService {
 
         // 8.taxable_income = assessableIncome - personalDeduction - dependentsDeduction - 7.BHXH,BHYT,BHTN;
         // 9.tax_amount
-        TaxService.Result taxResult = taxService.calculateTax(employeeCode, assessableIncome, employeeInsurance, monthEnd);
+        TaxService.Result taxResult = taxService.calculateTax(employeeCode, assessableIncome, employeeInsurance, monthEnd, month);
         snapshot.addAll(taxResult.getPaySummaryComponentItems());
         int taxableIncome = taxResult.getTaxableIncome();
         int taxAmount = taxResult.getTaxAmount();
@@ -119,6 +117,8 @@ public class PayrollServiceImpl implements PayrollService {
             summary.getComponents().clear();
         }
 
+
+
         // set lại các field đã tính
         summary.setGrossIncome(grossIncome);
         summary.setAssessableIncome(assessableIncome);
@@ -143,8 +143,9 @@ public class PayrollServiceImpl implements PayrollService {
                     .build();
             summary.getComponents().add(psc);
         }
+        paySummaryRepo.save(summary);
 
-        return paySummaryRepo.save(summary);
+        return summary;
     }
 
 

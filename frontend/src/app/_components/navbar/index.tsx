@@ -1,13 +1,23 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import {useEffect, useRef, useState} from "react";
+import {usePathname, useRouter} from "next/navigation";
 import localFont from "next/font/local";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useTranslations } from "@/lib/translations";
-import { Bell, ChevronDown, CircleChevronDown, Clock, Languages, User, Settings, LogOut, ArrowLeftRight } from "lucide-react";
-import { useLanguage } from "@/lib/language-context";
-import NotificationPanel from "@/app/_components/common/notification/panel";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {useTranslations} from "@/lib/translations";
+import {
+    Bell,
+    ChevronDown,
+    CircleChevronDown,
+    Clock,
+    Languages,
+    User,
+    Settings,
+    LogOut,
+    ArrowLeftRight
+} from "lucide-react";
+import {useLanguage} from "@/lib/language-context";
+import NotificationPanel from "../common/notification/panel";
 
 const iceland = localFont({
     src: "../../../../public/fonts/Iceland-Regular.ttf",
@@ -66,7 +76,7 @@ export default function Navbar() {
 
     // Ẩn navbar ở các route không cần layout
     // if (pathname && noLayoutRoutes.includes(pathname)) return null;
-    const { language, toggleLanguage } = useLanguage();
+    const {language, toggleLanguage} = useLanguage();
     const getDashboardTitle = () => {
         const userStr = window.sessionStorage.getItem("scpm.auth.user");
         if (userStr) {
@@ -131,7 +141,7 @@ export default function Navbar() {
         }
         setDashboardTitle(getDashboardTitle());
         fetchUnreadCount();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Fetch unread notification count
@@ -209,7 +219,7 @@ export default function Navbar() {
             {/* trái: logo + tiêu đề */}
             <div className="flex items-center gap-3">
                 <Avatar className="h-12 w-12">
-                    <AvatarImage src="/logo.jpg" alt="Logo" />
+                    <AvatarImage src="/logo.jpg" alt="Logo"/>
                     <AvatarFallback>Logo</AvatarFallback>
                 </Avatar>
                 <span className={`${iceland.className} text-2xl font-bold`}>
@@ -219,19 +229,10 @@ export default function Navbar() {
 
             {/* phải: chuông, đồng hồ, user */}
             <div className="flex items-center gap-4">
-                <button
-                    type="button"
-                    onClick={toggleLanguage}
-                    className="flex items-center gap-2 rounded-full bg-white/40 px-3 py-1 text-sm font-semibold text-[#345EA8] transition hover:bg-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#345EA8]"
-                    aria-label={`Switch to ${language === "vi" ? "English" : "Vietnamese"}`}
-                >
-                    <Languages className="h-4 w-4" aria-hidden="true" />
-                    <span>{language === "vi" ? "Tiếng Việt" : "English"}</span>
-                </button>
-                
+
                 <div className="relative" ref={notificationRef}>
-                    <button 
-                        id="notification" 
+                    <button
+                        id="notification"
                         className="flex items-center gap-1 hover:opacity-80 transition-opacity relative cursor-pointer"
                         onClick={() => {
                             setIsNotificationOpen(!isNotificationOpen);
@@ -241,31 +242,32 @@ export default function Navbar() {
                         }}
                         aria-label="Notifications"
                     >
-                        <Bell />
+                        <Bell/>
                         {unreadCount > 0 && (
-                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
+                            <span
+                                className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
                                 {unreadCount > 9 ? "9+" : unreadCount}
                             </span>
                         )}
-                        <ChevronDown />
+                        <ChevronDown/>
                     </button>
                     {isNotificationOpen && (
-                        <NotificationPanel />
+                        <NotificationPanel/>
                     )}
                 </div>
 
                 <button id="clock" className="flex items-center gap-1">
-                    <Clock />
-                    <ChevronDown />
+                    <Clock/>
+                    <ChevronDown/>
                 </button>
 
 
                 <Link href="/employee/profile"
-                    className="flex items-center gap-2 rounded-full px-2 py-1 transition hover:bg-white/50">
-                    <Avatar className="h-12 w-12">
-                        <AvatarImage src="/logo.jpg" alt="User avatar" />
-                        <AvatarFallback>Avatar</AvatarFallback>
-                    </Avatar>
+                      className="flex items-center gap-2 rounded-full px-2 py-1 transition hover:bg-white/50">
+                    {/*<Avatar className="h-12 w-12">*/}
+                    {/*    <AvatarImage src="/logo.jpg" alt="User avatar"/>*/}
+                    {/*    <AvatarFallback>Avatar</AvatarFallback>*/}
+                    {/*</Avatar>*/}
                     <span id="username" className="font-semibold">
                         {username || "Loading..."}
                     </span>
@@ -276,11 +278,12 @@ export default function Navbar() {
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
                         aria-label="User menu"
                     >
-                        <CircleChevronDown />
+                        <CircleChevronDown/>
                     </button>
 
                     {isMenuOpen && (
-                        <div className="absolute right-0 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+                        <div
+                            className="absolute right-0 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-50">
                             <div className="py-1">
                                 {canSwitchView && (
                                     <>
@@ -288,7 +291,7 @@ export default function Navbar() {
                                             className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                                             onClick={handleSwitchView}
                                         >
-                                            <ArrowLeftRight className="h-4 w-4" />
+                                            <ArrowLeftRight className="h-4 w-4"/>
                                             <span>
                                                 {isEmployeeView
                                                     ? (language === "vi" ? "Chuyển sang quản lý" : "Switch to Manager")
@@ -296,7 +299,7 @@ export default function Navbar() {
                                                 }
                                             </span>
                                         </button>
-                                        <hr className="my-1 border-gray-200" />
+                                        <hr className="my-1 border-gray-200"/>
                                     </>
                                 )}
                                 {/* <button
@@ -324,7 +327,7 @@ export default function Navbar() {
                                     className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                                     onClick={handleLogout}
                                 >
-                                    <LogOut className="h-4 w-4" />
+                                    <LogOut className="h-4 w-4"/>
                                     <span>{language === "vi" ? "Đăng xuất" : "Logout"}</span>
                                 </button>
                             </div>

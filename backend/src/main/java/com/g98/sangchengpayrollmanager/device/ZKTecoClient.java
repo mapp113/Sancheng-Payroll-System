@@ -99,13 +99,12 @@ public class ZKTecoClient {
     /**
      * ĐỌC TẤT CẢ LOGS CHẤM CÔNG
      */
+    /**
+     * ĐỌC TẤT CẢ LOGS CHẤM CÔNG
+     */
     public List<AttendanceLog> readAllLogs() {
         ActiveXComponent zk = null;
         List<AttendanceLog> logs = new ArrayList<>();
-
-        // Timezone constants
-        final ZoneId UTC = ZoneId.of("UTC");
-        final ZoneId VN = ZoneId.of("Asia/Ho_Chi_Minh");
 
         try {
             zk = connect();
@@ -151,49 +150,37 @@ public class ZKTecoClient {
                     // Validate đầy đủ
                     if (y < 2000 || y > 2100 || m < 1 || m > 12 || d < 1 || d > 31) {
                         log.debug("Invalid date values: {}-{}-{}", y, m, d);
-                        resetVariants(empId, verifyMode, checkType, year, month, day, hour, minute, second, workCode);
                         continue;
                     }
 
                     if (h < 0 || h > 23 || min < 0 || min > 59 || s < 0 || s > 59) {
                         log.debug("Invalid time values: {}:{}:{}", h, min, s);
-                        resetVariants(empId, verifyMode, checkType, year, month, day, hour, minute, second, workCode);
                         continue;
                     }
 
-                    // ✅ FIX: Máy trả về UTC, cần convert sang VN time
-                    // Bước 1: Tạo ZonedDateTime với UTC
-                    ZonedDateTime utcTime = ZonedDateTime.of(y, m, d, h, min, s, 0, UTC);
-
-                    // Bước 2: Convert sang giờ VN
-                    ZonedDateTime vnTime = utcTime.withZoneSameInstant(VN);
-
-                    // Bước 3: Lấy LocalDateTime để lưu DB
-                    LocalDateTime checkTime = vnTime.toLocalDateTime();
+                    // ✅ FIX: Máy đã lưu giờ VN sẵn, dùng trực tiếp không cần convert
+                    LocalDateTime checkTime = LocalDateTime.of(y, m, d, h, min, s);
 
                     String userId = empId.getStringRef();
 
                     logs.add(AttendanceLog.builder()
                             .userId(userId)
-                            .checkTime(checkTime) // Đã là giờ VN đúng
+                            .checkTime(checkTime)
                             .build());
 
                     count++;
 
                     // Log sample để verify
                     if (count <= 3) {
-                        log.debug("Sample: UTC {}→VN {} for user {}", utcTime, vnTime, userId);
+                        log.debug("Sample: Device time {}:{}:{} → userId: {}", h, min, s, userId);
                     }
 
                 } catch (Exception e) {
                     log.debug("Failed to parse log entry: {}", e.getMessage());
                 }
-
-                // Reset all variants for next iteration
-                resetVariants(empId, verifyMode, checkType, year, month, day, hour, minute, second, workCode);
             }
 
-            log.info("✅ Read {} attendance logs from device (converted UTC→VN)", count);
+            log.info("✅ Read {} attendance logs from device", count);
             return logs;
 
         } catch (Exception e) {
@@ -210,13 +197,10 @@ public class ZKTecoClient {
         }
     }
 
-    /**
-     * Helper: Reset variants (tránh lặp code)
-     */
-    private void resetVariants(Variant... variants) {
-        // Jacob variants tự reset khi dùng lại, không cần làm gì
-        // Method này để code gọn hơn
-    }
+/**
+ * Helper: Reset variants - XÓA METHOD NÀY (không dùng nữa)
+ */
+// private void resetVariants(Variant... variants) { ... }
 
 
     /**

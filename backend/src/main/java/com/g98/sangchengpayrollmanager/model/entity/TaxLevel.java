@@ -21,6 +21,7 @@ public class TaxLevel {
     @Column(length = 50, nullable = false)
     private String name;
 
+    // 'from' là từ khóa SQL nên phải đặt tên cột bằng backtick
     @Column(name = "`from`", nullable = false)
     private Integer fromValue;
 

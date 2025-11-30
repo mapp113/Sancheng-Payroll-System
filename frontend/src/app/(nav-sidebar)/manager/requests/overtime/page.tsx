@@ -2,18 +2,31 @@
 
 import { getUserMeta } from "@/app/_components/utils/getUserData";
 import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import OvertimeBalancePopup from "@/app/_components/manager/requests/overtime/overtime-balance-popup";
 import { OTResponseData } from "@/app/_components/employee/request/types";
 import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Info } from "lucide-react";
 
 export default function OvertimePage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Khôi phục state từ URL params
   const [otRequests, setOtRequests] = useState<OTResponseData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
-  const [indexPage, setIndexPage] = useState(0);
+  const [selectedMonth, setSelectedMonth] = useState(
+    searchParams.get("month") || new Date().toISOString().slice(0, 7)
+  );
+  const [indexPage, setIndexPage] = useState(
+    parseInt(searchParams.get("page") || "0")
+  );
   const [totalPages, setTotalPages] = useState(1);
-  const [searchInput, setSearchInput] = useState("");
-  const [keyword, setKeyword] = useState("");
+  const [searchInput, setSearchInput] = useState(
+    searchParams.get("search") || ""
+  );
+  const [keyword, setKeyword] = useState(
+    searchParams.get("search") || ""
+  );
   const maxItems = 10;
   const [showOvertimePopup, setShowOvertimePopup] = useState(false);
 
@@ -22,6 +35,17 @@ export default function OvertimePage() {
       window.location.href = "/login";
     }
   }, []);
+
+  // Cập nhật URL params khi state thay đổi
+  useEffect(() => {
+    const params = new URLSearchParams();
+    params.set("page", indexPage.toString());
+    params.set("month", selectedMonth);
+    if (keyword) {
+      params.set("search", keyword);
+    }
+    router.replace(`?${params.toString()}`, { scroll: false });
+  }, [indexPage, selectedMonth, keyword, router]);
 
   useEffect(() => {
     async function fetchOTRequests() {
@@ -184,7 +208,7 @@ export default function OvertimePage() {
                     <td className="px-4 py-2 text-center">
                       <a 
                         className="hover:underline cursor-pointer" 
-                        href={`/manager/requests/overtime/approval?id=${request.id}`}
+                        href={`/manager/requests/overtime/approval?id=${request.id}&page=${indexPage}&month=${selectedMonth}${keyword ? `&search=${encodeURIComponent(keyword)}` : ''}`}
                       >
                         <Info />
                       </a>

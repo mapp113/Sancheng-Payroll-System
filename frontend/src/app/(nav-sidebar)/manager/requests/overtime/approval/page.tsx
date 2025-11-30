@@ -96,10 +96,28 @@ export default function OTApprovalPage() {
     }
   };
 
+  const handleBack = () => {
+    const page = searchParams.get("page") || "0";
+    const month = searchParams.get("month") || "";
+    const search = searchParams.get("search") || "";
+    
+    const params = new URLSearchParams();
+    params.set("page", page);
+    if (month) params.set("month", month);
+    if (search) params.set("search", search);
+    
+    router.push(`/manager/requests/overtime?${params.toString()}`);
+  };
+
   return (
     <div className="flex flex-col items-center justify-between p-4">
       <div className="w-full">
-        <a href="./" className="w-fit h-fit border border-black bg-[#8acefd] text-[#4577a0] hover:bg-[#66befc] py-2 px-4 rounded cursor-pointer" >Back</a>
+        <button 
+          onClick={handleBack}
+          className="w-fit h-fit border border-black bg-[#8acefd] text-[#4577a0] hover:bg-[#66befc] py-2 px-4 rounded cursor-pointer"
+        >
+          Back
+        </button>
       </div>
       
       <OTDetail 

@@ -1,6 +1,6 @@
 "use client";
 
-import {Pencil, Plus, Search, X} from "lucide-react";
+import {Search, X} from "lucide-react";
 import {ChangeEvent, useEffect, useMemo, useState} from "react";
 import {useRouter} from "next/navigation";
 
@@ -133,6 +133,8 @@ export default function UserManagement() {
     const [selectedProfile, setSelectedProfile] = useState<EmployeeProfile>(emptyProfile);
     const [profileLoading, setProfileLoading] = useState(false);
     const [profileError, setProfileError] = useState<string | null>(null);
+    const [contractUploadError, setContractUploadError] = useState<string | null>(null);
+    const [uploadingContract, setUploadingContract] = useState(false);
 
     // ⭐ NEW: State to track current user info
     const [currentUserRole, setCurrentUserRole] = useState<string>("");
@@ -310,6 +312,59 @@ export default function UserManagement() {
         }
     };
 
+    const handleContractUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+            setContractUploadError("Vui lòng chọn tệp PDF");
+            event.target.value = "";
+            return;
+        }
+
+        if (!selectedEmployeeCode) {
+            setContractUploadError("Chưa có mã nhân viên để tải hợp đồng");
+            event.target.value = "";
+            return;
+        }
+
+        setUploadingContract(true);
+        setContractUploadError(null);
+
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const res = await fetch(
+                `${API_BASE}/api/v1/hr/users/${selectedEmployeeCode}/contract/upload`,
+                {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
+                    },
+                    body: formData,
+                }
+            );
+
+            if (!res.ok) {
+                throw new Error("Tải lên hợp đồng thất bại");
+            }
+
+            const json = await res.json();
+            const uploadedPath = json.data as string | undefined;
+
+            if (uploadedPath) {
+                setSelectedProfile((prev) => ({...prev, contractUrl: uploadedPath}));
+            }
+        } catch (error) {
+            console.error(error);
+            setContractUploadError("Tải lên hợp đồng thất bại");
+        } finally {
+            setUploadingContract(false);
+            event.target.value = "";
+        }
+    };
+
     // ⭐ NEW: Check if current user is HR viewing their own profile
     const isEditingOwnProfile = useMemo(() => {
         if (!currentUserRole || !currentUserEmployeeCode || !selectedEmployeeCode) {
@@ -325,14 +380,14 @@ export default function UserManagement() {
         <div className="flex h-full flex-col gap-4 p-4 text-[#1F2A44]">
             <header className="flex flex-col gap-2 rounded-2xl bg-white p-6 shadow-sm">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <h1 className="text-2xl font-semibold">Employee Management</h1>
+                    <h1 className="text-2xl font-semibold">Quản Lý Nhân Viên</h1>
                 </div>
             </header>
 
             <div className="flex flex-1 flex-col gap-4 xl:flex-row xl:overflow-hidden">
                 <section className="flex-1 overflow-hidden rounded-2xl bg-white p-4 shadow-sm">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <h2 className="text-lg font-semibold">List User</h2>
+                        <h2 className="text-lg font-semibold">Danh Sách</h2>
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                             <label className="relative flex items-center">
                                 <Search className="absolute left-3 h-4 w-4 text-[#94A3B8]"/>
@@ -353,7 +408,7 @@ export default function UserManagement() {
                                 <option value="HR">HR</option>
                                 <option value="Manager">Manager</option>
                                 <option value="Employee">Employee</option>
-                                <option value="Accountant">Accountant</option>
+
                             </select>
                         </div>
                     </div>
@@ -362,13 +417,13 @@ export default function UserManagement() {
                         <table className="min-w-full divide-y divide-[#E2E8F0] text-sm">
                             <thead className="bg-[#F8FAFC] text-left">
                             <tr>
-                                <th className="px-4 py-3 font-medium">UserID</th>
-                                <th className="px-4 py-3 font-medium">EmployeeCode</th>
-                                <th className="px-4 py-3 font-medium">Name</th>
-                                <th className="px-4 py-3 font-medium">Position</th>
-                                <th className="px-4 py-3 font-medium">Status</th>
-                                <th className="px-1 py-3 font-medium">Phone</th>
-                                <th className="px-4 py-3 font-medium text-right">Edit</th>
+                                <th className="px-4 py-3 font-medium">ID</th>
+                                <th className="px-4 py-3 font-medium">Mã Nhân Viên</th>
+                                <th className="px-4 py-3 font-medium">Tên</th>
+                                <th className="px-4 py-3 font-medium">Trức Vụ</th>
+                                <th className="px-4 py-3 font-medium">Trạng Thái</th>
+                                <th className="px-1 py-3 font-medium">Điện Thoại</th>
+                                <th className="px-4 py-3 font-medium text-right">Thông Tin Lương</th>
                             </tr>
                             </thead>
 
@@ -432,9 +487,9 @@ export default function UserManagement() {
                                                         )}`,
                                                     );
                                                 }}
-                                                className="p-2 rounded-full hover:bg-slate-100 text-[#4AB4DE]"
+                                                className="rounded-full border border-[#4AB4DE] px-4 py-1 text-xs font-medium text-[#4AB4DE] hover:bg-[#E0F2FE]"
                                             >
-                                                <Pencil className="h-4 w-4"/>
+                                                Xem
                                             </button>
                                         </td>
                                     </tr>
@@ -607,13 +662,32 @@ export default function UserManagement() {
                             </label>
 
                             <label className="flex flex-col gap-1 text-sm">
-                                Tải lên hợp đồng
-                                <input
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
-                                    value={selectedProfile.contractUrl}
-                                    onChange={handleProfileChange("contractUrl")}
-                                    disabled={profileLoading || isEditingOwnProfile}
-                                />
+                                Tải lên hợp đồng (PDF)
+                                <div className="flex flex-col gap-2">
+                                    <input
+                                        type="file"
+                                        accept="application/pdf"
+                                        className="rounded-lg border border-[#E2E8F0] px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-500"
+                                        onChange={handleContractUpload}
+                                        disabled={profileLoading || uploadingContract || isEditingOwnProfile}
+                                    />
+                                    {selectedProfile.contractUrl && (
+                                        <a
+                                            href={selectedProfile.contractUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-sm text-[#4AB4DE] hover:underline"
+                                        >
+                                            Xem hợp đồng hiện tại
+                                        </a>
+                                    )}
+                                    {contractUploadError && (
+                                        <p className="text-sm text-red-600">{contractUploadError}</p>
+                                    )}
+                                    {uploadingContract && (
+                                        <p className="text-sm text-slate-500">Đang tải lên...</p>
+                                    )}
+                                </div>
                             </label>
                         </div>
 

@@ -2,6 +2,7 @@ package com.g98.sangchengpayrollmanager.repository;
 
 import com.g98.sangchengpayrollmanager.model.dto.payroll.response.PaySummaryResponse;
 import com.g98.sangchengpayrollmanager.model.entity.PaySummary;
+import com.g98.sangchengpayrollmanager.util.PayrollRecord;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,8 +24,7 @@ public interface PaySummaryRepository extends JpaRepository<PaySummary,Integer> 
                 si.user.fullName,
                 p.name,
                 ps.netSalary,
-                ps.status,
-                ps.payslipUrl
+                ps.status
             )
             FROM PaySummary ps
             JOIN SalaryInformation si ON ps.salaryInformation.id = si.id
@@ -71,4 +71,26 @@ public interface PaySummaryRepository extends JpaRepository<PaySummary,Integer> 
     """)
     Optional<PaySummary> findWithComponentsByEmployeeAndMonth(@Param("employeeCode") String employeeCode,
                                                               @Param("month") LocalDate month);
+
+    @Query("""
+        SELECT new com.g98.sangchengpayrollmanager.util.PayrollRecord(
+            u.fullName,
+            null,
+            ps.netSalary,
+            ei.bankNumber
+        )
+        FROM PaySummary ps
+        JOIN ps.user u
+        JOIN EmployeeInformation ei ON ei.user = u
+        WHERE FUNCTION('YEAR', ps.date)  = FUNCTION('YEAR', :month)
+          AND FUNCTION('MONTH', ps.date) = FUNCTION('MONTH', :month)
+    """)
+    List<PayrollRecord> findPayrollRecordsByMonth(@Param("month") LocalDate month);
+
+    List<PaySummary> findByUserEmployeeCodeAndDateBetweenAndStatus(
+            String employeeCode,
+            LocalDate start,
+            LocalDate end,
+            String status
+    );
 }

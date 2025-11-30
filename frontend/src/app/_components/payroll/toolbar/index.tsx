@@ -3,12 +3,56 @@ import { DataContext, ParamsContext } from "../payroll-context";
 import { CloudUpload, SearchIcon } from "lucide-react";
 import FilterButton from "./filter-button";
 import { PayrollQuery } from "../query";
+import { useNotification } from "../../common/pop-box/notification/notification-context";
 
 export default function PayrollToolbar() {
   const params = useContext(ParamsContext);
   const payrollData = useContext(DataContext)!;
-  const exportButtonHandler = () => {
-    alert("Export");
+  const { addNotification } = useNotification();
+  const exportButtonHandler = async () => {
+    if (!params?.payrollParams.date) {
+      addNotification("error", "Lỗi", "Vui lòng chọn tháng để xuất dữ liệu", 3000);
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/payroll-export?month=${params.payrollParams.date}-01`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${sessionStorage.getItem("scpm.auth.token")}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Xuất file thất bại');
+      }
+
+      // Lấy filename từ header
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = 'payroll.xlsx';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Tải file xuống
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      addNotification("ok", "Thành công", "Xuất file Excel thành công", 3000);
+    } catch (error) {
+      console.error('Lỗi khi xuất file:', error);
+      addNotification("error", "Lỗi", "Có lỗi xảy ra khi xuất file Excel", 3000);
+    }
   }
 
   const searchHandler = async (e: FormEvent<HTMLInputElement>) => {
@@ -72,7 +116,7 @@ export default function PayrollToolbar() {
           onClick={exportButtonHandler}
         >
           <CloudUpload className="inline" />
-          Xuất
+          Xuất sang Excel
         </button>
       </div>
     </div>

@@ -9,12 +9,14 @@ import com.g98.sangchengpayrollmanager.model.dto.payroll.PayComponentResponse;
 import com.g98.sangchengpayrollmanager.model.dto.payroll.PayComponentTypeResponse;
 import com.g98.sangchengpayrollmanager.model.dto.payroll.SalaryInformationCreateRequest;
 import com.g98.sangchengpayrollmanager.model.dto.payroll.SalaryInformationResponse;
+import com.g98.sangchengpayrollmanager.model.dto.payroll.request.PayComponentEndDateUpdateRequest;
 import com.g98.sangchengpayrollmanager.service.AdminService;
 import com.g98.sangchengpayrollmanager.service.EmployeeService;
 import com.g98.sangchengpayrollmanager.service.PayrollInfoService;
 import com.g98.sangchengpayrollmanager.service.impl.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -92,6 +94,20 @@ public class HrController {
                 .build();
     }
 
+    @PostMapping("/users/{employeeCode}/contract/upload")
+    public ApiResponse<String> uploadContract(
+            @PathVariable String employeeCode,
+            @RequestParam("file") MultipartFile file
+    ) {
+        String path = employeeService.uploadContractPdf(employeeCode, file);
+        return ApiResponse.<String>builder()
+                .status(200)
+                .message("Tải lên hợp đồng thành công")
+                .data(path)
+                .build();
+    }
+
+
     @PostMapping("/users/{employeeCode}/pay-components")
     public ApiResponse<PayComponentResponse> addPayComponent(
             @PathVariable String employeeCode,
@@ -135,16 +151,21 @@ public class HrController {
                 .build();
     }
 
-    @DeleteMapping("/users/{employeeCode}/pay-components/{payComponentId}")
-    public ApiResponse<String> deletePayComponent(
+    @PutMapping("/users/{employeeCode}/pay-components/{payComponentId}")
+    public ApiResponse<PayComponentResponse> updatePayComponentEndDate(
             @PathVariable String employeeCode,
-            @PathVariable Integer payComponentId
+            @PathVariable Integer payComponentId,
+            @RequestBody PayComponentEndDateUpdateRequest request
     ) {
-        payrollInfoService.deletePayComponent(employeeCode, payComponentId);
-        return ApiResponse.<String>builder()
+        PayComponentResponse updatedPayComponent = payrollInfoService.updatePayComponentEndDate(
+                employeeCode,
+                payComponentId,
+                request
+        );
+        return ApiResponse.<PayComponentResponse>builder()
                 .status(200)
-                .message("Xoá phụ cấp thành công")
-                .data("Deleted")
+                .message("Cập nhật ngày kết thúc phụ cấp thành công")
+                .data(updatedPayComponent)
                 .build();
     }
 

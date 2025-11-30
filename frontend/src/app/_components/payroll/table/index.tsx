@@ -101,7 +101,7 @@ export default function PayrollTable() {
                                 </button>
                             </td>
                             <td className="py-3 px-4 text-gray-500">
-                                <a href={`/payroll-detail?employeeCode=${record.employeeCode}&month=${payrollParams.payrollParams.date}`} className="cursor-pointer"><Info size={18} /></a>
+                                <a href={`/payroll-detail?employeeCode=${record.employeeCode}&month=${payrollParams.payrollParams.date}&page=${payrollParams.payrollParams.page}${payrollParams.payrollParams.keyword ? `&search=${encodeURIComponent(payrollParams.payrollParams.keyword)}` : ''}${payrollParams.payrollParams.sortBy ? `&sortBy=${encodeURIComponent(payrollParams.payrollParams.sortBy)}` : ''}`} className="cursor-pointer"><Info size={18} /></a>
                             </td>
                         </tr>
                     ))}

@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class InsuranceService {
      * @param insuranceBase  lương tính bảo hiểm = baseSalary + insuredBaseExtra
      * @return Result gồm tổng bảo hiểm, chi tiết từng loại, và phần công ty chịu
      */
-    public Result calculateInsurance(int insuranceBase) {
+    public Result calculateInsurance(int insuranceBase, LocalDate payrollDate) {
 
         // tránh lỗi
         if (insuranceBase <= 0) {
@@ -39,8 +40,8 @@ public class InsuranceService {
                     .build();
         }
 
-        // Lấy danh sách BH
-        List<InsurancePolicy> policies = insuranceRepository.findAll();
+        // Lấy các policy đang có hiệu lực tại payrollDate
+        List<InsurancePolicy> policies = insuranceRepository.findActivePolicies(payrollDate);
         List<PaySummaryComponentItem> components = new ArrayList<>();
 
         long totalEmployeeShare = 0L;
