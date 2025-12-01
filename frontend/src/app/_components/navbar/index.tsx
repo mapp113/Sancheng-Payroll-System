@@ -71,6 +71,7 @@ export default function Navbar() {
     const [dashboardTitle, setDashboardTitle] = useState("Dashboard");
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [hasNewNotification, setHasNewNotification] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const notificationRef = useRef<HTMLDivElement>(null);
 
@@ -141,6 +142,7 @@ export default function Navbar() {
         }
         setDashboardTitle(getDashboardTitle());
         fetchUnreadCount();
+        checkForNewNotifications();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -167,6 +169,52 @@ export default function Navbar() {
         } catch (error) {
             console.error("Failed to fetch unread count:", error);
         }
+    };
+
+    // Check for new notifications by comparing with last viewed time
+    const checkForNewNotifications = async () => {
+        try {
+            const userStr = window.sessionStorage.getItem("scpm.auth.user");
+            if (!userStr) return;
+
+            const parsed: UserData = JSON.parse(userStr);
+            const token = parsed?.token;
+            if (!token) return;
+
+            const response = await fetch("http://localhost:8080/api/notifications", {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (response.ok) {
+                const notifications = await response.json();
+                if (notifications && notifications.length > 0) {
+                    // Lấy thời gian của thông báo mới nhất
+                    const latestNotificationTime = new Date(notifications[0].createdAt).getTime();
+                    
+                    // Lấy thời gian xem lần cuối từ localStorage
+                    const lastViewedTime = localStorage.getItem("scpm.notifications.lastViewed");
+                    
+                    if (!lastViewedTime || latestNotificationTime > parseInt(lastViewedTime)) {
+                        setHasNewNotification(true);
+                    } else {
+                        setHasNewNotification(false);
+                    }
+                } else {
+                    setHasNewNotification(false);
+                }
+            }
+        } catch (error) {
+            console.error("Failed to check for new notifications:", error);
+        }
+    };
+
+    // Mark notifications as viewed
+    const markNotificationsAsViewed = () => {
+        const currentTime = new Date().getTime();
+        localStorage.setItem("scpm.notifications.lastViewed", currentTime.toString());
+        setHasNewNotification(false);
     };
 
     // Đóng menu khi click bên ngoài
@@ -233,22 +281,30 @@ export default function Navbar() {
                 <div className="relative" ref={notificationRef}>
                     <button
                         id="notification"
-                        className="flex items-center gap-1 hover:opacity-80 transition-opacity relative cursor-pointer"
+                        className="flex items-center gap-1 hover:opacity-80 transition-opacity cursor-pointer"
                         onClick={() => {
-                            setIsNotificationOpen(!isNotificationOpen);
-                            if (!isNotificationOpen) {
+                            const wasOpen = isNotificationOpen;
+                            setIsNotificationOpen(!wasOpen);
+                            if (!wasOpen) {
                                 fetchUnreadCount();
+                                checkForNewNotifications();
+                                markNotificationsAsViewed();
                             }
                         }}
                         aria-label="Notifications"
                     >
-                        <Bell/>
-                        {unreadCount > 0 && (
-                            <span
-                                className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
-                                {unreadCount > 9 ? "9+" : unreadCount}
-                            </span>
-                        )}
+                        <div className="relative">
+                            <Bell/>
+                            {unreadCount > 0 && (
+                                <span
+                                    className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
+                                    {unreadCount > 9 ? "9+" : unreadCount}
+                                </span>
+                            )}
+                            {hasNewNotification && unreadCount === 0 && (
+                                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                            )}
+                        </div>
                         <ChevronDown/>
                     </button>
                     {isNotificationOpen && (
