@@ -2,7 +2,7 @@
 
 import type {ReactNode, ChangeEvent} from "react";
 import {useEffect, useState} from "react";
-import Link from "next/link";
+import {useRouter} from "next/navigation";
 
 import {
     CalendarClock,
@@ -13,6 +13,7 @@ import {
     Shield,
     UserRound,
     FileDown,
+    Eye, Download,
 } from "lucide-react";
 
 type EmployeeProfile = {
@@ -106,12 +107,15 @@ function parseNumber(value: string) {
 }
 
 export default function DetailEmployeePage() {
+    const router = useRouter();
+
     const [employee, setEmployee] = useState<EmployeeProfile>(emptyProfile);
     const [isEditing, setIsEditing] = useState(false);
     const [role, setRole] = useState<string>("EMPLOYEE");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [isDownloading, setIsDownloading] = useState(false);
     const [token, setToken] = useState<string>("");
 
     // --- VALIDATION STATE ---
@@ -193,7 +197,8 @@ export default function DetailEmployeePage() {
             };
 
     const canEditField = (field: keyof EmployeeProfile) =>
-        field !== "position" && (role === "HR" || EMPLOYEE_EDITABLE_FIELDS.has(field));
+        field !== "position" &&
+        (role === "HR" || EMPLOYEE_EDITABLE_FIELDS.has(field));
 
     // --- VALIDATE PROFILE ---
     const validateProfile = () => {
@@ -255,6 +260,39 @@ export default function DetailEmployeePage() {
         return Object.keys(errors).length === 0;
     };
 
+    function buildContractUrl(rawUrl: string | undefined) {
+        if (!rawUrl) return "";
+
+        // Nếu BE trả về link FE (ví dụ http://localhost:3000/xxx hoặc cùng origin với FE)
+        // thì chuyển origin sang API_BASE_URL (ví dụ http://localhost:8080)
+        try {
+            const apiBase = new URL(API_BASE_URL);
+            const currentOrigin = typeof window !== "undefined" ? window.location.origin : "";
+
+            // TH1: url bắt đầu bằng origin của FE (http://localhost:3000)
+            if (currentOrigin && rawUrl.startsWith(currentOrigin)) {
+                return apiBase.origin + rawUrl.slice(currentOrigin.length);
+            }
+
+            // TH2: url bắt đầu bằng http://localhost:3000 (hard-code dev)
+            const devOrigin = "http://localhost:3000";
+            if (rawUrl.startsWith(devOrigin)) {
+                return apiBase.origin + rawUrl.slice(devOrigin.length);
+            }
+
+            // TH3: url là path tương đối: /files/xxx.pdf
+            if (rawUrl.startsWith("/")) {
+                return apiBase.origin + rawUrl;
+            }
+
+            // Còn lại: giữ nguyên
+            return rawUrl;
+        } catch {
+            return rawUrl ?? "";
+        }
+    }
+
+
     const handleSave = async () => {
         // chạy validate trước
         if (!validateProfile()) {
@@ -268,28 +306,32 @@ export default function DetailEmployeePage() {
         }
 
         try {
-            const payload = role === "HR"
-                ? {
-                    fullName: employee.name || undefined,
-                    personalEmail: employee.personalEmail || undefined,
-                    dob: employee.dob || undefined,
-                    contractType: employee.contractType || undefined,
-                    phone: employee.phone || undefined,
-                    taxCode: employee.taxCode || undefined,
-                    status: employee.status || undefined,
-                    address: employee.address || undefined,
-                    joinDate: employee.joinDate || undefined,
-                    visaExpiry: employee.visaExpiry || undefined,
-                    contractUrl: employee.contractUrl || undefined,
-                }
-                : {
-                    personalEmail: employee.personalEmail || undefined,
-                    phone: employee.phone || undefined,
-                    address: employee.address || undefined,
-                };
+            const payload =
+                role === "HR"
+                    ? {
+                        fullName: employee.name || undefined,
+                        personalEmail: employee.personalEmail || undefined,
+                        dob: employee.dob || undefined,
+                        contractType: employee.contractType || undefined,
+                        phone: employee.phone || undefined,
+                        taxCode: employee.taxCode || undefined,
+                        status: employee.status || undefined,
+                        address: employee.address || undefined,
+                        joinDate: employee.joinDate || undefined,
+                        visaExpiry: employee.visaExpiry || undefined,
+                        contractUrl: employee.contractUrl || undefined,
+                    }
+                    : {
+                        personalEmail:
+                            employee.personalEmail || undefined,
+                        phone: employee.phone || undefined,
+                        address: employee.address || undefined,
+                    };
 
             const sanitizedPayload = Object.fromEntries(
-                Object.entries(payload).filter(([, value]) => value !== undefined),
+                Object.entries(payload).filter(
+                    ([, value]) => value !== undefined,
+                ),
             );
 
             const response = await fetch(`${API_BASE_URL}/api/profile`, {
@@ -318,6 +360,45 @@ export default function DetailEmployeePage() {
         }
     };
 
+    // ⭐ THÊM: Function download PDF
+    const handleDownloadContract = async () => {
+        if (!employee.contractUrl || !token) return;
+
+        setIsDownloading(true);
+        try {
+            const baseUrl = buildContractUrl(employee.contractUrl);
+            const downloadUrl = baseUrl.replace("/view", "/download");
+
+            const response = await fetch(downloadUrl, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error("Không thể tải xuống hợp đồng");
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `contract-${employee.id}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            setSuccessMessage("Tải xuống hợp đồng thành công");
+        } catch (err) {
+            console.error(err);
+            setError("Không thể tải xuống hợp đồng");
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
+
     const handlePasswordInput =
         (field: keyof typeof passwordForm) =>
             (e: ChangeEvent<HTMLInputElement>) => {
@@ -327,7 +408,11 @@ export default function DetailEmployeePage() {
     const handlePasswordSave = () => {
         setPasswordError(null);
 
-        if (!passwordForm.oldPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+        if (
+            !passwordForm.oldPassword ||
+            !passwordForm.newPassword ||
+            !passwordForm.confirmPassword
+        ) {
             setPasswordError("Vui lòng nhập đầy đủ thông tin mật khẩu");
             return;
         }
@@ -361,11 +446,16 @@ export default function DetailEmployeePage() {
             .then(async (response) => {
                 const payload = await response.json().catch(() => null);
                 if (!response.ok) {
-                    const message = (payload as { message?: string } | null)?.message ?? "Đổi mật khẩu thất bại";
+                    const message =
+                        (payload as { message?: string } | null)?.message ??
+                        "Đổi mật khẩu thất bại";
                     throw new Error(message);
                 }
 
-                setSuccessMessage((payload as { message?: string } | null)?.message ?? "Đổi mật khẩu thành công");
+                setSuccessMessage(
+                    (payload as { message?: string } | null)?.message ??
+                    "Đổi mật khẩu thành công",
+                );
                 setIsChangingPassword(false);
                 setPasswordForm({
                     oldPassword: "",
@@ -375,7 +465,11 @@ export default function DetailEmployeePage() {
             })
             .catch((err) => {
                 console.error(err);
-                setPasswordError(err instanceof Error ? err.message : "Đổi mật khẩu thất bại");
+                setPasswordError(
+                    err instanceof Error
+                        ? err.message
+                        : "Đổi mật khẩu thất bại",
+                );
                 setSuccessMessage(null);
             });
     };
@@ -385,13 +479,13 @@ export default function DetailEmployeePage() {
             <div className="mx-auto flex max-w-6xl flex-col gap-6">
                 {/* Header */}
                 <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <Link
-                        href="/employee"
+                    <button
+                        onClick={() => router.back()}
                         className="flex items-center gap-3 text-sm font-semibold text-[#4AB4DE]"
                     >
                         <span className="h-5 w-5">⬅</span>
                         Back
-                    </Link>
+                    </button>
 
                     <button
                         type="button"
@@ -445,112 +539,164 @@ export default function DetailEmployeePage() {
                         <div className="grid gap-4 md:grid-cols-2">
                             <InfoField
                                 label="Mã Nhân Viên"
-                                icon={<IdCard className="h-4 w-4 text-[#4AB4DE]"/>}
+                                icon={
+                                    <IdCard className="h-4 w-4 text-[#4AB4DE]"/>
+                                }
                             >
                                 {employee.id || "—"}
                             </InfoField>
 
                             <InfoField
                                 label="Họ và tên"
-                                icon={<UserRound className="h-4 w-4 text-[#4AB4DE]"/>}
+                                icon={
+                                    <UserRound className="h-4 w-4 text-[#4AB4DE]"/>
+                                }
                             >
                                 {employee.name || "—"}
                             </InfoField>
 
                             <InfoField
                                 label="Chức vụ"
-                                icon={<Shield className="h-4 w-4 text-[#4AB4DE]"/>}
+                                icon={
+                                    <Shield className="h-4 w-4 text-[#4AB4DE]"/>
+                                }
                             >
                                 {employee.position || "—"}
                             </InfoField>
 
                             <InfoField
                                 label="Ngày Bắt Đầu"
-                                icon={<CalendarClock className="h-4 w-4 text-[#4AB4DE]"/>}
+                                icon={
+                                    <CalendarClock className="h-4 w-4 text-[#4AB4DE]"/>
+                                }
                             >
                                 {formatDateDisplay(employee.joinDate) || "—"}
                             </InfoField>
 
                             <InfoField
                                 label="E-Mail"
-                                icon={<Mail className="h-4 w-4 text-[#4AB4DE]"/>}
+                                icon={
+                                    <Mail className="h-4 w-4 text-[#4AB4DE]"/>
+                                }
                             >
                                 {employee.personalEmail || "—"}
                             </InfoField>
 
                             <InfoField
                                 label="Thời hạn kết thúc"
-                                icon={<CalendarClock className="h-4 w-4 text-[#4AB4DE]"/>}
+                                icon={
+                                    <CalendarClock className="h-4 w-4 text-[#4AB4DE]"/>
+                                }
                             >
-                                {formatDateDisplay(employee.visaExpiry) || "—"}
+                                {formatDateDisplay(employee.visaExpiry) ||
+                                    "—"}
                             </InfoField>
 
                             <InfoField
                                 label="Ngày Sinh"
-                                icon={<CalendarClock className="h-4 w-4 text-[#4AB4DE]"/>}
+                                icon={
+                                    <CalendarClock className="h-4 w-4 text-[#4AB4DE]"/>
+                                }
                             >
                                 {formatDateDisplay(employee.dob) || "—"}
                             </InfoField>
 
                             <InfoField
                                 label="Loại hợp đồng"
-                                icon={<Shield className="h-4 w-4 text-[#4AB4DE]"/>}
+                                icon={
+                                    <Shield className="h-4 w-4 text-[#4AB4DE]"/>
+                                }
                             >
                                 {employee.contractType || "—"}
                             </InfoField>
 
-
                             <InfoField
                                 label="Điện thoại"
-                                icon={<Phone className="h-4 w-4 text-[#4AB4DE]"/>}
+                                icon={
+                                    <Phone className="h-4 w-4 text-[#4AB4DE]"/>
+                                }
                             >
                                 {employee.phone || "—"}
                             </InfoField>
 
                             <InfoField
                                 label="Tình trạng"
-                                icon={<Shield className="h-4 w-4 text-[#4AB4DE]"/>}
+                                icon={
+                                    <Shield className="h-4 w-4 text-[#4AB4DE]"/>
+                                }
                             >
                                 {employee.status || "—"}
                             </InfoField>
 
                             <InfoField
                                 label="CCCD"
-                                icon={<IdCard className="h-4 w-4 text-[#4AB4DE]"/>}
+                                icon={
+                                    <IdCard className="h-4 w-4 text-[#4AB4DE]"/>
+                                }
                             >
                                 {employee.citizenId || "—"}
                             </InfoField>
 
                             <InfoField
                                 label="Mã Số Thuế"
-                                icon={<IdCard className="h-4 w-4 text-[#4AB4DE]"/>}
+                                icon={
+                                    <IdCard className="h-4 w-4 text-[#4AB4DE]"/>
+                                }
                             >
                                 {employee.taxCode || "—"}
                             </InfoField>
 
                             <InfoField
                                 label="Địa chỉ"
-                                icon={<Home className="h-4 w-4 text-[#4AB4DE]"/>}
+                                icon={
+                                    <Home className="h-4 w-4 text-[#4AB4DE]"/>
+                                }
                             >
                                 {employee.address || "—"}
                             </InfoField>
 
-
                             {/* Nút tải hợp đồng */}
-                            <InfoField
-                                label="Hợp đồng lao động"
-                                icon={<FileDown className="h-4 w-4 text-[#4AB4DE]"/>}
-                            >
-                                <button
-                                    type="button"
-                                    onClick={() => window.open(employee.contractUrl, "_blank")}
-                                    className="inline-flex items-center gap-2 rounded-full bg-[#4AB4DE] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#3ba1ca] hover:shadow-md"
-                                    disabled={!employee.contractUrl}
+                            <div className="md:col-span-2">
+                                <InfoField
+                                    label="Hợp đồng lao động"
+                                    icon={
+                                        <FileDown className="h-4 w-4 text-[#4AB4DE]"/>
+                                    }
                                 >
-                                    ⬇️ Tải hợp đồng
-                                </button>
-                            </InfoField>
+                                    {employee.contractUrl ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {/* Nút Xem */}
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const viewUrl = buildContractUrl(employee.contractUrl);
+                                                    if (viewUrl) {
+                                                        window.open(viewUrl, "_blank");
+                                                    }
+                                                }}
+                                                className="inline-flex items-center gap-2 rounded-full bg-[#4AB4DE] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#3ba1ca] hover:shadow-md"
+                                            >
+                                                <Eye className="h-4 w-4"/>
+                                                Xem hợp đồng
+                                            </button>
 
+
+                                            {/* Nút Download */}
+                                            <button
+                                                type="button"
+                                                onClick={handleDownloadContract}
+                                                disabled={isDownloading}
+                                                className="inline-flex items-center gap-2 rounded-full border border-[#4AB4DE] bg-white px-4 py-2 text-sm font-semibold text-[#4AB4DE] shadow-sm transition hover:bg-[#E0F2FE] disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                <Download className="h-4 w-4"/>
+                                                {isDownloading ? "Đang tải..." : "Tải xuống"}
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <span className="text-slate-500">Chưa có hợp đồng</span>
+                                    )}
+                                </InfoField>
+                            </div>
                         </div>
                     </section>
                 </div>
@@ -645,8 +791,6 @@ export default function DetailEmployeePage() {
                                 disabled={!canEditField("joinDate")}
                                 error={validationErrors.joinDate}
                             />
-
-
                         </div>
 
                         <div className="mt-6 flex justify-end gap-3">
@@ -697,7 +841,9 @@ export default function DetailEmployeePage() {
                             <EditField
                                 label="Xác nhận mật khẩu mới"
                                 value={passwordForm.confirmPassword}
-                                onChange={handlePasswordInput("confirmPassword")}
+                                onChange={handlePasswordInput(
+                                    "confirmPassword",
+                                )}
                                 type="password"
                             />
                         </div>
@@ -755,7 +901,14 @@ interface EditFieldProps {
     error?: string;
 }
 
-function EditField({label, value, onChange, type = "text", disabled, error}: EditFieldProps) {
+function EditField({
+                       label,
+                       value,
+                       onChange,
+                       type = "text",
+                       disabled,
+                       error,
+                   }: EditFieldProps) {
     return (
         <label className="space-y-1 text-sm">
             <span className="font-semibold text-[#1F2A44]">{label}</span>

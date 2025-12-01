@@ -1,5 +1,7 @@
 package com.g98.sangchengpayrollmanager.controller;
 
+import com.g98.sangchengpayrollmanager.model.dto.ContractPdfDTO;
+import com.g98.sangchengpayrollmanager.model.dto.ContractUploadResponse;
 import com.g98.sangchengpayrollmanager.model.dto.UserDTO;
 import com.g98.sangchengpayrollmanager.model.dto.api.response.ApiResponse;
 import com.g98.sangchengpayrollmanager.model.dto.employee.EmployeeProfileResponse;
@@ -15,6 +17,11 @@ import com.g98.sangchengpayrollmanager.service.EmployeeService;
 import com.g98.sangchengpayrollmanager.service.PayrollInfoService;
 import com.g98.sangchengpayrollmanager.service.impl.JwtService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -49,6 +56,19 @@ public class HrController {
         String token = extractToken(authorization);
         String role = jwtService.extractRole(token);
         return employeeService.updateProfile(employeeCode, role, request);
+    }
+
+    @GetMapping("/users/{employeeCode}/pay-components/month")
+    public ApiResponse<List<PayComponentResponse>> getPayComponentsByMonth(
+            @PathVariable String employeeCode,
+            @RequestParam Integer year,
+            @RequestParam Integer month) {
+        List<PayComponentResponse> payComponents = payrollInfoService.getPayComponentsByMonth(employeeCode, year, month);
+        return ApiResponse.<List<PayComponentResponse>>builder()
+                .status(200)
+                .message("Lấy danh sách pay component theo tháng thành công")
+                .data(payComponents)
+                .build();
     }
 
     @GetMapping("/users/{employeeCode}/salary-information")
@@ -94,17 +114,52 @@ public class HrController {
                 .build();
     }
 
-    @PostMapping("/users/{employeeCode}/contract/upload")
-    public ApiResponse<String> uploadContract(
+    @PostMapping(value = "/users/{employeeCode}/contract/upload",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<ContractUploadResponse> uploadContract(
             @PathVariable String employeeCode,
-            @RequestParam("file") MultipartFile file
+            @RequestPart("file") MultipartFile file
     ) {
-        String path = employeeService.uploadContractPdf(employeeCode, file);
-        return ApiResponse.<String>builder()
+        ContractUploadResponse response = employeeService.uploadContractPdf(employeeCode, file);
+        return ApiResponse.<ContractUploadResponse>builder()
                 .status(200)
                 .message("Tải lên hợp đồng thành công")
-                .data(path)
+                .data(response)
                 .build();
+    }
+
+    // API download contract - để frontend có thể xem PDF
+    @GetMapping("/users/{employeeCode}/contract/download")
+    public ResponseEntity<Resource> downloadContract(
+            @PathVariable String employeeCode
+    ) {
+        ContractPdfDTO contractPdf = employeeService.getContractPdf(employeeCode);
+
+        ByteArrayResource resource = new ByteArrayResource(contractPdf.getContent());
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .contentLength(contractPdf.getSize())
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + contractPdf.getFileName() + "\"")
+                .body(resource);
+    }
+
+    // API view contract - để xem trực tiếp trên browser
+    @GetMapping("/users/{employeeCode}/contract/view")
+    public ResponseEntity<Resource> viewContract(
+            @PathVariable String employeeCode
+    ) {
+        ContractPdfDTO contractPdf = employeeService.getContractPdf(employeeCode);
+
+        ByteArrayResource resource = new ByteArrayResource(contractPdf.getContent());
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .contentLength(contractPdf.getSize())
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=\"" + contractPdf.getFileName() + "\"")
+                .body(resource);
     }
 
 

@@ -1,5 +1,7 @@
 package com.g98.sangchengpayrollmanager.service;
 
+import com.g98.sangchengpayrollmanager.model.dto.ContractPdfDTO;
+import com.g98.sangchengpayrollmanager.model.dto.ContractUploadResponse;
 import com.g98.sangchengpayrollmanager.model.dto.employee.EmployeeInfoResponse;
 import com.g98.sangchengpayrollmanager.model.dto.employee.EmployeeProfileResponse;
 import com.g98.sangchengpayrollmanager.model.dto.employee.EmployeeProfileUpdateRequest;
@@ -22,6 +24,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 @Service
@@ -130,9 +134,11 @@ public class EmployeeService {
             if (request.getVisaExpiry() != null) {
                 contract.setEndDate(request.getVisaExpiry());
             }
-            if (request.getContractUrl() != null) {
-                contract.setPdfPath(request.getContractUrl());
-            }
+
+            // ⭐ XÓA HOẶC COMMENT DÒNG NÀY - không cập nhật pdfPath từ request nữa
+            // if (request.getContractUrl() != null) {
+            //     contract.setPdfPath(request.getContractUrl());
+            // }
         } else {
             updateStatus(user, null, request.getStatus());
         }
@@ -146,8 +152,21 @@ public class EmployeeService {
 
         String status = contract != null ? contract.getStatus() : resolveUserStatus(user.getStatus());
         String contractType = contract != null ? contract.getType() : null;
-        String contractUrl = contract != null ? contract.getPdfPath() : null;
-        int dependentsNo = info.getDependentsNo();
+
+        // ⭐ SỬA LOGIC LẤY CONTRACT URL
+        String contractUrl = null;
+        if (contract != null) {
+            // Ưu tiên: nếu có PDF trong database → tạo view URL
+            if (contract.hasPdfInDatabase()) {
+                contractUrl = "/api/v1/hr/users/" + user.getEmployeeCode() + "/contract/view";
+            }
+            // Fallback: nếu chỉ có path (data cũ) → giữ nguyên path
+            else if (contract.getPdfPath() != null && !contract.getPdfPath().isEmpty()) {
+                contractUrl = contract.getPdfPath();
+            }
+        }
+
+        int dependentsNo = info.getDependentsNo() != null ? info.getDependentsNo() : 0;
 
         return new EmployeeProfileResponse(
                 user.getEmployeeCode(),
@@ -217,7 +236,8 @@ public class EmployeeService {
     }
 
     @Transactional
-    public String uploadContractPdf(String employeeCode, MultipartFile file) {
+    public ContractUploadResponse uploadContractPdf(String employeeCode, MultipartFile file) {
+        // 1. Validation
         if (file == null || file.isEmpty()) {
             throw new RuntimeException("File hợp đồng không được để trống");
         }
@@ -226,25 +246,83 @@ public class EmployeeService {
             throw new RuntimeException("Chỉ chấp nhận tập tin PDF");
         }
 
-        Contract contract = contractRepository.findFirstByUserEmployeeCodeOrderByStartDateDesc(employeeCode)
+        // Kiểm tra kích thước file (max 10MB)
+        long maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.getSize() > maxSize) {
+            throw new RuntimeException("File quá lớn. Kích thước tối đa là 10MB");
+        }
+
+        // 2. Tìm hợp đồng
+        Contract contract = contractRepository
+                .findFirstByUserEmployeeCodeOrderByStartDateDesc(employeeCode)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng của nhân viên"));
 
         try {
-            String originalName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
-            String fileName = employeeCode + "-" + System.currentTimeMillis() + "-" + originalName;
-            Path uploadDir = Paths.get("uploads", "contracts");
-            Files.createDirectories(uploadDir);
+            // 3. Lưu file vào database
+            String originalFileName = StringUtils.cleanPath(
+                    Objects.requireNonNull(file.getOriginalFilename())
+            );
 
-            Path destination = uploadDir.resolve(fileName);
-            file.transferTo(destination);
+            LocalDateTime now = LocalDateTime.now();
 
-            contract.setPdfPath(destination.toString());
+            contract.setPdfFileName(originalFileName);
+            contract.setPdfContent(file.getBytes());
+            contract.setPdfSize(file.getSize());
+            contract.setPdfUploadedAt(now);
+
             contractRepository.save(contract);
 
-            return destination.toString();
+            // 4. Tạo response với URLs để frontend sử dụng
+            String downloadUrl = "/api/v1/hr/users/" + employeeCode + "/contract/download";
+            String viewUrl = "/api/v1/hr/users/" + employeeCode + "/contract/view";
+
+            return ContractUploadResponse.builder()
+                    .fileName(originalFileName)
+                    .fileSize(file.getSize())
+                    .uploadedAt(now.format(DateTimeFormatter.ISO_DATE_TIME))
+                    .message("File đã được lưu thành công vào database")
+                    .downloadUrl(downloadUrl)
+                    .viewUrl(viewUrl)
+                    .build();
+
         } catch (IOException e) {
-            throw new RuntimeException("Tải lên file hợp đồng thất bại", e);
+            throw new RuntimeException("Tải lên file hợp đồng thất bại: " + e.getMessage(), e);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public ContractPdfDTO getContractPdf(String employeeCode) {
+        Contract contract = contractRepository
+                .findFirstByUserEmployeeCodeOrderByStartDateDesc(employeeCode)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng"));
+
+        // Ưu tiên lấy từ database
+        if (contract.getPdfContent() != null && contract.getPdfContent().length > 0) {
+            return ContractPdfDTO.builder()
+                    .fileName(contract.getPdfFileName())
+                    .content(contract.getPdfContent())
+                    .size(contract.getPdfSize())
+                    .source("database")
+                    .build();
+        }
+
+        // Fallback: lấy từ file (nếu có data cũ trong pdf_path)
+        if (contract.getPdfPath() != null && !contract.getPdfPath().isEmpty()) {
+            try {
+                Path filePath = Paths.get(contract.getPdfPath());
+                byte[] content = Files.readAllBytes(filePath);
+                return ContractPdfDTO.builder()
+                        .fileName(filePath.getFileName().toString())
+                        .content(content)
+                        .size((long) content.length)
+                        .source("file")
+                        .build();
+            } catch (IOException e) {
+                throw new RuntimeException("Không đọc được file: " + e.getMessage());
+            }
+        }
+
+        throw new RuntimeException("Hợp đồng chưa có file PDF");
     }
 }
 

@@ -2,7 +2,9 @@ package com.g98.sangchengpayrollmanager.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "contract")
@@ -42,7 +44,26 @@ public class Contract {
     @JoinColumn(name = "employee_code")
     private User user;
 
-    @Column(name = "pdf_path", length = 100)
-    private String pdfPath;
+    @Column(name = "pdf_path", length = 500)
+    private String pdfPath; // Giữ lại cho backward compatibility
+
+    @Column(name = "pdf_file_name")
+    private String pdfFileName;
+
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    @Column(name = "pdf_content", columnDefinition = "LONGBLOB")
+    private byte[] pdfContent;
+
+    @Column(name = "pdf_size")
+    private Long pdfSize;
+
+    @Column(name = "pdf_uploaded_at")
+    private LocalDateTime pdfUploadedAt;
+
+    // Helper method
+    public boolean hasPdfInDatabase() {
+        return pdfContent != null && pdfContent.length > 0;
+    }
 }
 
