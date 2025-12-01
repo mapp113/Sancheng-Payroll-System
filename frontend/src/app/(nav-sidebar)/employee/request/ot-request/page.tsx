@@ -6,6 +6,7 @@ import { useState } from "react";
 import { NotificationProvider, useNotification } from "@/app/_components/common/pop-box/notification/notification-context";
 import BottomRightNotification from "@/app/_components/common/pop-box/notification/bottom-right";
 import ConfirmPopBox from "@/app/_components/common/pop-box/confirm";
+import SubmitConfirmation from "@/app/_components/common/pop-box/submit-confirmation";
 
 interface OTRequestData {
   otDate: string;
@@ -27,6 +28,7 @@ function OTRequestsPageContent() {
   });
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState("");
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
   // Tự động xác định loại OT dựa trên ngày được chọn
   const getOTTypeFromDate = (dateString: string): string => {
@@ -64,6 +66,7 @@ function OTRequestsPageContent() {
   const handleConfirmOverLimit = async () => {
     // Gọi lại API với confirmOverLimit = true
     setShowConfirmPopup(false);
+    setShowSubmitConfirm(false);
     
     const formDataToSend = new FormData();
     formDataToSend.append("otDate", dateSlashToHyphen(formData.otDate));
@@ -102,7 +105,7 @@ function OTRequestsPageContent() {
     setShowConfirmPopup(false);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmitClick = () => {
     // Validate required fields
     if (!formData.otDate || formData.fromTime === undefined || formData.toTime === undefined) {
       addNotification("error", "Lỗi", "Vui lòng điền đầy đủ thông tin ngày làm thêm và thời gian", 4000);
@@ -120,6 +123,13 @@ function OTRequestsPageContent() {
       addNotification("error", "Lỗi", "OT ngày thường phải bắt đầu từ 17 giờ trở đi", 4000);
       return;
     }
+
+    // Hiện confirmation dialog
+    setShowSubmitConfirm(true);
+  };
+
+  const handleSubmit = async () => {
+    setShowSubmitConfirm(false);
 
     // Tạo FormData cho multipart/form-data
     const formDataToSend = new FormData();
@@ -149,17 +159,20 @@ function OTRequestsPageContent() {
       });
 
       if (response.ok) {
-        // Kiểm tra xem có response JSON không
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const jsonResponse = await response.json();
+        const responseText = await response.text();
+        
+        // Kiểm tra nếu response chứa "OT_OVER_LIMIT" và "CONFIRM"
+        if (responseText.includes("OT_OVER_LIMIT") && responseText.includes("CONFIRM")) {
+          // Trích xuất message từ response text
+          const messageMatch = responseText.match(/message=([^}]+)/);
+          const message = messageMatch 
+            ? messageMatch[1].trim() 
+            : "Vượt quá giới hạn OT. Bạn có chắc chắn muốn tiếp tục gửi đơn OT này không?";
           
-          // Kiểm tra nếu có code OT_OVER_LIMIT và type CONFIRM
-          if (jsonResponse.code === "OT_OVER_LIMIT" && jsonResponse.type === "CONFIRM") {
-            setConfirmMessage(jsonResponse.message || "Vượt quá giới hạn OT. Bạn có muốn tiếp tục?");
-            setShowConfirmPopup(true);
-            return;
-          }
+          setConfirmMessage(message);
+          setShowSubmitConfirm(false);
+          setShowConfirmPopup(true);
+          return;
         }
         
         addNotification("ok", "Thành công", "Gửi yêu cầu OT thành công", 3000);
@@ -269,7 +282,7 @@ function OTRequestsPageContent() {
           <div className="ml-auto">
             <button
               className="border border-black rounded px-4 py-2 bg-green-500 text-white hover:bg-green-600 cursor-pointer"
-              onClick={handleSubmit}
+              onClick={handleSubmitClick}
             >
               Gửi yêu cầu
             </button>
@@ -277,6 +290,14 @@ function OTRequestsPageContent() {
         </div>
       </div>
       
+      <SubmitConfirmation
+        isOpen={showSubmitConfirm}
+        onClose={() => setShowSubmitConfirm(false)}
+        onConfirm={handleSubmit}
+        message="Bạn có chắc chắn muốn gửi yêu cầu OT này không?"
+        details={`Ngày: ${formData.otDate ? new Date(formData.otDate).toLocaleDateString('vi-VN') : ''} | Thời gian: ${formData.fromTime}:00 - ${formData.toTime}:00 (${formData.toTime - formData.fromTime} giờ)`}
+      />
+
       {showConfirmPopup && (
         <ConfirmPopBox
           title="Xác nhận vượt giới hạn OT"

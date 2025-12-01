@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { File } from "lucide-react";
 import type { LeaveDetailResponse } from "@/app/_components/employee/request/types";
+import RequestConfirmation from "@/app/_components/common/pop-box/request-confirmation";
+import SuccessNotification from "@/app/_components/common/pop-box/notification/success";
+import ErrorNotification from "@/app/_components/common/pop-box/notification/error";
 
 export default function ManagerApprovalLeavesPage() {
   const searchParams = useSearchParams();
@@ -13,6 +16,10 @@ export default function ManagerApprovalLeavesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState("");
+  const [showApproveConfirm, setShowApproveConfirm] = useState(false);
+  const [showRejectConfirm, setShowRejectConfirm] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleBack = () => {
     const page = searchParams.get("page") || "0";
@@ -45,10 +52,10 @@ export default function ManagerApprovalLeavesPage() {
         throw new Error("Không thể phê duyệt");
       }
 
-      alert("Đã phê duyệt thành công");
-      handleBack();
+      setSuccessMessage("Đã phê duyệt yêu cầu nghỉ phép thành công!");
+      setTimeout(() => handleBack(), 2000);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Đã xảy ra lỗi");
+      setErrorMessage(err instanceof Error ? err.message : "Đã xảy ra lỗi");
     }
   };
 
@@ -70,10 +77,10 @@ export default function ManagerApprovalLeavesPage() {
         throw new Error("Không thể từ chối");
       }
 
-      alert("Đã từ chối yêu cầu");
-      handleBack();
+      setSuccessMessage("Đã từ chối yêu cầu nghỉ phép!");
+      setTimeout(() => handleBack(), 2000);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Đã xảy ra lỗi");
+      setErrorMessage(err instanceof Error ? err.message : "Đã xảy ra lỗi");
     }
   };
 
@@ -244,13 +251,13 @@ export default function ManagerApprovalLeavesPage() {
               return (
               <div className="flex gap-4 justify-center mt-6">
                 <button 
-                onClick={handleApprove}
+                onClick={() => setShowApproveConfirm(true)}
                 className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded cursor-pointer"
                 >
                 Đồng ý
                 </button>
                 <button 
-                onClick={handleReject}
+                onClick={() => setShowRejectConfirm(true)}
                 className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded cursor-pointer"
                 >
                 Từ chối
@@ -260,6 +267,34 @@ export default function ManagerApprovalLeavesPage() {
             })()}
         </div>
       </div>
+
+      {/* Confirmation Dialogs */}
+      <RequestConfirmation
+        isOpen={showApproveConfirm}
+        onClose={() => setShowApproveConfirm(false)}
+        onConfirm={handleApprove}
+        type="approve"
+        requestType="leave"
+      />
+      <RequestConfirmation
+        isOpen={showRejectConfirm}
+        onClose={() => setShowRejectConfirm(false)}
+        onConfirm={handleReject}
+        type="reject"
+        requestType="leave"
+      />
+
+      {/* Notifications */}
+      <SuccessNotification
+        isOpen={!!successMessage}
+        onClose={() => setSuccessMessage("")}
+        message={successMessage}
+      />
+      <ErrorNotification
+        isOpen={!!errorMessage}
+        onClose={() => setErrorMessage("")}
+        message={errorMessage}
+      />
     </div>
   );
 }
