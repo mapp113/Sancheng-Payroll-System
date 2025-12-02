@@ -66,7 +66,7 @@ export default function PayrollPage() {
         try {
             const token = localStorage.getItem("access_token");
             const response = await fetch(
-                `${API_BASE_URL}/api/paysummaries/download?employeeCode=${employeeCode}&month=${month}-01`,
+                `${API_BASE_URL}/api/paysummaries/download?employeeCode=${employeeCode}&month=${month}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -151,31 +151,39 @@ export default function PayrollPage() {
                             </tr>
                             </thead>
                             <tbody>
-                            {payrollData.map((row, index) => (
-                                <tr
-                                    key={index}
-                                    className="bg-white hover:bg-gray-50 transition-colors"
-                                >
-                                    <td className="border border-gray-300 px-4 py-3">{row.month}</td>
-                                    <td className="border border-gray-300 px-4 py-3 text-right">{row.dayStandard}</td>
-                                    <td className="border border-gray-300 px-4 py-3 text-right">{row.daysPayable}</td>
-                                    <td className="border border-gray-300 px-4 py-3 text-right font-semibold">
-                                        {formatCurrency(row.netSalary)}
-                                    </td>
-                                    <td className="border border-gray-300 px-4 py-3 text-center">
-                                        {row.hasPayslip ? (
-                                            <button
-                                                className="rounded border border-blue-800 bg-[#89cdfe] text-blue-800 p-3 hover:bg-[#6bb8e8] transition-colors"
-                                                onClick={() => handleDownload(row.employeeCode, row.month)}
-                                            >
-                                                Tải về
-                                            </button>
-                                        ) : (
-                                            <span className="text-gray-400">-</span>
-                                        )}
+                            {payrollData.filter(row => row.netSalary).length > 0 ? (
+                                payrollData.filter(row => row.netSalary).map((row, index) => (
+                                    <tr
+                                        key={index}
+                                        className="bg-white hover:bg-gray-50 transition-colors"
+                                    >
+                                        <td className="border border-gray-300 px-4 py-3">{row.month}</td>
+                                        <td className="border border-gray-300 px-4 py-3 text-right">{row.dayStandard}</td>
+                                        <td className="border border-gray-300 px-4 py-3 text-right">{row.daysPayable}</td>
+                                        <td className="border border-gray-300 px-4 py-3 text-right font-semibold">
+                                            {formatCurrency(row.netSalary)}
+                                        </td>
+                                        <td className="border border-gray-300 px-4 py-3 text-center">
+                                            {(row.hasPayslip) ? (
+                                                <button
+                                                    className="rounded border border-blue-800 bg-[#89cdfe] text-blue-800 p-3 hover:bg-[#6bb8e8] transition-colors"
+                                                    onClick={() => handleDownload(row.employeeCode, row.month)}
+                                                >
+                                                    Tải về
+                                                </button>
+                                            ) : (
+                                                <span className="text-gray-400">-</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={5} className="border border-gray-300 px-4 py-10 text-center text-gray-600">
+                                        Không có dữ liệu lương cho năm {year}
                                     </td>
                                 </tr>
-                            ))}
+                            )}
                             </tbody>
                         </table>
                     </div>
