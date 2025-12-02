@@ -15,9 +15,10 @@ import java.util.List;
 @SpringBootTest
 class PayrollServiceImplTest {
 
+
+//    private PayrollServiceImpl payrollService;
     @Autowired
-    private PayrollServiceImpl payrollService;
-    //private AttMonthSummaryService attMonthSummaryService;
+    private AttMonthSummaryService attMonthSummaryService;
 
 
     //private AttDailySummaryService attDailySummaryService;
@@ -25,6 +26,10 @@ class PayrollServiceImplTest {
 
     @Test
     void testCalculateMonthlySalary() {
+        attMonthSummaryService.createMonthSummary("EMP007", LocalDate.of(2023, 8, 31));
+        attMonthSummaryService.createMonthSummary("EMP006", LocalDate.of(2023, 8, 31));
+        attMonthSummaryService.createMonthSummary("EMP005", LocalDate.of(2023, 8, 31));
+        attMonthSummaryService.createMonthSummary("EMP004", LocalDate.of(2023, 8, 31));
 //        payrollService.calculateMonthlySalary(
 //                "EMP010",
 //                LocalDate.of(2023, 8, 1),   // tháng tính lương để lấy monthSumary
@@ -33,12 +38,12 @@ class PayrollServiceImplTest {
 //        );
 //        attMonthSummaryService.createMonthSummary("EMP010", LocalDate.of(2023, 8, 31));
 
-                payrollService.calculateMonthlySalary(
-                "EMP001",
-                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
-                LocalDate.of(2025, 9, 1), //monthStart
-                LocalDate.of(2025, 9, 30)  //monthEnd
-        );
+//                payrollService.calculateMonthlySalary(
+//                "EMP001",
+//                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
+//                LocalDate.of(2025, 9, 1), //monthStart
+//                LocalDate.of(2025, 9, 30)  //monthEnd
+//        );
 //        payrollService.calculateMonthlySalary(
 //                "EMP002",
 //                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
