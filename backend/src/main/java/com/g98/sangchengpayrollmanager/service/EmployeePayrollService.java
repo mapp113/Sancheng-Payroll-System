@@ -66,6 +66,7 @@ public class EmployeePayrollService {
             boolean hasPayslip = ps != null && ps.getPayslipUrl() != null;
 
             EmployeePayrollRowDto row = new EmployeePayrollRowDto(
+                    employeeCode,
                     ym.atDay(1),                         // month (FE tự format "MM-YYYY")
                     ams.getDayStandard().doubleValue(),  // Công chuẩn
                     ams.getDaysPayable().doubleValue(),  // Công thực tế

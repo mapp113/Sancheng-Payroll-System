@@ -11,6 +11,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 public class EmployeePayrollRowDto {
+    private String employeeCode;
     private LocalDate month;      // luôn là ngày đầu tháng, FE format thành "11-2025"
     private double dayStandard;   // Công chuẩn
     private double daysPayable;   // Công thực tế
