@@ -35,7 +35,7 @@ export default function LeavesPage() {
           size: leaveMaxItems.toString(),
         });
 
-        const requestsResponse = await fetch(`http://localhost:8080/api/leave/myrequest?${queryParams}`, {
+        const requestsResponse = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/leave/myrequest?${queryParams}`, {
           headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -50,7 +50,7 @@ export default function LeavesPage() {
 
         // Fetch remaining leave (only once)
         if (leaveIndexPage === 0) {
-          const remainingResponse = await fetch("http://localhost:8080/api/leave/remainingLeave", {
+          const remainingResponse = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/leave/remainingLeave`, {
             headers: {
               "Authorization": `Bearer ${token}`,
               "Content-Type": "application/json",
@@ -84,7 +84,7 @@ export default function LeavesPage() {
           size: otMaxItems.toString(),
         });
 
-        const otRequestsResponse = await fetch(`http://localhost:8080/api/overtime/myrequest?${queryParams}`, {
+        const otRequestsResponse = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/overtime/myrequest?${queryParams}`, {
           headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -99,7 +99,7 @@ export default function LeavesPage() {
 
         // Fetch remaining OT (only once)
         if (otIndexPage === 0) {
-          const remainingOTResponse = await fetch("http://localhost:8080/api/overtime/remaining-month", {
+          const remainingOTResponse = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/overtime/remaining-month`, {
             headers: {
               "Authorization": `Bearer ${token}`,
               "Content-Type": "application/json",

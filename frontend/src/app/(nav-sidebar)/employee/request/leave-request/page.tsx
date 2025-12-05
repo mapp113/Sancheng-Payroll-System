@@ -13,6 +13,12 @@ interface LeaveTypeOption {
   name: string;
 }
 
+interface LeaveBalanceResponse {
+  remainingDays: number;
+  usedDays: number;
+  totalDays: number;
+}
+
 function LeavesPageContent() {
   const { addNotification } = useNotification();
   const [formData, setFormData] = useState<RequestLeaveData>({
@@ -27,12 +33,14 @@ function LeavesPageContent() {
   });
   const [leaveTypeOptions, setLeaveTypeOptions] = useState<LeaveTypeOption[]>([]);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [leaveBalance, setLeaveBalance] = useState<LeaveBalanceResponse | null>(null);
+  const [loadingBalance, setLoadingBalance] = useState(true);
 
   useEffect(() => {
     async function fetchLeaveTypeOptions() {
       try {
         const token = sessionStorage.getItem("scpm.auth.token");
-        const response = await fetch("http://localhost:8080/api/leave/options", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/leave/options`, {
           headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -49,6 +57,43 @@ function LeavesPageContent() {
     }
 
     fetchLeaveTypeOptions();
+  }, []);
+
+  // Fetch leave balance when component mounts
+  useEffect(() => {
+    async function fetchLeaveBalance() {
+      setLoadingBalance(true);
+      try {
+        const token = sessionStorage.getItem("scpm.auth.token");
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/api/leave/remainingLeave`,
+          {
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (response.ok) {
+          const remainingDays = await response.json();
+          setLeaveBalance({
+            remainingDays: remainingDays,
+            usedDays: 0,
+            totalDays: 0,
+          });
+        } else {
+          setLeaveBalance(null);
+        }
+      } catch (error) {
+        console.error("Error fetching leave balance:", error);
+        setLeaveBalance(null);
+      } finally {
+        setLoadingBalance(false);
+      }
+    }
+
+    fetchLeaveBalance();
   }, []);
 
   const handleSelectChange = (id: string, value: string | boolean) => {
@@ -112,7 +157,7 @@ function LeavesPageContent() {
     // Gửi request
     try {
       const token = sessionStorage.getItem("scpm.auth.token");
-      const response = await fetch("http://localhost:8080/api/leave/submit", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/leave/submit`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -141,20 +186,31 @@ function LeavesPageContent() {
       <LeavesToolBar />
       <div className="w-3xl px-5 pt-2 pb-5 mt-10 bg-[#d5f1f5] rounded-2xl">
         <h1 className="text-lg text-center">Yêu cầu xin nghỉ</h1>
-        <div className="my-2">
-          <label htmlFor="leave-type">Loại nghỉ:</label>
-          <select
-            id="leave-type"
-            className="ml-5 border border-black rounded px-2 py-1"
-            value={formData.leaveType}
-            onChange={(e) => handleSelectChange("leaveType", e.target.value)}
-          >
-            {leaveTypeOptions.map((option) => (
-              <option key={option.code} value={option.code}>
-                {option.name}
-              </option>
-            ))}
-          </select>
+        <div className="my-2 flex items-center gap-4">
+          <div className="flex items-center">
+            <label htmlFor="leave-type">Loại nghỉ:</label>
+            <select
+              id="leave-type"
+              className="ml-5 border border-black rounded px-2 py-1"
+              value={formData.leaveType}
+              onChange={(e) => handleSelectChange("leaveType", e.target.value)}
+            >
+              {leaveTypeOptions.map((option) => (
+                <option key={option.code} value={option.code}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <span className="text-sm font-semibold text-black">
+            {loadingBalance ? (
+              "Đang tải..."
+            ) : leaveBalance ? (
+              `Còn lại: ${leaveBalance.remainingDays} ngày`
+            ) : (
+              "Còn lại: -- ngày"
+            )}
+          </span>
         </div>
         <div className="my-2">
           Ngày bắt đầu:

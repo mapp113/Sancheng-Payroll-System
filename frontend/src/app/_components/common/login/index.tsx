@@ -12,7 +12,7 @@ export type AuthenticatedUser = {
 }
 
 const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080"
+    process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080"
 
 type LoginSuccessResponse = {
     message?: string

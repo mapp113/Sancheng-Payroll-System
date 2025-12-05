@@ -4,7 +4,7 @@ import { useContext, useEffect } from "react";
 import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Info } from "lucide-react";
 import { ParamsContext, DataContext } from "./context";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 
 export function ManagerLeavesTable() {
   const { params, setParams } = useContext(ParamsContext)!;

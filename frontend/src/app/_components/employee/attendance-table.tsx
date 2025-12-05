@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Clock4, TimerReset } from "lucide-react";
 import type { AttendanceDaily } from "@/app/_components/manager-timesheet-detail/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 
 interface AttendanceTableProps {
   employeeCode: string;

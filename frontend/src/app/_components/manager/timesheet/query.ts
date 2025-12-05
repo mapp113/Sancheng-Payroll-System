@@ -1,5 +1,5 @@
 const USE_SAMPLE_DATA = false;
-const API_URL = "http://localhost:8080/api/attsummary";
+const API_URL = `${process.env.NEXT_PUBLIC_SERVER_URL}/api/attsummary`;
 
 import type {TimesheetParam, TimesheetRecord} from "./type";
 

@@ -67,7 +67,7 @@ export default function PayrollTable() {
                             <td className="py-3 px-4">
                                 <button 
                                     onClick={() => {
-                                        const downloadUrl = `http://localhost:8080/api/paysummaries/download?employeeCode=${record.employeeCode}&month=${payrollParams.payrollParams.date}-01`;
+                                        const downloadUrl = `${process.env.NEXT_PUBLIC_SERVER_URL}/api/paysummaries/download?employeeCode=${record.employeeCode}&month=${payrollParams.payrollParams.date}-01`;
                                         const token = sessionStorage.getItem("scpm.auth.token"); // or however you store your token
                                         fetch(downloadUrl, {
                                             headers: {

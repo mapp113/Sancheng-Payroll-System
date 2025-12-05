@@ -174,7 +174,7 @@ interface CreateDraftResponse {
 export async function createDraftQuery(param: CreateDraftParams): Promise<CreateDraftResponse> {
   try {
     const token = sessionStorage.getItem("scpm.auth.token");
-    const response = await fetch("http://localhost:8080/api/paysummaries/calculate-monthly", {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/paysummaries/calculate-monthly`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,

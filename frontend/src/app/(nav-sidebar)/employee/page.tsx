@@ -11,7 +11,7 @@ import { getUserData } from "@/app/_components/utils/getUserData";
 import AttendanceTable from "@/app/_components/employee/attendance-table";
 import type { EmployeeInfomation, AttendanceSummary } from "@/app/_components/manager-timesheet-detail/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 type JwtPayload = {
     full_name?: string;
     employee_code?: string;
@@ -141,7 +141,7 @@ export default function EmployeesDashboardPage() {
                 date: dateStr,
             }).toString();
 
-            const API_URL = `http://localhost:8080/api/att-records/first-check-in?${params}`;
+            const API_URL = `${process.env.NEXT_PUBLIC_SERVER_URL}/api/att-records/first-check-in?${params}`;
 
             console.log("🔍 Calling API:", API_URL);
 

@@ -18,7 +18,7 @@ type UserItem = {
     roleName?: string;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 
 export default function AdminPage() {
     const [filterRole, setFilterRole] = useState<string>("all");
