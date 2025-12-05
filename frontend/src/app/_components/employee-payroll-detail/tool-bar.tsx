@@ -40,7 +40,7 @@ export default function EmployeePayrollDetailToolbar({
                         className="inline-flex items-center justify-center gap-2 rounded-lg border border-black bg-[#89CDFE] px-5 py-2 text-sm font-semibold uppercase tracking-[0.25em] text-[#1D3E6A] transition hover:bg-[#7ABFEF]"
                     >
                         <ArrowLeft className="h-4 w-4"/>
-                        Back
+                        Quay Lại
                     </button>
 
                     <div className="flex flex-col gap-1 text-left">
@@ -55,7 +55,7 @@ export default function EmployeePayrollDetailToolbar({
                     className="inline-flex items-center justify-center gap-2 self-start rounded-lg border border-black bg-white px-5 py-2 text-sm font-semibold uppercase tracking-[0.25em] text-[#1D3E6A] transition hover:bg-[#F4FBFF]"
                 >
                     <Download className="h-4 w-4"/>
-                    Download
+                    Tải Xuống
                 </button>
             </div>
         </div>

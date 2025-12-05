@@ -18,7 +18,7 @@ type UserItem = {
     roleName?: string;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 
 export default function AdminPage() {
     const [filterRole, setFilterRole] = useState<string>("all");
@@ -352,8 +352,8 @@ function CreateAccountModal({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div className="w-full max-w-lg rounded-2xl bg-white shadow-lg">
+        <div className="fixed inset-0 z-50 flex justify-center items-start bg-black/40 p-4 overflow-y-auto">
+            <div className="w-full max-w-lg rounded-2xl bg-white shadow-lg max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between border-b px-5 py-4">
                     <h2 className="text-lg font-semibold text-[#1F2A44]">Tạo tài khoản</h2>
                     <button
@@ -364,101 +364,111 @@ function CreateAccountModal({
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4">
-                    {/* UserID (máy chấm công) */}
-                    <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">ID</label>
-                        <input
-                            value={userId}
-                            onChange={(e) => setUserId(e.target.value)}
-                            className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
-                            placeholder="VD: 51"
-                        />
+                {/* FORM */}
+                <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
+                    {/* PHẦN NỘI DUNG – CUỘN */}
+                    <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+                        {/* ID */}
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-[#1F2A44]">ID</label>
+                            <input
+                                value={userId}
+                                onChange={(e) => setUserId(e.target.value)}
+                                className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
+                                placeholder="VD: 51"
+                            />
+                        </div>
+
+                        {/* Mã nhân viên */}
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Mã Nhân Viên</label>
+                            <input
+                                value={employeeCode}
+                                onChange={(e) => setEmployeeCode(e.target.value)}
+                                className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
+                                placeholder="VD: SC0001"
+                            />
+                        </div>
+
+                        {/* Tên */}
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Tên</label>
+                            <input
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                required
+                                className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
+                                placeholder="vd: Nguyễn Văn A"
+                            />
+                        </div>
+
+                        {/* Tên đăng nhập */}
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Tên Đăng Nhập</label>
+                            <input
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                required
+                                className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
+                                placeholder="vd: an.nguyen"
+                            />
+                        </div>
+
+                        {/* Mật khẩu */}
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Mật Khẩu</label>
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
+                                placeholder="••••••••"
+                            />
+                        </div>
+
+                        {/* Vị trí */}
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Vị Trí</label>
+                            <select
+                                value={role}
+                                onChange={(e) => setRole(e.target.value as Role)}
+                                className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
+                            >
+                                <option value="HR">HR</option>
+                                <option value="EMPLOYEE">Nhân Viên</option>
+                                <option value="ADMIN">Admin</option>
+                                <option value="MANAGER">Quản Lý</option>
+                            </select>
+                        </div>
+
+                        {/* Email */}
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Email</label>
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
+                                placeholder="name@company.com"
+                            />
+                        </div>
+
+                        {/* Điện thoại */}
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Điện Thoại</label>
+                            <input
+                                type="text"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                                className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
+                                placeholder="vd: 0987654321"
+                            />
+                        </div>
                     </div>
 
-                    {/* EmployeeCode (PK) */}
-                    <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Mã Nhân Viên</label>
-                        <input
-                            value={employeeCode}
-                            onChange={(e) => setEmployeeCode(e.target.value)}
-                            className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
-                            placeholder="VD: SC0001"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Tên</label>
-                        <input
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            required
-                            className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
-                            placeholder="vd: Nguyễn Văn A"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Tên Đăng Nhập</label>
-                        <input
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            required
-                            className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
-                            placeholder="vd: an.nguyen"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Mật Khẩu</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
-                            placeholder="••••••••"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Vị Trí</label>
-                        <select
-                            value={role}
-                            onChange={(e) => setRole(e.target.value as Role)}
-                            className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
-                        >
-                            <option value="HR">HR</option>
-                            <option value="EMPLOYEE">Nhân Viên</option>
-                            <option value="ADMIN">Admin</option>
-                            <option value="MANAGER">Quản Lý</option>
-
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Email</label>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
-                            placeholder="name@company.com"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Điện Thoại</label>
-                        <input
-                            type="text"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
-                            placeholder="vd: 0987654321"
-                        />
-                    </div>
-
-                    <div className="flex justify-end gap-2 pt-2">
+                    {/* FOOTER – LUÔN THẤY TRONG MÀN HÌNH */}
+                    <div className="flex justify-end gap-2 border-t px-5 py-3 shrink-0">
                         <button
                             type="button"
                             onClick={onClose}
@@ -477,7 +487,11 @@ function CreateAccountModal({
             </div>
         </div>
     );
+
+
 }
+
+/* ------------ EDIT MODAL ------------ */
 
 /* ------------ EDIT MODAL ------------ */
 function EditUserModal({
@@ -503,9 +517,17 @@ function EditUserModal({
     );
     const [phone, setPhone] = useState(user.phoneNo ?? "");
     const [email, setEmail] = useState(user.email ?? "");
+    const [error, setError] = useState<string>(""); // lỗi validate
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!name.trim()) {
+            setError("Tên không được để trống");
+            return;
+        }
+
+        setError(""); // clear lỗi nếu đã nhập
         onSubmit({
             id: user.employeeCode, // dùng PK để update ở FE cha
             name,
@@ -517,8 +539,8 @@ function EditUserModal({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div className="w-full max-w-lg rounded-2xl bg-white shadow-lg">
+        <div className="fixed inset-0 z-50 flex justify-center items-start bg-black/40 p-4 overflow-y-auto">
+            <div className="w-full max-w-lg rounded-2xl bg-white shadow-lg max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between border-b px-5 py-4">
                     <h2 className="text-lg font-semibold text-[#1F2A44]">Chỉnh sửa tài khoản</h2>
                     <button
@@ -554,14 +576,24 @@ function EditUserModal({
                         <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Tên</label>
                         <input
                             value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
+                            onChange={(e) => {
+                                setName(e.target.value);
+                                if (error) setError("");
+                            }}
+                            className={`w-full rounded-xl border px-3 py-2 text-sm outline-none focus:border-[#4AB4DE] ${
+                                error ? "border-red-500" : "border-[#E2E8F0]"
+                            }`}
                             placeholder="Nhập tên nhân viên"
                         />
+                        {error && (
+                            <p className="mt-1 text-xs text-red-500">
+                                {error}
+                            </p>
+                        )}
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Vị Trí</label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Vai Trò</label>
                         <select
                             value={role}
                             onChange={(e) => setRole(e.target.value)}

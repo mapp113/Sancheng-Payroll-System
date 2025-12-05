@@ -205,7 +205,7 @@ export default function ForgotPasswordPage() {
                         className="w-full rounded-md py-2 text-base font-semibold text-white shadow-[0_6px_0_rgba(46,115,201,0.35)] hover:opacity-95 disabled:opacity-60"
                         style={{background: AUTH_PRIMARY_GRADIENT}}
                     >
-                        {verifying ? "Checking..." : "Verify code"}
+                        {verifying ? "Checking..." : "Xác Nhận"}
                     </button>
                 </form>
 

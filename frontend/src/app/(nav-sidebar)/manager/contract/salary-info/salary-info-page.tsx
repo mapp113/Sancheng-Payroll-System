@@ -2,7 +2,7 @@
 import {ArrowLeft, Pencil} from "lucide-react";
 import {useCallback, useEffect, useMemo, useState} from "react";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 
 type PayrollRow = {
     id: number;

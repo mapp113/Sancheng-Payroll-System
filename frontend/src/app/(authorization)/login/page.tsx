@@ -27,7 +27,7 @@ export default function LoginPage() {
         setErrorMessage(null)
 
         try {
-            // fake delay để UI có cảm giác loading, giữ lại nếu bạn thích
+            // fake delay để UI có cảm giác loading
             await new Promise((resolve) => setTimeout(resolve, 600))
 
             // gọi API login
@@ -45,13 +45,19 @@ export default function LoginPage() {
                 )
             }
 
-            // luôn đi /payroll
+            // redirect
             const destination = resolveRedirectPath(authenticatedUser)
             router.push(destination)
-        } catch (error) {
-            if (error instanceof Error) {
+        } catch (error: any) {
+            console.log('Login error:', error)
+
+            // Kiểm tra theo message
+            if (error?.message?.includes('Tài khoản đang tạm khóa') || error?.status === 423) {
+                setErrorMessage("Tài khoản của bạn đã bị tạm khóa. Vui lòng liên hệ quản trị viên.")
+            } else {
                 setErrorMessage("Đăng nhập thất bại. Vui lòng thử lại.")
             }
+        
         } finally {
             setLoading(false)
         }

@@ -26,7 +26,7 @@ const normalizeUser = (user: RawUserItem): UserItem => ({
     userId: user.userId ?? user.userID ?? "",
 });
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 
 type EmployeeProfile = {
     id: string;
@@ -227,7 +227,16 @@ export default function UserManagement() {
                 throw new Error("Không thể tải thông tin hồ sơ");
             }
             const data = (await res.json()) as EmployeeProfileResponse;
-            setSelectedProfile(mapProfileResponse(data));
+
+            // ⭐ MAP VÀ THÊM API_BASE VÀO CONTRACT URL
+            const mappedProfile = mapProfileResponse(data);
+
+            // Nếu contractUrl là relative path, thêm API_BASE
+            if (mappedProfile.contractUrl && !mappedProfile.contractUrl.startsWith('http')) {
+                mappedProfile.contractUrl = `${API_BASE}${mappedProfile.contractUrl}`;
+            }
+
+            setSelectedProfile(mappedProfile);
         } catch (error) {
             console.error(error);
             setProfileError("Không thể tải thông tin hồ sơ");
@@ -347,18 +356,27 @@ export default function UserManagement() {
             );
 
             if (!res.ok) {
-                throw new Error("Tải lên hợp đồng thất bại");
+                const errorData = await res.json();
+                throw new Error(errorData.message || "Tải lên hợp đồng thất bại");
             }
 
             const json = await res.json();
-            const uploadedPath = json.data as string | undefined;
 
-            if (uploadedPath) {
-                setSelectedProfile((prev) => ({...prev, contractUrl: uploadedPath}));
+            // ⭐ THÊM API_BASE VÀO URL
+            const viewUrl = json.data?.viewUrl || json.data?.downloadUrl;
+
+            if (viewUrl) {
+                // Tạo URL đầy đủ với API_BASE
+                const fullViewUrl = `${API_BASE}${viewUrl}`;
+                setSelectedProfile((prev) => ({...prev, contractUrl: fullViewUrl}));
+
+                alert(`Tải lên thành công: ${json.data?.fileName || file.name}`);
             }
         } catch (error) {
             console.error(error);
-            setContractUploadError("Tải lên hợp đồng thất bại");
+            setContractUploadError(
+                error instanceof Error ? error.message : "Tải lên hợp đồng thất bại"
+            );
         } finally {
             setUploadingContract(false);
             event.target.value = "";
@@ -404,7 +422,6 @@ export default function UserManagement() {
                                 className="rounded-full border border-[#E2E8F0] px-4 py-2 text-sm focus:border-[#4AB4DE] focus:outline-none"
                             >
                                 <option value="all">All</option>
-                                <option value="Admin">Admin</option>
                                 <option value="HR">HR</option>
                                 <option value="Manager">Manager</option>
                                 <option value="Employee">Employee</option>
@@ -419,8 +436,8 @@ export default function UserManagement() {
                             <tr>
                                 <th className="px-4 py-3 font-medium">ID</th>
                                 <th className="px-4 py-3 font-medium">Mã Nhân Viên</th>
-                                <th className="px-4 py-3 font-medium">Tên</th>
-                                <th className="px-4 py-3 font-medium">Trức Vụ</th>
+                                <th className="px-4 py-3 font-medium">Họ Và Tên</th>
+                                <th className="px-4 py-3 font-medium">Chức Vụ</th>
                                 <th className="px-4 py-3 font-medium">Trạng Thái</th>
                                 <th className="px-1 py-3 font-medium">Điện Thoại</th>
                                 <th className="px-4 py-3 font-medium text-right">Thông Tin Lương</th>
@@ -504,7 +521,7 @@ export default function UserManagement() {
             {/* ===== PROFILE MODAL (UPDATED) ===== */}
             {profileModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-                    <div className="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-xl">
+                    <div className="max-w-lg w-full bg-white p-6 shadow-xl rounded-lg max-h-[90vh] overflow-y-auto">
                         <div className="mb-4 flex items-start justify-between">
                             <div>
                                 <h3 className="text-xl font-semibold text-[#1F2A44]">
@@ -671,21 +688,163 @@ export default function UserManagement() {
                                         onChange={handleContractUpload}
                                         disabled={profileLoading || uploadingContract || isEditingOwnProfile}
                                     />
+
+                                    {/* ⭐ THÊM PHẦN XEM HỢP ĐỒNG */}
                                     {selectedProfile.contractUrl && (
-                                        <a
-                                            href={selectedProfile.contractUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-sm text-[#4AB4DE] hover:underline"
-                                        >
-                                            Xem hợp đồng hiện tại
-                                        </a>
+                                        <div
+                                            className="flex flex-col gap-2 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-3">
+                                            <div className="flex items-center gap-2">
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    className="h-5 w-5 text-red-500"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                                                    />
+                                                </svg>
+                                                <span className="font-medium text-[#1F2A44]">
+                Hợp đồng đã tải lên
+            </span>
+                                            </div>
+
+                                            <div className="flex flex-wrap gap-2">
+                                                {/* Nút Xem */}
+                                                <button
+                                                    onClick={() => {
+                                                        // ⭐ XỬ LÝ URL ĐÃ CÓ SẴN API_BASE
+                                                        window.open(selectedProfile.contractUrl, '_blank');
+                                                    }}
+                                                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#4AB4DE] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#3c9ec3]"
+                                                >
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        className="h-4 w-4"
+                                                        fill="none"
+                                                        viewBox="0 0 24 24"
+                                                        stroke="currentColor"
+                                                    >
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            strokeWidth={2}
+                                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                                        />
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            strokeWidth={2}
+                                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                                        />
+                                                    </svg>
+                                                    Xem hợp đồng
+                                                </button>
+
+                                                {/* Nút Download */}
+                                                <button
+                                                    onClick={async () => {
+                                                        try {
+                                                            // ⭐ REPLACE /view THÀNH /download
+                                                            const downloadUrl = selectedProfile.contractUrl.replace('/view', '/download');
+
+                                                            const res = await fetch(downloadUrl, {
+                                                                headers: {
+                                                                    Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
+                                                                },
+                                                            });
+
+                                                            if (!res.ok) {
+                                                                throw new Error("Không thể tải xuống file");
+                                                            }
+
+                                                            const blob = await res.blob();
+                                                            const url = window.URL.createObjectURL(blob);
+                                                            const a = document.createElement('a');
+                                                            a.href = url;
+                                                            a.download = `contract-${selectedEmployeeCode}.pdf`;
+                                                            document.body.appendChild(a);
+                                                            a.click();
+                                                            window.URL.revokeObjectURL(url);
+                                                            document.body.removeChild(a);
+                                                        } catch (error) {
+                                                            console.error("Download failed:", error);
+                                                            alert("Không thể tải xuống file");
+                                                        }
+                                                    }}
+                                                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#4AB4DE] bg-white px-4 py-2 text-sm font-medium text-[#4AB4DE] transition hover:bg-[#E0F2FE]"
+                                                >
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        className="h-4 w-4"
+                                                        fill="none"
+                                                        viewBox="0 0 24 24"
+                                                        stroke="currentColor"
+                                                    >
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            strokeWidth={2}
+                                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                                                        />
+                                                    </svg>
+                                                    Tải xuống
+                                                </button>
+                                            </div>
+                                        </div>
                                     )}
+
                                     {contractUploadError && (
-                                        <p className="text-sm text-red-600">{contractUploadError}</p>
+                                        <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+                                            <div className="flex items-start gap-2">
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    className="h-5 w-5 text-red-500"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                    />
+                                                </svg>
+                                                <p className="text-sm text-red-600">{contractUploadError}</p>
+                                            </div>
+                                        </div>
                                     )}
+
                                     {uploadingContract && (
-                                        <p className="text-sm text-slate-500">Đang tải lên...</p>
+                                        <div
+                                            className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3">
+                                            <svg
+                                                className="h-5 w-5 animate-spin text-[#4AB4DE]"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <circle
+                                                    className="opacity-25"
+                                                    cx="12"
+                                                    cy="12"
+                                                    r="10"
+                                                    stroke="currentColor"
+                                                    strokeWidth="4"
+                                                />
+                                                <path
+                                                    className="opacity-75"
+                                                    fill="currentColor"
+                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                />
+                                            </svg>
+                                            <p className="text-sm text-[#4AB4DE] font-medium">Đang tải lên...</p>
+                                        </div>
                                     )}
                                 </div>
                             </label>

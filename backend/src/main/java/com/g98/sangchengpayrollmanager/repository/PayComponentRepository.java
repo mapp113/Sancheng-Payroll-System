@@ -23,4 +23,15 @@ public interface PayComponentRepository extends JpaRepository<PayComponent, Inte
 
     List<PayComponent> findByUserEmployeeCodeOrderByStartDateDesc(String employeeCode);
 
+    @Query("SELECT pc FROM PayComponent pc " +
+            "WHERE pc.user.employeeCode = :employeeCode " +
+            "AND pc.startDate <= :endOfMonth " +
+            "AND (pc.endDate IS NULL OR pc.endDate >= :startOfMonth) " +
+            "ORDER BY pc.startDate DESC")
+    List<PayComponent> findByUserEmployeeCodeAndMonth(
+            @Param("employeeCode") String employeeCode,
+            @Param("startOfMonth") LocalDate startOfMonth,
+            @Param("endOfMonth") LocalDate endOfMonth
+    );
+
 }

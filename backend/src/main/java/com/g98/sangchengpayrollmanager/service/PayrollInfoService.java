@@ -56,6 +56,18 @@ public class PayrollInfoService {
                 .toList();
     }
 
+    public List<PayComponentResponse> getPayComponentsByMonth(String employeeCode, Integer year, Integer month) {
+        // Tạo ngày đầu và cuối tháng
+        LocalDate startOfMonth = LocalDate.of(year, month, 1);
+        LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
+
+        return payComponentRepository
+                .findByUserEmployeeCodeAndMonth(employeeCode, startOfMonth, endOfMonth)
+                .stream()
+                .map(this::mapPayComponent)
+                .toList();
+    }
+
     public SalaryInformationResponse addSalaryInformation(String employeeCode, SalaryInformationCreateRequest request) {
         User user = userRepository.findByEmployeeCode(employeeCode)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên với mã: " + employeeCode));

@@ -5,7 +5,7 @@ import { X, Search } from "lucide-react";
 import FormPopBoxNotScroll from "@/app/_components/common/pop-box/form";
 import {OvertimeSummaryResponse} from "./types"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 
 interface OvertimeBalancePopupProps {
   onClose: () => void;

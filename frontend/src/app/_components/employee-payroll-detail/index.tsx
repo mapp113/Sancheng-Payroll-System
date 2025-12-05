@@ -26,9 +26,9 @@ export default function EmployeePayrollDetail({detail}: EmployeePayrollDetailPro
     const totalBackPay = detail.backPayItems?.reduce((sum, item) => sum + item.value, 0);
 
     const summaryCards = [
-        {label: "Total Income", value: totalIncome},
-        {label: "Total Deduct", value: totalDeduct},
-        {label: "Net Income", value: netIncome, highlight: true},
+        {label: "Tổng Thu Nhập", value: totalIncome},
+        {label: "Tổng Khấu Trừ", value: totalDeduct},
+        {label: "Thu Nhập Ròng", value: netIncome, highlight: true},
     ];
 
     const headerLines: DetailHeaderLine[] = [
@@ -66,7 +66,7 @@ export default function EmployeePayrollDetail({detail}: EmployeePayrollDetailPro
 
             <div className="grid gap-6 p-6 lg:grid-cols-[1.6fr_1fr]">
                 <div className="space-y-6">
-                    <DetailSectionCard title="General Information" iconSrc="/icons/employee.png">
+                    <DetailSectionCard title="Thông Tin Chung" iconSrc="/icons/employee.png">
                         <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
                             {detail.generalInformation.map((item) => (
                                 <div key={item.label} className="grid gap-1">
@@ -77,34 +77,34 @@ export default function EmployeePayrollDetail({detail}: EmployeePayrollDetailPro
                         </dl>
                     </DetailSectionCard>
 
-                    <DetailSectionCard title="Income" iconSrc="/icons/payroll.png">
+                    <DetailSectionCard title="Thu Nhập" iconSrc="/icons/payroll.png">
                         <PayrollLineItemTable
                             items={detail.incomeItems}
                             footerRows={[
-                                {label: "Total Income", value: totalIncome, emphasis: "highlight"},
-                                {label: "Total Gross", value: totalGross, emphasis: "muted"},
+                                {label: "Tổng Thu Nhập", value: totalIncome, emphasis: "highlight"},
+                                {label: "Tổng Lương Gộp", value: totalGross, emphasis: "muted"},
                             ]}
                         />
                     </DetailSectionCard>
                 </div>
 
                 <div className="space-y-6">
-                    <DetailSectionCard title="Deductions" iconSrc="/icons/report.png">
+                    <DetailSectionCard title="Khấu Trừ" iconSrc="/icons/report.png">
                         <PayrollLineItemTable
                             items={detail.deductionItems}
                             footerRows={[
-                                {label: "Total Deduct", value: totalDeduct, emphasis: "highlight"},
+                                {label: "Tổng Khấu Trừ", value: totalDeduct, emphasis: "highlight"},
                             ]}
                         />
                     </DetailSectionCard>
 
                     {detail.backPayItems?.length ? (
-                        <DetailSectionCard title="Back Pay" iconSrc="/icons/attendance.png">
+                        <DetailSectionCard title="Lương Bổ Sung" iconSrc="/icons/attendance.png">
                             <PayrollLineItemTable
                                 items={detail.backPayItems}
                                 footerRows={
                                     typeof totalBackPay === "number"
-                                        ? [{label: "Total Back Pay", value: totalBackPay, emphasis: "muted"}]
+                                        ? [{label: "Tổng Lương Bổ Sung", value: totalBackPay, emphasis: "muted"}]
                                         : undefined
                                 }
                             />
@@ -150,14 +150,14 @@ function TotalsSummaryCard({
         <div className="rounded-2xl border border-dashed border-[#4AB4DE] bg-[#F4FBFF] p-5 text-[#1D3E6A]">
             <div className="flex items-center justify-between gap-4">
         <span className="text-sm font-semibold uppercase tracking-[0.3em] text-[#56749A]">
-          Total Deduct
+          Tổng Khấu Trừ
         </span>
                 <span className="text-base font-semibold text-[#1D3E6A]">
           {formatCurrency(totalDeduct)}
         </span>
             </div>
             <div className="mt-4 rounded-2xl border border-[#CCE1F0] bg-white p-4 text-center">
-                <span className="text-xs font-semibold uppercase tracking-[0.4em] text-[#56749A]">Net Income</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.4em] text-[#56749A]">Thu Nhập Ròng</span>
                 <div className="mt-2 text-2xl font-semibold text-[#1D3E6A]">
                     {formatCurrency(netIncome)}
                 </div>
