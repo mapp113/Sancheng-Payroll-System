@@ -192,10 +192,10 @@ export default function Navbar() {
                 if (notifications && notifications.length > 0) {
                     // Lấy thời gian của thông báo mới nhất
                     const latestNotificationTime = new Date(notifications[0].createdAt).getTime();
-                    
+
                     // Lấy thời gian xem lần cuối từ localStorage
                     const lastViewedTime = localStorage.getItem("scpm.notifications.lastViewed");
-                    
+
                     if (!lastViewedTime || latestNotificationTime > parseInt(lastViewedTime)) {
                         setHasNewNotification(true);
                     } else {
@@ -318,8 +318,15 @@ export default function Navbar() {
                 </button>
 
 
-                <Link href="/employee/profile"
-                      className="flex items-center gap-2 rounded-full px-2 py-1 transition hover:bg-white/50">
+                <Link
+                    href={
+                        userRole === "MANAGER"
+                            ? "/manager/profile"
+                            : userRole === "HR"
+                                ? "/contract/profile"
+                                : "/employee/profile"
+                    }
+                    className="flex items-center gap-2 rounded-full px-2 py-1 transition hover:bg-white/50">
                     {/*<Avatar className="h-12 w-12">*/}
                     {/*    <AvatarImage src="/logo.jpg" alt="User avatar"/>*/}
                     {/*    <AvatarFallback>Avatar</AvatarFallback>*/}

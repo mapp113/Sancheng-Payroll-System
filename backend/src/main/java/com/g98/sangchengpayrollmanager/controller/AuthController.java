@@ -5,6 +5,7 @@ import com.g98.sangchengpayrollmanager.model.dto.auth.ChangePasswordRequest;
 import com.g98.sangchengpayrollmanager.model.dto.auth.LoginRequest;
 import com.g98.sangchengpayrollmanager.model.dto.auth.LoginResponse;
 import com.g98.sangchengpayrollmanager.model.dto.auth.PasswordResetRequests;
+import com.g98.sangchengpayrollmanager.security.AccountLockedException;
 import com.g98.sangchengpayrollmanager.security.InvalidCredentialsException;
 import com.g98.sangchengpayrollmanager.service.AuthService;
 import com.g98.sangchengpayrollmanager.service.PasswordResetService;
@@ -36,10 +37,10 @@ public class AuthController {
             LoginResponse response = authService.authenticate(loginRequest);
             log.info("Login successful for user: {}", loginRequest.getUsername());
             return ResponseEntity.ok(response);
-        } catch (IllegalStateException exception) {
+        } catch (AccountLockedException exception) {
             log.warn("Login denied for user {}: {}", loginRequest.getUsername(), exception.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.builder()
-                    .status(HttpStatus.UNAUTHORIZED.value())
+            return ResponseEntity.status(HttpStatus.LOCKED).body(ApiResponse.builder()
+                    .status(HttpStatus.LOCKED.value())
                     .message(exception.getMessage())
                     .build());
         } catch (InvalidCredentialsException exception) {

@@ -10,7 +10,8 @@ import { useNotification } from "../../common/pop-box/notification/notification-
 export default function PayrollTable() {
     const payrollParams = useContext(ParamsContext)!;
     const payrollData = useContext(DataContext)!;
-    const { addNotification } = useNotification();;
+    const {addNotification} = useNotification();
+    ;
 
     useEffect(() => {
         PayrollQuery(payrollParams.payrollParams).then((data) => {
@@ -41,25 +42,25 @@ export default function PayrollTable() {
             <h1 className="text-xl font-bold mb-5">Bảng lương nhân viên</h1>
             <table className="w-full border-collapse text-sm text-gray-800">
                 <thead>
-                    <tr className="bg-[#CCE1F0] text-left rounded-t-xl">
-                        <th className="py-3 px-4 font-semibold rounded-tl-xl">ID</th>
-                        <th className="py-3 px-4 font-semibold">Tên</th>
-                        <th className="py-3 px-4 font-semibold">Chức vụ</th>
-                        <th className="py-3 px-4 font-semibold">Lương</th>
-                        <th className="py-3 px-4 font-semibold">Trạng thái</th>
-                        <th className="py-3 px-4 font-semibold">Phiếu lương</th>
-                        <th className="py-3 px-4 rounded-tr-xl"></th>
-                    </tr>
+                <tr className="bg-[#CCE1F0] text-left rounded-t-xl">
+                    <th className="py-3 px-4 font-semibold rounded-tl-xl">Mã Nhân Viên</th>
+                    <th className="py-3 px-4 font-semibold">Họ Và Tên</th>
+                    <th className="py-3 px-4 font-semibold">Chức vụ</th>
+                    <th className="py-3 px-4 font-semibold">Lương</th>
+                    <th className="py-3 px-4 font-semibold">Trạng thái</th>
+                    <th className="py-3 px-4 font-semibold">Phiếu lương</th>
+                    <th className="py-3 px-4 rounded-tr-xl"></th>
+                </tr>
                 </thead>
 
                 <tbody className="divide-y divide-gray-200">
-                    {payrollData.payrollData.map((record) => (
-                        <tr key={record.employeeCode} className="hover:bg-gray-50">
-                            <td className="py-3 px-4">{record.employeeCode}</td>
-                            <td className="py-3 px-4">{record.fullName}</td>
-                            <td className="py-3 px-4">{record.positionName}</td>
-                            <td className="py-3 px-4">${record.netSalary}</td>
-                            <td className="py-3 px-4">
+                {payrollData.payrollData.map((record) => (
+                    <tr key={record.employeeCode} className="hover:bg-gray-50">
+                        <td className="py-3 px-4">{record.employeeCode}</td>
+                        <td className="py-3 px-4">{record.fullName}</td>
+                        <td className="py-3 px-4">{record.positionName}</td>
+                        <td className="py-3 px-4">${record.netSalary}</td>
+                        <td className="py-3 px-4">
                                 <span
                                     className={`py-3 px-4`}
                                 >{record.status}</span>
@@ -94,20 +95,21 @@ export default function PayrollTable() {
                                                 5000
                                             );
                                         });
-                                    }}
-                                    className="bg-cyan-300 hover:bg-cyan-400 text-sm text-gray-800 font-medium py-1 px-3 rounded-md shadow"
-                                >
-                                    Tải về
-                                </button>
-                            </td>
-                            <td className="py-3 px-4 text-gray-500">
-                                <a href={`/payroll-detail?employeeCode=${record.employeeCode}&month=${payrollParams.payrollParams.date}&page=${payrollParams.payrollParams.page}${payrollParams.payrollParams.keyword ? `&search=${encodeURIComponent(payrollParams.payrollParams.keyword)}` : ''}${payrollParams.payrollParams.sortBy ? `&sortBy=${encodeURIComponent(payrollParams.payrollParams.sortBy)}` : ''}`} className="cursor-pointer"><Info size={18} /></a>
-                            </td>
-                        </tr>
-                    ))}
+                                }}
+                                className="bg-cyan-300 hover:bg-cyan-400 text-sm text-gray-800 font-medium py-1 px-3 rounded-md shadow"
+                            >
+                                Tải về
+                            </button>
+                        </td>
+                        <td className="py-3 px-4 text-gray-500">
+                            <a href={`/payroll-detail?employeeCode=${record.employeeCode}&month=${payrollParams.payrollParams.date}&page=${payrollParams.payrollParams.page}${payrollParams.payrollParams.keyword ? `&search=${encodeURIComponent(payrollParams.payrollParams.keyword)}` : ''}${payrollParams.payrollParams.sortBy ? `&sortBy=${encodeURIComponent(payrollParams.payrollParams.sortBy)}` : ''}`}
+                               className="cursor-pointer"><Info size={18}/></a>
+                        </td>
+                    </tr>
+                ))}
                 </tbody>
             </table>
-            <Pagination />
+            <Pagination/>
         </div>
     );
 }

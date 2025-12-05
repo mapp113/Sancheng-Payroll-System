@@ -524,16 +524,16 @@ export default function DetailEmployeePage() {
                             <h2 className="text-lg font-semibold text-[#1F2A44]">
                                 Thông tin nhân viên
                             </h2>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setIsEditing(true);
-                                    setValidationErrors({});
-                                }}
-                                className="inline-flex items-center gap-2 rounded-full bg-[#4AB4DE] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#3ba1ca] hover:shadow-md"
-                            >
-                                ✏️ Chỉnh sửa
-                            </button>
+                            {/*<button*/}
+                            {/*    type="button"*/}
+                            {/*    onClick={() => {*/}
+                            {/*        setIsEditing(true);*/}
+                            {/*        setValidationErrors({});*/}
+                            {/*    }}*/}
+                            {/*    className="inline-flex items-center gap-2 rounded-full bg-[#4AB4DE] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#3ba1ca] hover:shadow-md"*/}
+                            {/*>*/}
+                            {/*    ✏️ Chỉnh sửa*/}
+                            {/*</button>*/}
                         </div>
 
                         <div className="grid gap-4 md:grid-cols-2">
