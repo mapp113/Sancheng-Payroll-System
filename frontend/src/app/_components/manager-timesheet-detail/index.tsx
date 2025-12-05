@@ -455,7 +455,7 @@ function TimesheetTable({
     return (
         <section
             className="overflow-hidden rounded-2xl border border-black bg-white text-[#1D3E6A] shadow-[6px_6px_0_#CCE1F0]">
-            <div className="h-[600px] overflow-y-auto">
+            <div className="h-[100px] overflow-y-auto">
                 <table className="w-full border-collapse">
                     <thead
                         className="bg-[#CCE1F0] text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] sticky top-0 z-10">
@@ -576,7 +576,7 @@ function OtherEntriesTable({
     return (
         <section
             className="overflow-hidden rounded-2xl border border-black bg-white text-[#1D3E6A] shadow-[6px_6px_0_#CCE1F0]">
-            <div className="h-[600px] overflow-y-auto">
+            <div className="h-[100px] overflow-y-auto">
                 <table className="w-full border-collapse">
                     <thead
                         className="bg-[#CCE1F0] text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] sticky top-0 z-10">

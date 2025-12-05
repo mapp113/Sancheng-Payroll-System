@@ -422,7 +422,6 @@ export default function UserManagement() {
                                 className="rounded-full border border-[#E2E8F0] px-4 py-2 text-sm focus:border-[#4AB4DE] focus:outline-none"
                             >
                                 <option value="all">All</option>
-                                <option value="Admin">Admin</option>
                                 <option value="HR">HR</option>
                                 <option value="Manager">Manager</option>
                                 <option value="Employee">Employee</option>
@@ -437,8 +436,8 @@ export default function UserManagement() {
                             <tr>
                                 <th className="px-4 py-3 font-medium">ID</th>
                                 <th className="px-4 py-3 font-medium">Mã Nhân Viên</th>
-                                <th className="px-4 py-3 font-medium">Tên</th>
-                                <th className="px-4 py-3 font-medium">Trức Vụ</th>
+                                <th className="px-4 py-3 font-medium">Họ Và Tên</th>
+                                <th className="px-4 py-3 font-medium">Chức Vụ</th>
                                 <th className="px-4 py-3 font-medium">Trạng Thái</th>
                                 <th className="px-1 py-3 font-medium">Điện Thoại</th>
                                 <th className="px-4 py-3 font-medium text-right">Thông Tin Lương</th>
@@ -522,7 +521,7 @@ export default function UserManagement() {
             {/* ===== PROFILE MODAL (UPDATED) ===== */}
             {profileModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-                    <div className="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-xl">
+                    <div className="max-w-lg w-full bg-white p-6 shadow-xl rounded-lg max-h-[90vh] overflow-y-auto">
                         <div className="mb-4 flex items-start justify-between">
                             <div>
                                 <h3 className="text-xl font-semibold text-[#1F2A44]">
