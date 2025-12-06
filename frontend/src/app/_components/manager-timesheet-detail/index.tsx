@@ -81,7 +81,7 @@ export default function ManagerTimesheetDetail({
             setIsLoading(true);
             try {
                 const response = await fetch(
-                    `http://localhost:8080/api/employees/${timesheetParams.employeeCode}`
+                    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/employees/${timesheetParams.employeeCode}`
                 );
 
                 if (!response.ok) {
@@ -109,7 +109,7 @@ export default function ManagerTimesheetDetail({
             try {
                 const monthParam = `${timesheetParams.month}-01`;
                 const response = await fetch(
-                    `http://localhost:8080/api/attsummary/month?month=${monthParam}&employeeCode=${timesheetParams.employeeCode}`
+                    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/attsummary/month?month=${monthParam}&employeeCode=${timesheetParams.employeeCode}`
                 );
 
                 if (!response.ok) {
@@ -137,7 +137,7 @@ export default function ManagerTimesheetDetail({
             try {
                 const monthParam = `${timesheetParams.month}-01`;
                 const response = await fetch(
-                    `http://localhost:8080/api/attsummary/by-month?employeeCode=${timesheetParams.employeeCode}&month=${monthParam}`
+                    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/attsummary/by-month?employeeCode=${timesheetParams.employeeCode}&month=${monthParam}`
                 );
 
                 if (!response.ok) {
@@ -169,7 +169,7 @@ export default function ManagerTimesheetDetail({
             setIsLoading(true);
             try {
                 const response = await fetch(
-                    `http://localhost:8080/api/v1/hr/users/${timesheetParams.employeeCode}/pay-components/month?year=${year}&month=${month}`
+                    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/v1/hr/users/${timesheetParams.employeeCode}/pay-components/month?year=${year}&month=${month}`
                 );
 
                 if (!response.ok) {
@@ -455,7 +455,7 @@ function TimesheetTable({
     return (
         <section
             className="overflow-hidden rounded-2xl border border-black bg-white text-[#1D3E6A] shadow-[6px_6px_0_#CCE1F0]">
-            <div className="h-[600px] overflow-y-auto">
+            <div className="h-[100px] overflow-y-auto">
                 <table className="w-full border-collapse">
                     <thead
                         className="bg-[#CCE1F0] text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] sticky top-0 z-10">
@@ -576,7 +576,7 @@ function OtherEntriesTable({
     return (
         <section
             className="overflow-hidden rounded-2xl border border-black bg-white text-[#1D3E6A] shadow-[6px_6px_0_#CCE1F0]">
-            <div className="h-[600px] overflow-y-auto">
+            <div className="h-[100px] overflow-y-auto">
                 <table className="w-full border-collapse">
                     <thead
                         className="bg-[#CCE1F0] text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] sticky top-0 z-10">
@@ -711,7 +711,7 @@ function AttendanceDayDetailPopup({
             };
 
             const response = await fetch(
-                `http://localhost:8080/api/attsummary/${attendanceData.id}`,
+                `${process.env.NEXT_PUBLIC_SERVER_URL}/api/attsummary/${attendanceData.id}`,
                 {
                     method: 'PATCH',
                     headers: {

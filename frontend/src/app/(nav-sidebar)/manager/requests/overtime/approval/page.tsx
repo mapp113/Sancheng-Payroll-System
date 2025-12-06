@@ -26,7 +26,7 @@ export default function OTApprovalPage() {
 
       try {
         const token = sessionStorage.getItem("scpm.auth.token");
-        const response = await fetch(`http://localhost:8080/api/overtime/detail/${id}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/overtime/detail/${id}`, {
           headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -52,7 +52,7 @@ export default function OTApprovalPage() {
 
     try {
       const token = sessionStorage.getItem("scpm.auth.token");
-      const response = await fetch(`http://localhost:8080/api/overtime/approve/${id}?note=${encodeURIComponent(note)}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/overtime/approve/${id}?note=${encodeURIComponent(note)}`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -77,7 +77,7 @@ export default function OTApprovalPage() {
 
     try {
       const token = sessionStorage.getItem("scpm.auth.token");
-      const response = await fetch(`http://localhost:8080/api/overtime/reject/${id}?note=${encodeURIComponent(note)}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/overtime/reject/${id}?note=${encodeURIComponent(note)}`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,

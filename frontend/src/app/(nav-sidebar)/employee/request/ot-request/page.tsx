@@ -79,7 +79,7 @@ function OTRequestsPageContent() {
 
     try {
       const token = sessionStorage.getItem("scpm.auth.token");
-      const response = await fetch("http://localhost:8080/api/overtime/submit", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/overtime/submit`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -150,7 +150,7 @@ function OTRequestsPageContent() {
 
     try {
       const token = sessionStorage.getItem("scpm.auth.token");
-      const response = await fetch("http://localhost:8080/api/overtime/submit", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/overtime/submit`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,

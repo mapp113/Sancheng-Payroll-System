@@ -5,6 +5,7 @@ import com.g98.sangchengpayrollmanager.model.dto.auth.LoginRequest;
 import com.g98.sangchengpayrollmanager.model.dto.auth.LoginResponse;
 import com.g98.sangchengpayrollmanager.model.entity.User;
 import com.g98.sangchengpayrollmanager.repository.UserRepository;
+import com.g98.sangchengpayrollmanager.security.AccountLockedException;
 import com.g98.sangchengpayrollmanager.security.InvalidCredentialsException;
 import com.g98.sangchengpayrollmanager.service.impl.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -24,11 +25,11 @@ public class AuthService {
     public LoginResponse authenticate(LoginRequest request) {
         // lấy user + role
         User user = userRepository.findByUsernameWithRole(request.getUsername())
-                .orElseThrow(() -> new IllegalStateException("Tài khoản đang tạm khóa. Vui lòng liên hệ quản trị viên để kích hoạt lại."));
+                .orElseThrow(InvalidCredentialsException::new);
 
         // kiểm tra trạng thái tài khoản (1 = hoạt động, 0 = tạm khóa)
         if (!Integer.valueOf(1).equals(user.getStatus())) {
-            throw new IllegalStateException("Tài khoản đang tạm khóa.");
+            throw new AccountLockedException();
         }
         // so sánh mật khẩu đã mã hóa
         boolean matched = passwordEncoder.matches(request.getPassword(), user.getPassword());

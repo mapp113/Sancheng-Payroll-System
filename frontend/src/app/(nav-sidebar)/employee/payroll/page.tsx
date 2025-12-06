@@ -5,7 +5,7 @@ import {useEffect, useState, useCallback} from "react";
 import {EmployeePayrollRow} from "@/app/_components/employee/payroll/types";
 import {useNotification} from "@/app/_components/common/pop-box/notification/notification-context";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 
 export default function PayrollPage() {
     const router = useRouter();

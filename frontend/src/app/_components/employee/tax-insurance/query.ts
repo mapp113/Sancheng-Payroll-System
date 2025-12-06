@@ -3,7 +3,7 @@ import { InsuranceListContextType, TaxLevelListContextType, CreateTaxLevelReques
 export async function fetchTaxLevels (context: TaxLevelListContextType | undefined, setLoading: React.Dispatch<React.SetStateAction<boolean>>) {
   try {
     const token = sessionStorage.getItem("scpm.auth.token");
-    const response = await fetch("http://localhost:8080/api/config/tax-level", {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/config/tax-level`, {
       headers: {
         "Authorization": `Bearer ${token}`,
       },
@@ -20,7 +20,7 @@ export async function fetchTaxLevels (context: TaxLevelListContextType | undefin
 export async function createTaxLevel(data: CreateTaxLevelRequest): Promise<boolean> {
   try {
     const token = sessionStorage.getItem("scpm.auth.token");
-    const response = await fetch("http://localhost:8080/api/config/tax-level", {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/config/tax-level`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -38,7 +38,7 @@ export async function createTaxLevel(data: CreateTaxLevelRequest): Promise<boole
 export async function updateTaxLevel(id: number, data: CreateTaxLevelRequest): Promise<boolean> {
   try {
     const token = sessionStorage.getItem("scpm.auth.token");
-    const response = await fetch(`http://localhost:8080/api/config/tax-level/${id}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/config/tax-level/${id}`, {
       method: "PUT",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -56,7 +56,7 @@ export async function updateTaxLevel(id: number, data: CreateTaxLevelRequest): P
 export async function deleteTaxLevel(id: number): Promise<boolean> {
   try {
     const token = sessionStorage.getItem("scpm.auth.token");
-    const response = await fetch(`http://localhost:8080/api/config/tax-level/${id}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/config/tax-level/${id}`, {
       method: "DELETE",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -72,7 +72,7 @@ export async function deleteTaxLevel(id: number): Promise<boolean> {
 export async function fetchInsurancePolicies (context: InsuranceListContextType | undefined, setLoading: React.Dispatch<React.SetStateAction<boolean>>) {
   try {
     const token = sessionStorage.getItem("scpm.auth.token");
-    const response = await fetch("http://localhost:8080/api/config/insurance-policy", {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/config/insurance-policy`, {
       headers: {
         "Authorization": `Bearer ${token}`,
       },
@@ -89,7 +89,7 @@ export async function fetchInsurancePolicies (context: InsuranceListContextType 
 export async function createInsurancePolicy(data: CreateInsurancePolicyRequest): Promise<boolean> {
   try {
     const token = sessionStorage.getItem("scpm.auth.token");
-    const response = await fetch("http://localhost:8080/api/config/insurance-policy", {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/config/insurance-policy`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -107,7 +107,7 @@ export async function createInsurancePolicy(data: CreateInsurancePolicyRequest):
 export async function updateInsurancePolicy(id: number, data: CreateInsurancePolicyRequest): Promise<boolean> {
   try {
     const token = sessionStorage.getItem("scpm.auth.token");
-    const response = await fetch(`http://localhost:8080/api/config/insurance-policy/${id}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/config/insurance-policy/${id}`, {
       method: "PUT",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -125,7 +125,7 @@ export async function updateInsurancePolicy(id: number, data: CreateInsurancePol
 export async function deleteInsurancePolicy(id: number): Promise<boolean> {
   try {
     const token = sessionStorage.getItem("scpm.auth.token");
-    const response = await fetch(`http://localhost:8080/api/config/insurance-policy/${id}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/config/insurance-policy/${id}`, {
       method: "DELETE",
       headers: {
         "Authorization": `Bearer ${token}`,

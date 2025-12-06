@@ -66,7 +66,7 @@ export default function OvertimePage() {
           queryParams.append("keyword", keyword);
         }
 
-        const response = await fetch(`http://localhost:8080/api/overtime/all?${queryParams}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/overtime/all?${queryParams}`, {
           headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",

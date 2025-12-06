@@ -17,7 +17,7 @@ import type {
 //             <EmployeePayrollDetail detail={hrPayrollDetail}/>
 //         </div>
 //     );
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 
 type PayrollDetailSearchParams = {
     employeeCode?: string;
@@ -76,12 +76,12 @@ type PaySummaryPageResponse = {
 
 const FALLBACK_PAYROLL_MONTH = "2025-10-01";
 
-const monthFormatter = new Intl.DateTimeFormat("en-US", {
+const monthFormatter = new Intl.DateTimeFormat("vi-VN", {
     month: "long",
     year: "numeric",
 });
 
-const dateFormatter = new Intl.DateTimeFormat("en-GB", {
+const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -107,7 +107,7 @@ export default async function PayrollDetailPage({
             return (
                 <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 pb-12">
                     <EmployeePayrollDetailToolbar
-                        title="Employee Payroll Detail"
+                        title="Chi Tiết Bảng Lương Nhân Viên"
                         subtitle={periodLabel}
                     />
                     <div
@@ -138,7 +138,7 @@ export default async function PayrollDetailPage({
         console.error("Failed to load payroll detail", error);
         return (
             <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 pb-12">
-                <EmployeePayrollDetailToolbar title="Employee Payroll Detail"/>
+                <EmployeePayrollDetailToolbar title="Chi Tiết Bảng Lương Nhân Viên"/>
                 <div
                     className="rounded-2xl border border-dashed border-[#4AB4DE] bg-[#F4FBFF] p-10 text-center text-[#1D3E6A]">
                     Không thể tải chi tiết bảng lương cho nhân viên và tháng đã chọn.
@@ -221,8 +221,8 @@ function mapToEmployeePayrollDetail(
     const totalDeduct = paySummary.grossIncome - paySummary.netSalary;
 
     return {
-        title: "Employee Payroll Detail",
-        role: employee?.positionName ?? "Employee",
+        title: "Chi Tiết Bảng Lương Nhân Viên",
+        role: employee?.positionName ?? "Nhân Viên",
         periodLabel,
         employee: {
             name: employee?.fullName ?? paySummary.employeeCode,

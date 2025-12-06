@@ -39,7 +39,7 @@ export default function ManagerApprovalLeavesPage() {
     
     try {
       const token = sessionStorage.getItem("scpm.auth.token");
-      const response = await fetch(`http://localhost:8080/api/leave/approve/${id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/leave/approve/${id}`, {
         method: 'PUT',
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -64,7 +64,7 @@ export default function ManagerApprovalLeavesPage() {
     
     try {
       const token = sessionStorage.getItem("scpm.auth.token");
-      const response = await fetch(`http://localhost:8080/api/leave/reject/${id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/leave/reject/${id}`, {
         method: 'PUT',
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -95,7 +95,7 @@ export default function ManagerApprovalLeavesPage() {
       try {
         setLoading(true);
         const token = sessionStorage.getItem("scpm.auth.token");
-        const response = await fetch(`http://localhost:8080/api/leave/detail/${id}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/leave/detail/${id}`, {
           method: 'GET',
           headers: {
             "Authorization": `Bearer ${token}`,

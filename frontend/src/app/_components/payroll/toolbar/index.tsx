@@ -16,7 +16,7 @@ export default function PayrollToolbar() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8080/api/payroll-export?month=${params.payrollParams.date}-01`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/payroll-export?month=${params.payrollParams.date}-01`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${sessionStorage.getItem("scpm.auth.token")}`,

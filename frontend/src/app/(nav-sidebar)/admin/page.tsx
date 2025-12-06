@@ -18,7 +18,7 @@ type UserItem = {
     roleName?: string;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 
 export default function AdminPage() {
     const [filterRole, setFilterRole] = useState<string>("all");
@@ -492,6 +492,8 @@ function CreateAccountModal({
 }
 
 /* ------------ EDIT MODAL ------------ */
+
+/* ------------ EDIT MODAL ------------ */
 function EditUserModal({
                            user,
                            onClose,
@@ -515,9 +517,17 @@ function EditUserModal({
     );
     const [phone, setPhone] = useState(user.phoneNo ?? "");
     const [email, setEmail] = useState(user.email ?? "");
+    const [error, setError] = useState<string>(""); // lỗi validate
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!name.trim()) {
+            setError("Tên không được để trống");
+            return;
+        }
+
+        setError(""); // clear lỗi nếu đã nhập
         onSubmit({
             id: user.employeeCode, // dùng PK để update ở FE cha
             name,
@@ -566,14 +576,24 @@ function EditUserModal({
                         <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Tên</label>
                         <input
                             value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="w-full rounded-xl border border-[#E2E8F0] px-3 py-2 text-sm outline-none focus:border-[#4AB4DE]"
+                            onChange={(e) => {
+                                setName(e.target.value);
+                                if (error) setError("");
+                            }}
+                            className={`w-full rounded-xl border px-3 py-2 text-sm outline-none focus:border-[#4AB4DE] ${
+                                error ? "border-red-500" : "border-[#E2E8F0]"
+                            }`}
                             placeholder="Nhập tên nhân viên"
                         />
+                        {error && (
+                            <p className="mt-1 text-xs text-red-500">
+                                {error}
+                            </p>
+                        )}
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Vị Trí</label>
+                        <label className="mb-1 block text-sm font-medium text-[#1F2A44]">Vai Trò</label>
                         <select
                             value={role}
                             onChange={(e) => setRole(e.target.value)}
