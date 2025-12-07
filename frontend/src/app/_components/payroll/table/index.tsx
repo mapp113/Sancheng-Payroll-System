@@ -4,6 +4,8 @@ import { PayrollQuery } from "../query";
 import { Info } from "lucide-react";
 import Pagination from "./pagination";
 import { useNotification } from "../../common/pop-box/notification/notification-context";
+import { formatNumber } from "../../utils/formatNumber";
+import { mapStatus } from "../../utils/statusMapping";
 
 
 export default function PayrollTable() {
@@ -66,11 +68,11 @@ export default function PayrollTable() {
                         <td className="py-3 px-4">{record.employeeCode}</td>
                         <td className="py-3 px-4">{record.fullName}</td>
                         <td className="py-3 px-4">{record.positionName}</td>
-                        <td className="py-3 px-4">${record.netSalary}</td>
+                        <td className="py-3 px-4">{formatNumber(record.netSalary)}</td>
                         <td className="py-3 px-4">
                                 <span
                                     className={`py-3 px-4`}
-                                >{record.status}</span>
+                                >{mapStatus(record.status)}</span>
                             </td>
                             <td className="py-3 px-4">
                                 <button 
