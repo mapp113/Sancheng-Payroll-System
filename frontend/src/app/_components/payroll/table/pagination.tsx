@@ -35,6 +35,11 @@ export default function Pagination() {
     
   };
 
+  // Ẩn pagination nếu không có dữ liệu
+  if (!payrollData.payrollData.length) {
+    return null;
+  }
+
   return (
     <div className="flex justify-end items-center py-4">
       <div className="flex space-x-2">

@@ -3,7 +3,6 @@ import { DataContext, ParamsContext } from "../payroll-context";
 import { PayrollQuery } from "../query";
 import { Info } from "lucide-react";
 import Pagination from "./pagination";
-import Link from "next/link";
 import { useNotification } from "../../common/pop-box/notification/notification-context";
 
 
@@ -24,6 +23,7 @@ export default function PayrollTable() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
             case "green":
@@ -54,7 +54,14 @@ export default function PayrollTable() {
                 </thead>
 
                 <tbody className="divide-y divide-gray-200">
-                {payrollData.payrollData.map((record) => (
+                {payrollData.payrollData.length === 0 ? (
+                    <tr>
+                        <td colSpan={7} className="py-8 text-center text-gray-500">
+                            Không có dữ liệu
+                        </td>
+                    </tr>
+                ) : (
+                    payrollData.payrollData.map((record) => (
                     <tr key={record.employeeCode} className="hover:bg-gray-50">
                         <td className="py-3 px-4">{record.employeeCode}</td>
                         <td className="py-3 px-4">{record.fullName}</td>
@@ -106,10 +113,11 @@ export default function PayrollTable() {
                                className="cursor-pointer"><Info size={18}/></a>
                         </td>
                     </tr>
-                ))}
+                )))
+                }
                 </tbody>
             </table>
-            <Pagination/>
+            {payrollData.payrollData.length > 0 && <Pagination/>}
         </div>
     );
 }
