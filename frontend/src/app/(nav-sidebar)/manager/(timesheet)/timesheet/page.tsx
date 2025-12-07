@@ -34,6 +34,20 @@ function TimesheetPageContent() {
     successCount: number;
     errors: string[];
   } | null>(null);
+  const [userRole, setUserRole] = useState<string>("");
+
+  // Lấy role của user từ session storage
+  useEffect(() => {
+    const userDataString = sessionStorage.getItem("scpm.auth.user");
+    if (userDataString) {
+      try {
+        const userData = JSON.parse(userDataString);
+        setUserRole(userData.role || "");
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+  }, []);
 
   // Cập nhật URL params khi state thay đổi
   useEffect(() => {
@@ -184,7 +198,7 @@ function TimesheetPageContent() {
           />
         )}
         <div className="flex flex-col h-full p-3 box-border">
-          <TimesheetToolbar showForm={() => setShowFormPopBox(true)} />
+          <TimesheetToolbar showForm={userRole === "HR" ? () => setShowFormPopBox(true) : undefined} />
           <div className="flex-1 mt-2">
             <section className="h-full rounded-xl flex flex-col justify-between">
               <TimesheetTable />
