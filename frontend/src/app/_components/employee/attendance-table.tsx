@@ -191,77 +191,89 @@ export default function AttendanceTable({ employeeCode, month, onDayClick }: Att
 
   return (
     <div className="mt-6 overflow-hidden rounded-2xl border border-[#CCE1F0]">
-      <table className="min-w-full divide-y divide-[#CCE1F0] text-sm">
+      <table className="min-w-full text-sm" style={{ tableLayout: 'fixed' }}>
         <thead className="bg-[#EAF5FF] text-xs uppercase tracking-widest text-[#345EA8]">
           <tr>
-            <th className="px-4 py-3 text-left">Ngày</th>
-            <th className="px-4 py-3 text-left">Check in</th>
-            <th className="px-4 py-3 text-left">Check out</th>
-            <th className="px-4 py-3 text-left">Giờ làm việc</th>
-            <th className="px-4 py-3 text-left">Tăng ca</th>
-            <th className="px-4 py-3 text-left"></th>
+            <th className="px-4 py-3 text-left" style={{ width: '15%' }}>Ngày</th>
+            <th className="px-4 py-3 text-left" style={{ width: '15%' }}>Check in</th>
+            <th className="px-4 py-3 text-left" style={{ width: '15%' }}>Check out</th>
+            <th className="px-4 py-3 text-left" style={{ width: '20%' }}>Giờ làm việc</th>
+            <th className="px-4 py-3 text-left" style={{ width: '15%' }}>Tăng ca</th>
+            <th className="px-4 py-3 text-left" style={{ width: '20%' }}></th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#F0F6FB] bg-white text-[#1F2A44]">
-          {allDays.map((entry) => {
-            const dailyData = attendanceDaily.find((d) => d.date === entry.id);
-            const isLeave = entry.type === "leave";
-            const isDefaultLeave = entry.note === "Ngày nghỉ";
-
-            return (
-              <tr key={entry.id}>
-                <td className="px-4 py-3">
-                  <p className="font-medium">{entry.day}</p>
-                  <p className="text-xs text-[#1F2A44]/60">{entry.date}</p>
-                </td>
-                <td className="px-4 py-3">
-                  {isLeave ? (
-                    <span>--</span>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Clock4 className="h-4 w-4 text-[#4AB4DE]" />
-                      <span>{formatTime(entry.checkIn)}</span>
-                    </div>
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  {isLeave ? (
-                    <span>--</span>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <TimerReset className="h-4 w-4 text-[#4AB4DE]" />
-                      <span>{formatTime(entry.checkOut)}</span>
-                    </div>
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  {isLeave ? (
-                    <span className="inline-flex items-center rounded-full bg-[#FFEFD6] px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[#B45309]">
-                      {entry.note}
-                    </span>
-                  ) : (
-                    formatHours(entry.workHours)
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  {isLeave ? "--" : formatHours(entry.overtimeHours)}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  {!isDefaultLeave && dailyData && onDayClick && (
-                    <button
-                      type="button"
-                      onClick={() => onDayClick(dailyData)}
-                      className="inline-flex items-center justify-center rounded-full border border-[#4AB4DE] bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] transition hover:bg-[#E6F7FF] cursor-pointer"
-                    >
-                      Chi tiết
-                    </button>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
       </table>
+      <div className="max-h-[600px] overflow-y-auto">
+        <table className="min-w-full text-sm" style={{ tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: '15%' }} />
+            <col style={{ width: '15%' }} />
+            <col style={{ width: '15%' }} />
+            <col style={{ width: '20%' }} />
+            <col style={{ width: '15%' }} />
+            <col style={{ width: '20%' }} />
+          </colgroup>
+          <tbody className="divide-y divide-[#F0F6FB] bg-white text-[#1F2A44]">
+            {allDays.map((entry) => {
+              const dailyData = attendanceDaily.find((d) => d.date === entry.id);
+              const isLeave = entry.type === "leave";
+              const isDefaultLeave = entry.note === "Ngày nghỉ";
+
+              return (
+                <tr key={entry.id}>
+                  <td className="px-4 py-3">
+                    <p className="font-medium">{entry.day}</p>
+                    <p className="text-xs text-[#1F2A44]/60">{entry.date}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    {isLeave ? (
+                      <span>--</span>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Clock4 className="h-4 w-4 text-[#4AB4DE]" />
+                        <span>{formatTime(entry.checkIn)}</span>
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {isLeave ? (
+                      <span>--</span>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <TimerReset className="h-4 w-4 text-[#4AB4DE]" />
+                        <span>{formatTime(entry.checkOut)}</span>
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {isLeave ? (
+                      <span className="inline-flex items-center rounded-full bg-[#FFEFD6] px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[#B45309]">
+                        {entry.note}
+                      </span>
+                    ) : (
+                      formatHours(entry.workHours)
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {isLeave ? "--" : formatHours(entry.overtimeHours)}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    {!isDefaultLeave && dailyData && onDayClick && (
+                      <button
+                        type="button"
+                        onClick={() => onDayClick(dailyData)}
+                        className="inline-flex items-center justify-center rounded-full border border-[#4AB4DE] bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] transition hover:bg-[#E6F7FF] cursor-pointer"
+                      >
+                        Chi tiết
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

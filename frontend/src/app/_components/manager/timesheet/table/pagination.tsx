@@ -35,6 +35,11 @@ export default function Pagination() {
     }
   };
 
+  // Ẩn phân trang nếu không có dữ liệu
+  if (!data.timesheetData.length) {
+    return null;
+  }
+
   return (
     <div className="flex justify-end items-center py-4">
       <div className="flex space-x-2">

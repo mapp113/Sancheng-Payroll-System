@@ -317,7 +317,7 @@ export default function EmployeesDashboardPage() {
                             <div>
                                 <h3 className="text-xl font-semibold text-[#1F2A44]">Danh Sách Chấm Công</h3>
                                 <p className="text-sm text-[#1F2A44]/60">
-                                    Tháng {currentMonth}
+                                    Tháng {currentMonth.split('-')[1]}/{currentMonth.split('-')[0]}
                                 </p>
                             </div>
                             <button

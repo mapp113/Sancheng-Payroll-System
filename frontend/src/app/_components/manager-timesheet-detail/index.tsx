@@ -91,7 +91,7 @@ export default function ManagerTimesheetDetail({
                 const data: EmployeeInfomation = await response.json();
                 setEmployeeInfo(data);
             } catch (error) {
-                console.error('Error fetching employee info:', error);
+                console.error('Lỗi khi tải thông tin nhân viên:', error);
             } finally {
                 setIsLoading(false);
             }
@@ -103,11 +103,13 @@ export default function ManagerTimesheetDetail({
     // Gọi API để lấy attendance summary
     useEffect(() => {
         const fetchAttendanceSummary = async () => {
-            if (!timesheetParams?.employeeCode || !timesheetParams?.month) return;
+            if (!timesheetParams?.employeeCode || !startDate) return;
 
+            const month = startDate.slice(0, 7);
+            
             setIsLoading(true);
             try {
-                const monthParam = `${timesheetParams.month}-01`;
+                const monthParam = `${month}-01`;
                 const response = await fetch(
                     `${process.env.NEXT_PUBLIC_SERVER_URL}/api/attsummary/month?month=${monthParam}&employeeCode=${timesheetParams.employeeCode}`
                 );
@@ -119,23 +121,25 @@ export default function ManagerTimesheetDetail({
                 const data: AttendanceSummary = await response.json();
                 setAttendanceSummary(data);
             } catch (error) {
-                console.error('Error fetching attendance summary:', error);
+                console.error('Lỗi khi tải thống kê chấm công:', error);
             } finally {
                 setIsLoading(false);
             }
         };
 
         fetchAttendanceSummary();
-    }, [timesheetParams?.employeeCode, timesheetParams?.month]);
+    }, [timesheetParams?.employeeCode, startDate]);
 
     // Gọi API để lấy attendance daily
     useEffect(() => {
         const fetchAttendanceDaily = async () => {
-            if (!timesheetParams?.employeeCode || !timesheetParams?.month) return;
+            if (!timesheetParams?.employeeCode || !startDate) return;
+
+            const month = startDate.slice(0, 7);
 
             setIsLoading(true);
             try {
-                const monthParam = `${timesheetParams.month}-01`;
+                const monthParam = `${month}-01`;
                 const response = await fetch(
                     `${process.env.NEXT_PUBLIC_SERVER_URL}/api/attsummary/by-month?employeeCode=${timesheetParams.employeeCode}&month=${monthParam}`
                 );
@@ -147,14 +151,14 @@ export default function ManagerTimesheetDetail({
                 const data: AttendanceDaily[] = await response.json();
                 setAttendanceDaily(data);
             } catch (error) {
-                console.error('Error fetching attendance daily:', error);
+                console.error('Lỗi khi tải dữ liệu chấm công hàng ngày:', error);
             } finally {
                 setIsLoading(false);
             }
         };
 
         fetchAttendanceDaily();
-    }, [timesheetParams?.employeeCode, timesheetParams?.month]);
+    }, [timesheetParams?.employeeCode, startDate]);
 
     // Gọi API để lấy pay components theo tháng
     useEffect(() => {
@@ -179,7 +183,7 @@ export default function ManagerTimesheetDetail({
                 const result = await response.json();
                 setPayComponents(result.data || []);
             } catch (error) {
-                console.error('Error fetching pay components:', error);
+                console.error('Lỗi khi tải thông tin phụ cấp/khoản trừ:', error);
             } finally {
                 setIsLoading(false);
             }
@@ -323,9 +327,14 @@ function LeaveSummaryCard({
                 <input
                     type="month"
                     value={month.slice(0, 7)}
-                    onChange={(e) => onChange(e.target.value, e.target.value)}
+                    onChange={(e) => {
+                        const selectedMonth = e.target.value;
+                        const monthRange = getMonthRange(selectedMonth);
+                        if (monthRange) {
+                            onChange(monthRange.start, monthRange.end);
+                        }
+                    }}
                     className="rounded-xl border border-[#CCE1F0] bg-white px-3 py-2 text-sm text-[#1D3E6A] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4AB4DE]"
-                    disabled
                 />
             </div>
 
@@ -391,12 +400,17 @@ function TimesheetTable({
         const [year, monthNum] = monthStr.split('-').map(Number);
         const daysInMonth = new Date(year, monthNum, 0).getDate();
         const days: TimesheetEntry[] = [];
+        const today = new Date();
+        const currentDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(year, monthNum - 1, day);
             const dateStr = `${year}-${String(monthNum).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const dayNames = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
             const dayName = dayNames[date.getDay()];
+
+            // Kiểm tra xem ngày này có trong tương lai không
+            const isFutureDate = date > currentDate;
 
             const dailyData = attendanceDaily.find(d => d.date === dateStr);
 
@@ -433,12 +447,14 @@ function TimesheetTable({
                     });
                 }
             } else {
+                // Nếu là ngày trong tương lai, hiển thị "Không có dữ liệu"
+                // Nếu là ngày trong quá khứ, hiển thị "Ngày nghỉ"
                 days.push({
                     id: dateStr,
                     day: dayName,
                     date: `${String(day).padStart(2, '0')}/${String(monthNum).padStart(2, '0')}/${year}`,
                     type: "leave",
-                    note: "Ngày nghỉ",
+                    note: isFutureDate ? "Không có dữ liệu" : "Ngày nghỉ",
                     checkIn: null,
                     checkOut: null,
                     workHours: null,
@@ -452,22 +468,46 @@ function TimesheetTable({
 
     const allDays = generateMonthDays(month);
 
+    // Kiểm tra xem có dữ liệu không (chỉ tính các ngày không phải "Không có dữ liệu")
+    const hasData = allDays.some(day => day.note !== "Không có dữ liệu" && day.note !== "Ngày nghỉ") || attendanceDaily.length > 0;
+
+    if (!hasData && attendanceDaily.length === 0) {
+        return (
+            <section
+                className="overflow-hidden rounded-2xl border border-black bg-white text-[#1D3E6A] shadow-[6px_6px_0_#CCE1F0]">
+                <div className="p-8 text-center text-sm text-[#56749A]">
+                    Không có dữ liệu chấm công
+                </div>
+            </section>
+        );
+    }
+
     return (
         <section
             className="overflow-hidden rounded-2xl border border-black bg-white text-[#1D3E6A] shadow-[6px_6px_0_#CCE1F0]">
-            <div className="h-[100px] overflow-y-auto">
-                <table className="w-full border-collapse">
-                    <thead
-                        className="bg-[#CCE1F0] text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] sticky top-0 z-10">
-                    <tr>
-                        <th className="px-5 py-3 text-left">Ngày</th>
-                        <th className="px-5 py-3 text-left">Giờ vào</th>
-                        <th className="px-5 py-3 text-left">Giờ ra</th>
-                        <th className="px-5 py-3 text-left">Giờ làm việc</th>
-                        <th className="px-5 py-3 text-left">Tăng ca</th>
-                        <th className="px-5 py-3 text-left"></th>
-                    </tr>
-                    </thead>
+            <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
+                <thead
+                    className="bg-[#CCE1F0] text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A]">
+                <tr>
+                    <th className="px-5 py-3 text-left" style={{ width: '20%' }}>Ngày</th>
+                    <th className="px-5 py-3 text-left" style={{ width: '12%' }}>Giờ vào</th>
+                    <th className="px-5 py-3 text-left" style={{ width: '12%' }}>Giờ ra</th>
+                    <th className="px-5 py-3 text-left" style={{ width: '20%' }}>Giờ làm việc</th>
+                    <th className="px-5 py-3 text-left" style={{ width: '12%' }}>Tăng ca</th>
+                    <th className="px-5 py-3 text-left" style={{ width: '24%' }}></th>
+                </tr>
+                </thead>
+            </table>
+            <div className="h-[600px] overflow-y-auto">
+                <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
+                    <colgroup>
+                        <col style={{ width: '20%' }} />
+                        <col style={{ width: '12%' }} />
+                        <col style={{ width: '12%' }} />
+                        <col style={{ width: '20%' }} />
+                        <col style={{ width: '12%' }} />
+                        <col style={{ width: '24%' }} />
+                    </colgroup>
                     <tbody>
                     {allDays.map((entry) => {
                         const dailyData = attendanceDaily.find(d => d.date === entry.id);
@@ -629,6 +669,7 @@ function TimesheetTableRow({
 }) {
     const isLeave = entry.type === "leave";
     const isDefaultLeave = entry.note === "Ngày nghỉ";
+    const isNoData = entry.note === "Không có dữ liệu";
 
     const handleDetailClick = () => {
         if (dailyData) {
@@ -653,7 +694,11 @@ function TimesheetTableRow({
             <td className="px-5 py-4 text-sm font-semibold text-[#1D3E6A]">
                 {isLeave ? (
                     <span
-                        className="inline-flex items-center rounded-full bg-[#FFEFD6] px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[#B45309]">
+                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] ${
+                            isNoData 
+                                ? 'bg-gray-100 text-gray-500' 
+                                : 'bg-[#FFEFD6] text-[#B45309]'
+                        }`}>
                         {entry.note}
                     </span>
                 ) : (
@@ -664,7 +709,7 @@ function TimesheetTableRow({
                 {isLeave ? "--" : formatHours(entry.overtimeHours)}
             </td>
             <td className="px-5 py-4 text-right">
-                {!isDefaultLeave && (
+                {!isDefaultLeave && !isNoData && (
                     <button
                         type="button"
                         onClick={handleDetailClick}
@@ -722,14 +767,14 @@ function AttendanceDayDetailPopup({
             );
 
             if (!response.ok) {
-                throw new Error('Failed to update attendance');
+                throw new Error('Không thể cập nhật thông tin chấm công');
             }
             setIsEditing(false);
             onClose();
             window.location.reload();
         } catch (error) {
-            console.error('Error updating attendance:', error);
-            alert('Failed to update attendance');
+            console.error('Lỗi khi cập nhật chấm công:', error);
+            alert('Không thể cập nhật thông tin chấm công');
         } finally {
             setIsSaving(false);
         }

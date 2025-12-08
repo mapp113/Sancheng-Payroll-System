@@ -10,13 +10,13 @@ import { DataContext } from "@/app/_components/manager/timesheet/timesheet-conte
 import FormPopBox from "@/app/_components/common/pop-box/form";
 import { X } from "lucide-react";
 import CreateDraft, { createDraftQuery } from "@/app/_components/manager/timesheet/create-draft";
-import { NotificationProvider, useNotification } from "@/app/_components/common/pop-box/notification/notification-context";
+import { NotificationProvider } from "@/app/_components/common/pop-box/notification/notification-context";
 import BottomRightNotification from "@/app/_components/common/pop-box/notification/bottom-right";
+import ConfirmPopBox from "@/app/_components/common/pop-box/confirm";
 
 function TimesheetPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { addNotification } = useNotification();
   
   // Khôi phục state từ URL params
   const [timesheetParams, setTimesheetParams] = useState<TimesheetParam>({
@@ -28,6 +28,26 @@ function TimesheetPageContent() {
   const [timesheetData, setTimesheetData] = useState<TimesheetRecord[]>([]);
   const [showFormPopBox, setShowFormPopBox] = useState(false);
   const [createDraftParams, setCreateDraftParams] = useState<CreateDraftParams | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState<{
+    successCount: number;
+    errors: string[];
+  } | null>(null);
+  const [userRole, setUserRole] = useState<string>("");
+
+  // Lấy role của user từ session storage
+  useEffect(() => {
+    const userDataString = sessionStorage.getItem("scpm.auth.user");
+    if (userDataString) {
+      try {
+        const userData = JSON.parse(userDataString);
+        setUserRole(userData.role || "");
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+  }, []);
 
   // Cập nhật URL params khi state thay đổi
   useEffect(() => {
@@ -41,34 +61,82 @@ function TimesheetPageContent() {
   }, [timesheetParams.index, timesheetParams.date, timesheetParams.keyword, router]);
 
   const handleCreateDraft = async () => {
-    if (!createDraftParams) {
-      addNotification("error", "Lỗi", "Vui lòng chọn ít nhất một nhân viên", 3000);
+    if (!createDraftParams || createDraftParams.employeeCode.length === 0) {
       return;
     }
 
+    setIsCreating(true);
     try {
       const response = await createDraftQuery(createDraftParams);
       
-      if (response.message) {
-        addNotification("ok", "Thành công", response.message, 7000);
+      // Đóng form popup
+      setShowFormPopBox(false);
+      
+      // Parse response nếu là string
+      let parsedResponse = response;
+      if (typeof response === 'string') {
+        try {
+          parsedResponse = JSON.parse(response);
+        } catch {
+          parsedResponse = { message: response, errors: [] };
+        }
       }
       
-      if (response.errors && response.errors.length > 0) {
-        response.errors.forEach((error: string) => {
-          addNotification("error", "Lỗi", error, 7000);
-        });
-      }
-
-      // Đóng popup nếu thành công
-      if (response.message && (!response.errors || response.errors.length === 0)) {
-        setShowFormPopBox(false);
-        setCreateDraftParams(null);
-      }
+      // Hiển thị confirm box với kết quả
+      setConfirmMessage({
+        successCount: createDraftParams.employeeCode.length - (parsedResponse.errors?.length || 0),
+        errors: parsedResponse.errors || []
+      });
+      setShowConfirm(true);
+      
     } catch (error) {
       console.error("Error creating draft:", error);
-      const errorMessage = error instanceof Error ? error.message : "Lỗi không xác định";
-      addNotification("error", "Lỗi", `${errorMessage}`, 7000);
+      
+      // Xử lý error có thể là string JSON
+      let errorMessage = "Lỗi không xác định";
+      let errorList: string[] = [];
+      
+      if (error instanceof Error) {
+        try {
+          const parsedError = JSON.parse(error.message);
+          errorMessage = parsedError.message || error.message;
+          errorList = parsedError.errors || [];
+        } catch {
+          errorMessage = error.message;
+        }
+      }
+      
+      // Hiển thị lỗi trong confirm box
+      setConfirmMessage({
+        successCount: 0,
+        errors: errorList.length > 0 ? errorList : [errorMessage]
+      });
+      setShowFormPopBox(false);
+      setShowConfirm(true);
+    } finally {
+      setIsCreating(false);
     }
+  };
+
+  const handleConfirmClose = () => {
+    setShowConfirm(false);
+    setConfirmMessage(null);
+    setCreateDraftParams(null);
+  };
+
+  const handleConfirmNavigate = () => {
+    setShowConfirm(false);
+    setConfirmMessage(null);
+    setCreateDraftParams(null);
+    
+    // Tạo URL params với search và month
+    const urlParams = new URLSearchParams();
+    urlParams.set("month", timesheetParams.date);
+    if (timesheetParams.keyword) {
+      urlParams.set("search", timesheetParams.keyword);
+    }
+    
+    router.push(`/payroll?${urlParams.toString()}`);
   };
 
   return (
@@ -88,13 +156,49 @@ function TimesheetPageContent() {
               </CreateDraftParamContext.Provider>
             </div>
             <div className="w-full flex justify-end">
-              <button className="mt-4 mr-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer" onClick={handleCreateDraft}>Tạo</button>
+              <button 
+                className={`mt-4 mr-4 px-4 py-2 text-white rounded ${
+                  isCreating 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
+                }`}
+                onClick={handleCreateDraft}
+                disabled={isCreating}
+              >
+                {isCreating ? 'Đang tạo...' : 'Tạo'}
+              </button>
             </div>
           
           </FormPopBox>
         )}
+        
+        {showConfirm && confirmMessage && (
+          <ConfirmPopBox
+            title="Kết quả tạo bảng lương"
+            message={
+              <div className="space-y-2">
+                <p>Đã tạo xong cho {confirmMessage.successCount} nhân viên</p>
+                {confirmMessage.errors.length > 0 && (
+                  <div className="mt-3">
+                    <p className="font-semibold text-red-600">Có lỗi khi tạo những nhân viên:</p>
+                    <ul className="list-disc list-inside mt-1 text-sm">
+                      {confirmMessage.errors.map((error, index) => (
+                        <li key={index} className="text-red-600">{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <p className="mt-4">Bạn có muốn chuyển sang trang phiếu lương không?</p>
+              </div>
+            }
+            onConfirm={handleConfirmNavigate}
+            onCancel={handleConfirmClose}
+            confirmText="OK"
+            cancelText="Đóng"
+          />
+        )}
         <div className="flex flex-col h-full p-3 box-border">
-          <TimesheetToolbar showForm={() => setShowFormPopBox(true)} />
+          <TimesheetToolbar showForm={userRole === "HR" ? () => setShowFormPopBox(true) : undefined} />
           <div className="flex-1 mt-2">
             <section className="h-full rounded-xl flex flex-col justify-between">
               <TimesheetTable />
