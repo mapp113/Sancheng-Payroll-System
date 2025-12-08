@@ -45,17 +45,17 @@ export default function TimesheetTableBody() {
   }
 
   return (
-    <tbody>
+    <tbody className="divide-y divide-[#E2E8F0]">
       {data.timesheetData.map((record) => (
-        <tr key={record.employeeCode} className="hover:bg-gray-50">
-          <td className="py-3 px-4">{record.employeeCode}</td>
-          <td className="py-3 px-4">{record.fullName}</td>
-          <td className="py-3 px-4">{record.positionName}</td>
-          <td className="py-3 px-4">{record.daysHours}h</td>
-          <td className="py-3 px-4">{record.otHours}h</td>
-          <td className="py-3 px-4 text-center">{record.usedleave}</td>
-          <td className="py-3 px-4">
-            <a href={`timesheet-detail?employeeCode=${record.employeeCode}&month=${params.timesheetParams.date}&page=${params.timesheetParams.index}${params.timesheetParams.keyword ? `&search=${encodeURIComponent(params.timesheetParams.keyword)}` : ''}`} className="px-2 py-1 rounded-xl bg-[#79dee9] cursor-pointer">Chi tiết</a>
+        <tr key={record.employeeCode} className="hover:bg-[#F1F5F9]">
+          <td className="whitespace-nowrap px-4 py-3 font-medium">{record.employeeCode}</td>
+          <td className="whitespace-nowrap px-4 py-3">{record.fullName}</td>
+          <td className="whitespace-nowrap px-4 py-3">{record.positionName}</td>
+          <td className="whitespace-nowrap px-4 py-3">{record.daysHours}h</td>
+          <td className="whitespace-nowrap px-4 py-3">{record.otHours}h</td>
+          <td className="whitespace-nowrap px-4 py-3 text-center">{record.usedleave}</td>
+          <td className="whitespace-nowrap px-4 py-3 text-right">
+            <a href={`timesheet-detail?employeeCode=${record.employeeCode}&month=${params.timesheetParams.date}&page=${params.timesheetParams.index}${params.timesheetParams.keyword ? `&search=${encodeURIComponent(params.timesheetParams.keyword)}` : ''}`} className="rounded-full border border-[#4AB4DE] px-4 py-1 text-xs font-medium text-[#4AB4DE] hover:bg-[#E0F2FE] cursor-pointer inline-block">Chi tiết</a>
           </td>
         </tr>
       ))}

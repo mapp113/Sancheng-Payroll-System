@@ -816,7 +816,7 @@ function AttendanceDayDetailPopup({
                 </div>
 
                 {/* Main Content - Responsive Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto max-h-[50vh] lg:max-h-[60vh]">
                     {/* Left Column */}
                     <div className="space-y-6">
                         {/* Employee Info */}
