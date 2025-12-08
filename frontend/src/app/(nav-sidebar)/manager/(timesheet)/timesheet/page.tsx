@@ -168,7 +168,6 @@ function TimesheetPageContent() {
                 {isCreating ? 'Đang tạo...' : 'Tạo'}
               </button>
             </div>
-          
           </FormPopBox>
         )}
         

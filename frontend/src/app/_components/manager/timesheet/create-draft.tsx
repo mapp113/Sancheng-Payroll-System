@@ -116,53 +116,59 @@ export default function CreateDraft() {
   };
   
   return (
-    <table className="w-full table-auto">
-      <thead className="bg-gray-200 sticky top-0">
-        <tr>
-          <th className="px-4 py-2 text-left">
-            <input 
-              id="select-all-checkbox" 
-              type="checkbox"
-              checked={isAllChecked()}
-              onChange={(e) => handleSelectAllChange(e.target.checked)}
-              className="w-4 h-4 cursor-pointer"
-            />
-          </th>
-          <th className="px-4 py-2 text-left">Tên nhân viên</th>
-          <th className="px-4 py-2 text-left">Mã nhân viên</th>
-        </tr>
-      </thead>
-      <tbody className="overflow-y-auto max-h-1/2">
-        {loading ? (
+    <div className="w-full max-h-[400px] overflow-hidden border border-gray-300 rounded-lg">
+      <table className="w-full table-auto">
+        <thead className="bg-gray-200 sticky top-0 z-10">
           <tr>
-            <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
-              Đang tải...
-            </td>
+            <th className="px-4 py-2 text-left">
+              <input 
+                id="select-all-checkbox" 
+                type="checkbox"
+                checked={isAllChecked()}
+                onChange={(e) => handleSelectAllChange(e.target.checked)}
+                className="w-4 h-4 cursor-pointer"
+              />
+            </th>
+            <th className="px-4 py-2 text-left">Tên nhân viên</th>
+            <th className="px-4 py-2 text-left">Mã nhân viên</th>
           </tr>
-        ) : employees.length === 0 ? (
-          <tr>
-            <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
-              Không có nhân viên nào
-            </td>
-          </tr>
-        ) : (
-          employees.map((employee) => (
-            <tr key={employee.employeeCode} className="border-b hover:bg-gray-50">
-              <td className="px-4 py-2">
-                <input
-                  type="checkbox"
-                  checked={isChecked(employee.employeeCode)}
-                  onChange={(e) => handleCheckboxChange(employee.employeeCode, e.target.checked)}
-                  className="w-4 h-4 cursor-pointer"
-                />
-              </td>
-              <td className="px-4 py-2">{employee.fullName}</td>
-              <td className="px-4 py-2">{employee.employeeCode}</td>
-            </tr>
-          ))
-        )}
-      </tbody>
-    </table>
+        </thead>
+      </table>
+      <div className="max-h-[340px] overflow-y-auto">
+        <table className="w-full table-auto">
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
+                  Đang tải...
+                </td>
+              </tr>
+            ) : employees.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
+                  Không có nhân viên nào
+                </td>
+              </tr>
+            ) : (
+              employees.map((employee) => (
+                <tr key={employee.employeeCode} className="border-b hover:bg-gray-50">
+                  <td className="px-4 py-2">
+                    <input
+                      type="checkbox"
+                      checked={isChecked(employee.employeeCode)}
+                      onChange={(e) => handleCheckboxChange(employee.employeeCode, e.target.checked)}
+                      className="w-4 h-4 cursor-pointer"
+                    />
+                  </td>
+                  <td className="px-4 py-2">{employee.fullName}</td>
+                  <td className="px-4 py-2">{employee.employeeCode}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 

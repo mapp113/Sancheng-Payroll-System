@@ -2,8 +2,8 @@ import type {ManagerTimesheetDetailData} from "../types";
 
 export const managerTimesheetDetail: ManagerTimesheetDetailData = {
     dashboardTitle: "Manager Dashboard",
-    title: "Timesheet Detail",
-    tabs: [{label: "Other"}, {label: "Timesheet Detail", isActive: true}],
+    title: "Chi tiết bảng chấm công",
+    tabs: [{label: "Khác"}, {label: "Thông tin chi tiết", isActive: true}],
     // ✅ ngày động
     startDate: "2025-09-15",
     endDate: "2025-10-15",
