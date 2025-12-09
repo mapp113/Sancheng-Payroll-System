@@ -1,7 +1,7 @@
 "use client"
 
 import TimesheetTable from "@/app/_components/manager/timesheet/table";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CreateDraftParams, TimesheetParam, TimesheetRecord } from "@/app/_components/manager/timesheet/type";
 import { CreateDraftParamContext, ParamsContext } from "@/app/_components/manager/timesheet/timesheet-context";
@@ -226,7 +226,9 @@ function TimesheetPageContent() {
 export default function TimesheetPage() {
   return (
     <NotificationProvider>
-      <TimesheetPageContent />
+      <Suspense fallback={<div>Loading...</div>}>
+        <TimesheetPageContent />
+      </Suspense>
       <BottomRightNotification />
     </NotificationProvider>
   );

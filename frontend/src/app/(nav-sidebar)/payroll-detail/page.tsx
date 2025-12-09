@@ -90,10 +90,11 @@ const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
 export default async function PayrollDetailPage({
                                                     searchParams,
                                                 }: {
-    searchParams?: PayrollDetailSearchParams;
+    searchParams?: Promise<PayrollDetailSearchParams>;
 }) {
-    const employeeCode = searchParams?.employeeCode?.trim();
-    const monthParam = searchParams?.month?.trim();
+    const resolvedSearchParams = await searchParams;
+    const employeeCode = resolvedSearchParams?.employeeCode?.trim();
+    const monthParam = resolvedSearchParams?.month?.trim();
     const monthForApi = monthParam
         ? normaliseMonthParam(monthParam)
         : getDefaultPayrollMonth();

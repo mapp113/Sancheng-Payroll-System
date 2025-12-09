@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import {FormEvent, useState} from "react"
+import {FormEvent, useState, Suspense} from "react"
 import {useSearchParams} from "next/navigation"
 
 import {
@@ -13,7 +13,7 @@ import {
     from "@app/_components/common/auth-card"
 import {resetPassword} from "@app/_components/common/password-reset"
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
     const searchParams = useSearchParams()
     const [email, setEmail] = useState(() => searchParams.get("email") ?? "")
     const [code, setCode] = useState(() => searchParams.get("code") ?? "")
@@ -162,5 +162,13 @@ export default function ResetPasswordPage() {
                 </div>
             </form>
         </AuthCard>
+    )
+}
+
+export default function ResetPasswordPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <ResetPasswordContent />
+        </Suspense>
     )
 }

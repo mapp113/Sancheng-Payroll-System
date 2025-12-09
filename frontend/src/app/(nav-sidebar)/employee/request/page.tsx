@@ -226,7 +226,7 @@ export default function LeavesPage() {
         <div className="flex justify-end align-middle my-3 mr-2">
           <button className="cursor-pointer" onClick={() => changeLeavePageHandler("first")}><ChevronFirst /></button>
           <button className="cursor-pointer" onClick={() => changeLeavePageHandler("prev")}><ChevronLeft /></button>
-          <span className="mx-2">Page {leaveIndexPage + 1} of {leaveTotalPages}</span>
+          <span className="mx-2">Trang {leaveIndexPage + 1} trên {leaveTotalPages}</span>
           <button className="cursor-pointer" onClick={() => changeLeavePageHandler("next")}><ChevronRight /></button>
           <button className="cursor-pointer" onClick={() => changeLeavePageHandler("last")}><ChevronLast /></button>
         </div>
@@ -291,7 +291,7 @@ export default function LeavesPage() {
         <div className="flex justify-end align-middle my-3 mr-2">
           <button className="cursor-pointer" onClick={() => changeOTPageHandler("first")}><ChevronFirst /></button>
           <button className="cursor-pointer" onClick={() => changeOTPageHandler("prev")}><ChevronLeft /></button>
-          <span className="mx-2">Page {otIndexPage + 1} of {otTotalPages}</span>
+          <span className="mx-2">Trang {otIndexPage + 1} trên {otTotalPages}</span>
           <button className="cursor-pointer" onClick={() => changeOTPageHandler("next")}><ChevronRight /></button>
           <button className="cursor-pointer" onClick={() => changeOTPageHandler("last")}><ChevronLast /></button>
         </div>

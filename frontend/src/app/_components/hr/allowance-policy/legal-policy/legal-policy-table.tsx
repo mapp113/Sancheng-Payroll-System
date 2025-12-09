@@ -48,7 +48,7 @@ export default function LegalPolicyTable() {
   return (
     <div className="w-full h-full overflow-y-auto rounded-2xl">
       <table className="w-full border-collapse">
-        <thead className="sticky top-0 bg-[#b8e9f7] z-10">
+        <thead className="sticky top-0 bg-[#F8FAFC] z-10">
           <tr>
             <th className="px-4 py-3 text-left text-sm font-semibold text-[#1D3E6A] border-b-2 border-[#8dd5ea]">
               Mã chính sách

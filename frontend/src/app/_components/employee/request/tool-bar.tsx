@@ -24,9 +24,9 @@ export default function EmployeeToolBar() {
         </div>
         <div className="ml-auto">
           <a className="border border-black bg-[#79deeb] text-[#4577a0] py-2 px-4 rounded hover:bg-[#49bee1] cursor-pointer"
-            href="request/ot-request">Create OT Request</a>
+            href="request/ot-request">Tạo yêu cầu OT</a>
           <a className="mx-5 border border-black bg-[#79deeb] text-[#4577a0] py-2 px-4 rounded hover:bg-[#4bacca] cursor-pointer"
-            href="request/leave-request">Create Leave</a>
+            href="request/leave-request">Tạo yêu cầu nghỉ phép</a>
         </div>
       </div>
     </div>
