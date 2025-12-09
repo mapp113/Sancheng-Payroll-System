@@ -16,7 +16,7 @@ export default function PayrollPage() {
   const [payrollParams, setPayrollParams] = useState<PayrollParam>({
     keyword: searchParams.get("search") || "",
     sortBy: searchParams.get("sortBy") || "",
-    date: searchParams.get("month") || (false ? new Date().toISOString().slice(0, 7) : "2025-10"),
+    date: searchParams.get("month") || (new Date().toISOString().slice(0, 7)),
     page: searchParams.get("page") || "0",
     totalPage: "",
   });
@@ -39,8 +39,22 @@ export default function PayrollPage() {
   return (
     <ParamsContext.Provider value={{ payrollParams, setPayrollParams }}>
       <DataContext.Provider value={{ payrollData, setPayrollData }}>
-        <PayrollToolbar />
-        <PayrollTable />
+        <div className="flex h-full flex-col gap-4 p-4 md:p-6">
+          <header className="flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <h1 className="text-2xl font-semibold">Bảng Lương Nhân Viên</h1>
+              <PayrollToolbar />
+            </div>
+          </header>
+
+          <div className="flex flex-1 flex-col gap-4 xl:flex-row xl:overflow-hidden">
+            <section className="flex-1 overflow-hidden rounded-2xl bg-white p-4 shadow-sm flex flex-col">
+              <div className="flex-1 overflow-hidden">
+                <PayrollTable />
+              </div>
+            </section>
+          </div>
+        </div>
       </DataContext.Provider>
     </ParamsContext.Provider>
   );

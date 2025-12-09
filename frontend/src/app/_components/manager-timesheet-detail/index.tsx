@@ -20,6 +20,7 @@ import {formatDecimal, formatHours, formatTime} from "./utils";
 import {useState, useEffect, useContext} from "react";
 import {TimesheetDetailParam} from "./context";
 import FormPopBoxNotScroll from "../common/pop-box/form-not-scroll";
+import { useRouter } from "next/navigation";
 
 // Thêm interface cho PayComponent
 interface PayComponentResponse {
@@ -55,6 +56,7 @@ export default function ManagerTimesheetDetail({
                                                    detail,
                                                    view = "timesheet",
                                                }: ManagerTimesheetDetailProps) {
+    const router = useRouter();
     const [startDate, setStartDate] = useState(detail.startDate);
     const [endDate, setEndDate] = useState(detail.endDate);
     const [employeeInfo, setEmployeeInfo] = useState<EmployeeInfomation | null>(null);
@@ -253,6 +255,7 @@ export default function ManagerTimesheetDetail({
                             setStartDate(s);
                             setEndDate(e);
                         }}
+                        employeeCode={timesheetParams?.employeeCode}
                     />
                     <OtherEntriesTable
                         entries={detail.otherEntries}
@@ -278,6 +281,7 @@ export default function ManagerTimesheetDetail({
                         }}
                         leaveSummary={detail.leaveSummary}
                         attendanceSummary={attendanceSummary}
+                        employeeCode={timesheetParams?.employeeCode}
                     />
                 </div>
 
@@ -309,12 +313,16 @@ function LeaveSummaryCard({
                               onChange,
                               leaveSummary,
                               attendanceSummary,
+                              employeeCode,
                           }: {
     month: string;
     onChange: (s: string, e: string) => void;
     leaveSummary: ManagerTimesheetDetailData["leaveSummary"];
     attendanceSummary: AttendanceSummary | null;
+    employeeCode?: string;
 }) {
+    const router = useRouter();
+    
     return (
         <div
             className="rounded-2xl border border-dashed border-[#4AB4DE] bg-[#F4FBFF] p-5 text-[#1D3E6A] shadow-[6px_6px_0_#CCE1F0]">
@@ -329,9 +337,8 @@ function LeaveSummaryCard({
                     value={month.slice(0, 7)}
                     onChange={(e) => {
                         const selectedMonth = e.target.value;
-                        const monthRange = getMonthRange(selectedMonth);
-                        if (monthRange) {
-                            onChange(monthRange.start, monthRange.end);
+                        if (employeeCode) {
+                            router.push(`/manager/timesheet-detail?employeeCode=${employeeCode}&month=${selectedMonth}`);
                         }
                     }}
                     className="rounded-xl border border-[#CCE1F0] bg-white px-3 py-2 text-sm text-[#1D3E6A] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4AB4DE]"
@@ -531,26 +538,16 @@ function OtherPeriodCard({
                              startDate,
                              endDate,
                              onChange,
+                             employeeCode,
                          }: {
     startDate: string;
     endDate: string;
     onChange: (s: string, e: string) => void;
+    employeeCode?: string;
 }) {
-
+    const router = useRouter();
     const startMonth = startDate.slice(0, 7);
-    const endMonth = endDate.slice(0, 7);
 
-    const handleMonthChange = (month: string, isStart: boolean) => {
-        const monthRange = getMonthRange(month);
-
-        if (!monthRange) return;
-
-        if (isStart) {
-            onChange(monthRange.start, endDate);
-        } else {
-            onChange(startDate, monthRange.end);
-        }
-    };
     return (
         <div
             className="rounded-2xl border border-dashed border-[#4AB4DE] bg-[#F4FBFF] p-5 text-[#1D3E6A] shadow-[6px_6px_0_#CCE1F0]">
@@ -561,7 +558,12 @@ function OtherPeriodCard({
                 <input
                     type="month"
                     value={startMonth}
-                    onChange={(e) => handleMonthChange(e.target.value, true)}
+                    onChange={(e) => {
+                        const selectedMonth = e.target.value;
+                        if (employeeCode) {
+                            router.push(`/manager/timesheet-detail?employeeCode=${employeeCode}&month=${selectedMonth}`);
+                        }
+                    }}
                     className="border rounded px-2 py-1 text-sm"
                 />
             </div>
@@ -616,7 +618,7 @@ function OtherEntriesTable({
     return (
         <section
             className="overflow-hidden rounded-2xl border border-black bg-white text-[#1D3E6A] shadow-[6px_6px_0_#CCE1F0]">
-            <div className="h-[100px] overflow-y-auto">
+            <div className="h-fit max-h-[600px] overflow-y-auto">
                 <table className="w-full border-collapse">
                     <thead
                         className="bg-[#CCE1F0] text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] sticky top-0 z-10">
@@ -740,6 +742,11 @@ function AttendanceDayDetailPopup({
     const [isDayMeal, setIsDayMeal] = useState(attendanceData.isDayMeal);
     const [isSaving, setIsSaving] = useState(false);
 
+    // Lưu giá trị ban đầu để kiểm tra
+    const initialIsLateCounted = attendanceData.isLateCounted;
+    const initialIsEarlyLeaveCounted = attendanceData.isEarlyLeaveCounted;
+    const initialIsDayMeal = attendanceData.isDayMeal;
+
     const formatDateTime = (dateTime: string) => {
         if (!dateTime) return "--";
         const timePart = dateTime.split('T')[1];
@@ -809,7 +816,7 @@ function AttendanceDayDetailPopup({
                 </div>
 
                 {/* Main Content - Responsive Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto max-h-[50vh] lg:max-h-[60vh]">
                     {/* Left Column */}
                     <div className="space-y-6">
                         {/* Employee Info */}
@@ -890,7 +897,7 @@ function AttendanceDayDetailPopup({
                                 <input
                                     type="checkbox"
                                     checked={isLateCounted}
-                                    disabled={!isEditing}
+                                    disabled={!isEditing || !initialIsLateCounted}
                                     onChange={(e) => setIsLateCounted(e.target.checked)}
                                     className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE] cursor-pointer disabled:cursor-not-allowed"
                                 />
@@ -901,7 +908,7 @@ function AttendanceDayDetailPopup({
                                 <input
                                     type="checkbox"
                                     checked={isEarlyLeaveCounted}
-                                    disabled={!isEditing}
+                                    disabled={!isEditing || !initialIsEarlyLeaveCounted}
                                     onChange={(e) => setIsEarlyLeaveCounted(e.target.checked)}
                                     className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE] cursor-pointer disabled:cursor-not-allowed"
                                 />
@@ -932,7 +939,7 @@ function AttendanceDayDetailPopup({
                                 <input
                                     type="checkbox"
                                     checked={isDayMeal}
-                                    disabled={!isEditing}
+                                    disabled={!isEditing || !initialIsDayMeal}
                                     onChange={(e) => setIsDayMeal(e.target.checked)}
                                     className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE] cursor-pointer disabled:cursor-not-allowed"
                                 />

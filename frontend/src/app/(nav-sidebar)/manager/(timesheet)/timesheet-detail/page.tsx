@@ -30,7 +30,7 @@ export default function ManagerTimesheetDetailPage() {
         [activeTab]
     );
 
-    const view = activeTab === "Other" ? "other" : "timesheet";
+    const view = activeTab === "Khác" ? "other" : "timesheet";
 
     return (
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 pb-12">
