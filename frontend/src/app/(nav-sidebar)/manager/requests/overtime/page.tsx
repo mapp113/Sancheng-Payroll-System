@@ -5,7 +5,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import OvertimeBalancePopup from "@/app/_components/manager/requests/overtime/overtime-balance-popup";
 import { OTResponseData } from "@/app/_components/employee/request/types";
-import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Info } from "lucide-react";
+import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Search } from "lucide-react";
 
 function OvertimeContent() {
   const router = useRouter();
@@ -133,100 +133,120 @@ function OvertimeContent() {
   const filteredRequests = otRequests;
   
   return (
-    <div className="w-full p-4">
-      <div>
-        <input 
-          className="border border-black rounded-2xl px-4 py-2" 
-          placeholder="Tìm kiếm" 
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          onKeyDown={handleSearchKeyDown}
-        />
-        <button
-          onClick={() => setShowOvertimePopup(true)}
-          className="ml-4 bg-[#88ccfd] text-blue-900 px-4 py-2 rounded hover:bg-[#4cb4fe] transition-colors cursor-pointer"
-        >
-          Quản lí thời gian overtime
-        </button>
-      </div>
-      <hr className="my-4 border-black" />
-      <div className="w-full h-fit border border-black rounded-2xl py-4">
-        <div className="flex flex-row px-4 mb-4">
-          <h1 className="text-2xl font-bold">Danh sách xin Overtime</h1>
-          <input 
-            type="month" 
-            className="ml-auto border border-black rounded-xl p-1" 
-            value={selectedMonth}
-            onChange={(e) => {
-              setSelectedMonth(e.target.value);
-              setIndexPage(0);
-            }}
-          />
+    <div className="flex h-full flex-col gap-4 p-4 md:p-6">
+      <header className="flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <h1 className="text-2xl font-semibold">Danh Sách Xin Overtime</h1>
+          <button
+            onClick={() => setShowOvertimePopup(true)}
+            className="rounded-full bg-[#4AB4DE] px-4 py-2 text-sm font-medium text-white hover:bg-[#3a9bc5] transition-colors cursor-pointer"
+          >
+            Quản lí thời gian overtime
+          </button>
         </div>
-        <div className="w-full h-[calc(100%-56px)] overflow-auto">
-          <table className="w-full table-auto">
-            <thead className="bg-gray-200 sticky top-0">
-              <tr>
-                <th className="px-4 py-2 text-left">Họ và tên</th>
-                <th className="px-4 py-2 text-center">Thời gian gửi yêu cầu</th>
-                <th className="px-4 py-2 text-center">Thời gian Overtime</th>
-                <th className="px-4 py-2 text-center">Status</th>
-                <th className="px-4 py-2 text-left">Lí do</th>
-                <th className="px-4 py-2 text-center"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="text-center py-4">
-                    Đang tải...
-                  </td>
-                </tr>
-              ) : filteredRequests.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="text-center py-4">
-                    Không có dữ liệu
-                  </td>
-                </tr>
-              ) : (
-                filteredRequests.map((request) => (
-                  <tr key={request.id} className="border-b hover:bg-gray-50">
-                    <td className="px-4 py-2 text-left">
-                      <div>{request.fullName}</div>
-                      <div>{request.employeeCode}</div>
-                    </td>
-                    <td className="px-4 py-2 text-center">
-                      {new Date(request.createdDateOT).toLocaleDateString('vi-VN')}
-                    </td>
-                    <td className="px-4 py-2 text-center">
-                      {request.fromTime.substring(11, 16)} - {request.toTime.substring(11, 16)}
-                    </td>
-                    <td className={`px-4 py-2 text-center font-semibold ${getStatusColor(request.status)}`}>
-                      {getStatusText(request.status)}
-                    </td>
-                    <td className="px-4 py-2 text-left">{request.reason}</td>
-                    <td className="px-4 py-2 text-center">
-                      <a 
-                        className="hover:underline cursor-pointer" 
-                        href={`/manager/requests/overtime/approval?id=${request.id}&page=${indexPage}&month=${selectedMonth}${keyword ? `&search=${encodeURIComponent(keyword)}` : ''}`}
-                      >
-                        <Info />
-                      </a>
-                    </td>
-                  </tr>
-                ))
+      </header>
+
+      <div className="flex flex-1 flex-col gap-4 xl:flex-row xl:overflow-hidden">
+        <section className="flex-1 overflow-hidden rounded-2xl bg-white p-4 shadow-sm flex flex-col">
+          <div className="flex-1 overflow-hidden">
+            <div className="h-full w-full flex flex-col">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <label className="relative flex items-center">
+                    <Search className="absolute left-3 h-4 w-4 text-[#94A3B8]" />
+                    <input
+                      placeholder="Tìm kiếm"
+                      className="w-full rounded-full border border-[#E2E8F0] py-2 pl-9 pr-3 text-sm focus:border-[#4AB4DE] focus:outline-none"
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      onKeyDown={handleSearchKeyDown}
+                    />
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center rounded-full border border-[#E2E8F0] px-3 py-2">
+                    <input
+                      type="month"
+                      value={selectedMonth}
+                      onChange={(e) => {
+                        setSelectedMonth(e.target.value);
+                        setIndexPage(0);
+                      }}
+                      className="focus:outline-0 text-sm bg-transparent"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="flex-1 overflow-auto rounded-2xl border border-[#E2E8F0]">
+                <table className="min-w-full divide-y divide-[#E2E8F0] text-sm">
+                  <thead className="bg-[#F8FAFC] text-left sticky top-0">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">Họ và tên</th>
+                      <th className="px-4 py-3 font-medium text-center">Thời gian gửi yêu cầu</th>
+                      <th className="px-4 py-3 font-medium text-center">Thời gian Overtime</th>
+                      <th className="px-4 py-3 font-medium text-center">Trạng thái</th>
+                      <th className="px-4 py-3 font-medium">Lí do</th>
+                      <th className="px-4 py-3 font-medium text-center"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E2E8F0]">
+                    {loading ? (
+                      <tr>
+                        <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500">
+                          Đang tải...
+                        </td>
+                      </tr>
+                    ) : filteredRequests.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500">
+                          Không có dữ liệu
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredRequests.map((request) => (
+                        <tr key={request.id} className="hover:bg-[#F1F5F9]">
+                          <td className="whitespace-nowrap px-4 py-3">
+                            <span className="font-medium">{request.fullName}</span><br />
+                            <span className="text-xs text-slate-500">{request.employeeCode}</span>
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-center">
+                            {new Date(request.createdDateOT).toLocaleDateString('vi-VN')}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-center">
+                            {request.fromTime.substring(11, 16)} - {request.toTime.substring(11, 16)}
+                          </td>
+                          <td className={`whitespace-nowrap px-4 py-3 text-center font-semibold ${getStatusColor(request.status)}`}>
+                            {getStatusText(request.status)}
+                          </td>
+                          <td className="px-4 py-3">{request.reason}</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-center">
+                            <a
+                              className="inline-block rounded-full border border-[#4AB4DE] px-4 py-1 text-xs font-medium text-[#4AB4DE] hover:bg-[#E0F2FE] cursor-pointer"
+                              href={`/manager/requests/overtime/approval?id=${request.id}&page=${indexPage}&month=${selectedMonth}${keyword ? `&search=${encodeURIComponent(keyword)}` : ''}`}
+                            >
+                              Chi tiết
+                            </a>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {!loading && filteredRequests.length > 0 && (
+                <div className="flex justify-end items-center gap-2 mt-4 text-sm">
+                  <button className="cursor-pointer p-2 hover:bg-gray-100 rounded transition-colors" onClick={() => changePageHandler("first")} disabled={indexPage === 0}><ChevronFirst className="h-4 w-4" /></button>
+                  <button className="cursor-pointer p-2 hover:bg-gray-100 rounded transition-colors" onClick={() => changePageHandler("prev")} disabled={indexPage === 0}><ChevronLeft className="h-4 w-4" /></button>
+                  <span className="px-3 text-slate-600">Trang {indexPage + 1} / {totalPages}</span>
+                  <button className="cursor-pointer p-2 hover:bg-gray-100 rounded transition-colors" onClick={() => changePageHandler("next")} disabled={indexPage >= totalPages - 1}><ChevronRight className="h-4 w-4" /></button>
+                  <button className="cursor-pointer p-2 hover:bg-gray-100 rounded transition-colors" onClick={() => changePageHandler("last")} disabled={indexPage >= totalPages - 1}><ChevronLast className="h-4 w-4" /></button>
+                </div>
               )}
-            </tbody>
-          </table>
-        </div>
-        <div className="flex justify-end align-middle my-5 mr-5">
-          <button className="cursor-pointer" onClick={() => changePageHandler("first")}><ChevronFirst /></button>
-          <button className="cursor-pointer" onClick={() => changePageHandler("prev")}><ChevronLeft /></button>
-          <span className="mx-2">Page {indexPage + 1} of {totalPages}</span>
-          <button className="cursor-pointer" onClick={() => changePageHandler("next")}><ChevronRight /></button>
-          <button className="cursor-pointer" onClick={() => changePageHandler("last")}><ChevronLast /></button>
-        </div>
+            </div>
+          </div>
+        </section>
       </div>
+
       {showOvertimePopup && (
         <OvertimeBalancePopup onClose={() => setShowOvertimePopup(false)} />
       )}

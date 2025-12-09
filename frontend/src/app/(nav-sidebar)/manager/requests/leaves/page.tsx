@@ -52,7 +52,7 @@ function ManagerLeavesContent() {
   return (
     <ParamsContext.Provider value={{ params, setParams }}>
       <DataContext.Provider value={{ leaves, setLeaves, loading, setLoading }}>
-        <div className="flex h-full flex-col gap-4 bg-[#F8FAFC] p-4 md:p-6">
+        <div className="flex h-full flex-col gap-4 p-4 md:p-6">
           <header className="flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <h1 className="text-2xl font-semibold">Danh Sách Nghỉ Phép</h1>
