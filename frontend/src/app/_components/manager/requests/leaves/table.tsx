@@ -1,12 +1,18 @@
 "use client";
 
 import { useContext, useEffect } from "react";
-import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Info } from "lucide-react";
+import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { ParamsContext, DataContext } from "./context";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 
-export function ManagerLeavesTable() {
+interface ManagerLeavesTableProps {
+  searchInput: string;
+  setSearchInput: (value: string) => void;
+  handleSearchKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+}
+
+export function ManagerLeavesTable({ searchInput, setSearchInput, handleSearchKeyDown }: ManagerLeavesTableProps) {
   const { params, setParams } = useContext(ParamsContext)!;
   const { leaves, setLeaves, loading, setLoading } = useContext(DataContext)!;
 
@@ -86,64 +92,79 @@ export function ManagerLeavesTable() {
   };
 
   return (
-    <div className="w-full h-fit my-5 border border-black rounded-lg shadow-md">
-      <div className="flex flex-row p-5">
-        <span className="text-2xl font-semibold">Danh sách nghỉ phép</span>
-        <input 
-          type="month" 
-          value={params.date} 
-          onChange={(e) => setParams((prev) => ({ ...prev, date: e.target.value }))}
-          className="ml-auto border rounded-2xl border-gray-700 px-3 py-1" 
-        />
+    <div className="h-full w-full flex flex-col">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <label className="relative flex items-center">
+            <Search className="absolute left-3 h-4 w-4 text-[#94A3B8]" />
+            <input
+              placeholder="Tìm kiếm"
+              className="w-full rounded-full border border-[#E2E8F0] py-2 pl-9 pr-3 text-sm focus:border-[#4AB4DE] focus:outline-none"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+            />
+          </label>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center rounded-full border border-[#E2E8F0] px-3 py-2">
+            <input
+              type="month"
+              value={params.date}
+              onChange={(e) => setParams((prev) => ({ ...prev, date: e.target.value }))}
+              className="focus:outline-0 text-sm bg-transparent"
+            />
+          </div>
+        </div>
       </div>
-      <div className="w-full h-[calc(100%-72px)] overflow-auto">
-        <table className="w-full table-auto">
-          <thead className="bg-gray-200 sticky top-0">
+      <div className="flex-1 overflow-auto rounded-2xl border border-[#E2E8F0]">
+        <table className="min-w-full divide-y divide-[#E2E8F0] text-sm">
+          <thead className="bg-[#F8FAFC] text-left sticky top-0">
             <tr>
-              <th className="px-4 py-2 text-left">Họ và tên</th>
-              <th className="px-4 py-2 text-center">Thời gian gửi yêu cầu</th>
-              <th className="px-4 py-2 text-center">Thời gian bắt đầu</th>
-              <th className="px-4 py-2 text-center">Thời gian nghỉ</th>
-              <th className="px-4 py-2 text-center">Status</th>
-              <th className="px-4 py-2 text-left">Lí do</th>
-              <th className="px-4 py-2 text-center"></th>
+              <th className="px-4 py-3 font-medium">Họ và tên</th>
+              <th className="px-4 py-3 font-medium text-center">Thời gian gửi yêu cầu</th>
+              <th className="px-4 py-3 font-medium text-center">Thời gian bắt đầu</th>
+              <th className="px-4 py-3 font-medium text-center">Thời gian nghỉ</th>
+              <th className="px-4 py-3 font-medium text-center">Trạng thái</th>
+              <th className="px-4 py-3 font-medium">Lí do</th>
+              <th className="px-4 py-3 font-medium text-center"></th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-[#E2E8F0]">
             {loading ? (
               <tr>
-                <td colSpan={6} className="text-center py-4">
+                <td colSpan={7} className="px-4 py-6 text-center text-sm text-slate-500">
                   Đang tải...
                 </td>
               </tr>
             ) : leaves.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center py-4">
+                <td colSpan={7} className="px-4 py-6 text-center text-sm text-slate-500">
                   Không có dữ liệu
                 </td>
               </tr>
             ) : (
               leaves.map((leave) => (
-                <tr key={leave.id} className="border-b hover:bg-gray-50">
-                  <td className="px-4 py-2 text-left">
-                    <span>{leave.fullName}</span><br />
-                    <span className="text-sm">{leave.employeeCode}</span>
+                <tr key={leave.id} className="hover:bg-[#F1F5F9]">
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <span className="font-medium">{leave.fullName}</span><br />
+                    <span className="text-xs text-slate-500">{leave.employeeCode}</span>
                   </td>
-                  <td className="px-4 py-2 text-center">{leave.createDate ? new Date(leave.createDate).toLocaleDateString('vi-VN') : '-'}</td>
-                  <td className="px-4 py-2 text-center">{new Date(leave.fromDate).toLocaleDateString('vi-VN')}</td>
-                  <td className="px-4 py-2 text-center">
+                  <td className="whitespace-nowrap px-4 py-3 text-center">{leave.createDate ? new Date(leave.createDate).toLocaleDateString('vi-VN') : '-'}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-center">{new Date(leave.fromDate).toLocaleDateString('vi-VN')}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-center">
                     {(() => {
                       const days = Math.ceil((new Date(leave.toDate).getTime() - new Date(leave.fromDate).getTime()) / (1000 * 60 * 60 * 24));
                       return days === 0 ? 1 : days;
                     })()} ngày
                   </td>
-                  <td className={`px-4 py-2 text-center font-semibold ${getStatusColor(leave.status)}`}>
+                  <td className={`whitespace-nowrap px-4 py-3 text-center font-semibold ${getStatusColor(leave.status)}`}>
                     {getStatusText(leave.status)}
                   </td>
-                  <td className="px-4 py-2 text-left">{leave.reason}</td>
-                  <td className="px-4 py-2 text-center">
-                    <a href={`/manager/requests/leaves/approval?id=${leave.id}&page=${params.indexPage}&month=${params.date}${params.keyword ? `&search=${encodeURIComponent(params.keyword)}` : ''}`} className="cursor-pointer">
-                      <Info />
+                  <td className="px-4 py-3">{leave.reason}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-center">
+                    <a href={`/manager/requests/leaves/approval?id=${leave.id}&page=${params.indexPage}&month=${params.date}${params.keyword ? `&search=${encodeURIComponent(params.keyword)}` : ''}`} className="inline-block rounded-full border border-[#4AB4DE] px-4 py-1 text-xs font-medium text-[#4AB4DE] hover:bg-[#E0F2FE] cursor-pointer">
+                      Chi tiết
                     </a>
                   </td>
                 </tr>
@@ -152,13 +173,15 @@ export function ManagerLeavesTable() {
           </tbody>
         </table>
       </div>
-      <div className="flex justify-end align-middle my-5 mr-5">
-        <button className="cursor-pointer" onClick={() => changePageHandler("first")}><ChevronFirst /></button>
-        <button className="cursor-pointer" onClick={() => changePageHandler("prev")}><ChevronLeft /></button>
-        <span className="mx-2">Page {params.indexPage + 1} of {params.totalPages ?? 1}</span>
-        <button className="cursor-pointer" onClick={() => changePageHandler("next")}><ChevronRight /></button>
-        <button className="cursor-pointer" onClick={() => changePageHandler("last")}><ChevronLast /></button>
-      </div>
+      {!loading && leaves.length > 0 && (
+        <div className="flex justify-end items-center gap-2 mt-4 text-sm">
+          <button className="cursor-pointer p-2 hover:bg-gray-100 rounded transition-colors" onClick={() => changePageHandler("first")} disabled={params.indexPage === 0}><ChevronFirst className="h-4 w-4" /></button>
+          <button className="cursor-pointer p-2 hover:bg-gray-100 rounded transition-colors" onClick={() => changePageHandler("prev")} disabled={params.indexPage === 0}><ChevronLeft className="h-4 w-4" /></button>
+          <span className="px-3 text-slate-600">Trang {params.indexPage + 1} / {params.totalPages ?? 1}</span>
+          <button className="cursor-pointer p-2 hover:bg-gray-100 rounded transition-colors" onClick={() => changePageHandler("next")} disabled={params.indexPage >= (params.totalPages ?? 1) - 1}><ChevronRight className="h-4 w-4" /></button>
+          <button className="cursor-pointer p-2 hover:bg-gray-100 rounded transition-colors" onClick={() => changePageHandler("last")} disabled={params.indexPage >= (params.totalPages ?? 1) - 1}><ChevronLast className="h-4 w-4" /></button>
+        </div>
+      )}
     </div>
   );
 }

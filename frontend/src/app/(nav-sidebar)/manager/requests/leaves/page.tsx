@@ -52,25 +52,26 @@ export default function ManagerLeavesPage() {
   return (
     <ParamsContext.Provider value={{ params, setParams }}>
       <DataContext.Provider value={{ leaves, setLeaves, loading, setLoading }}>
-        <div className="w-full p-4">
-          <div className="flex flex-row">
-            <input 
-              placeholder="Tìm kiếm" 
-              className="ml-10 border border-gray-300 rounded px-3 py-1" 
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
-            />
-            <button 
-              onClick={() => setShowQuotaPopup(true)}
-              className="ml-auto mr-5 bg-[#88ccfd] text-blue-900 px-4 py-2 rounded hover:bg-[#4cb4fe] transition-colors cursor-pointer"
-            >
-              Quản lí số ngày nghỉ phép
-            </button>
-          </div>
+        <div className="flex h-full flex-col gap-4 bg-[#F8FAFC] p-4 md:p-6">
+          <header className="flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <h1 className="text-2xl font-semibold">Danh Sách Nghỉ Phép</h1>
+              <button 
+                onClick={() => setShowQuotaPopup(true)}
+                className="rounded-full bg-[#4AB4DE] px-4 py-2 text-sm font-medium text-white hover:bg-[#3a9bc5] transition-colors cursor-pointer"
+              >
+                Quản lí số ngày nghỉ phép
+              </button>
+            </div>
+          </header>
 
-          <hr className="mt-4" />
-          <ManagerLeavesTable />
+          <div className="flex flex-1 flex-col gap-4 xl:flex-row xl:overflow-hidden">
+            <section className="flex-1 overflow-hidden rounded-2xl bg-white p-4 shadow-sm flex flex-col">
+              <div className="flex-1 overflow-hidden">
+                <ManagerLeavesTable searchInput={searchInput} setSearchInput={setSearchInput} handleSearchKeyDown={handleSearchKeyDown} />
+              </div>
+            </section>
+          </div>
         </div>
 
         {showQuotaPopup && (

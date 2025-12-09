@@ -3,22 +3,27 @@ import AllowanceTable from "@/app/_components/hr/allowance-policy/allowance/allo
 
 export default function AllowancePolicyPage() {
   return (
-    <div className="w-full h-full p-6">
-      <h1 className="w-full px-10 py-5 text-2xl font-bold mb-4 bg-[#c0f2fd] rounded-2xl">Quản lí chính sách trợ cấp</h1>
-      <div className="">
-        <h2 className="text-xl font-semibold mb-2">Chính sách pháp lí</h2>
-        <div className="w-full h-[30dvh] bg-[#d5f1f5] rounded-2xl">
-          <LegalPolicyTable />
+    <div className="flex h-full flex-col gap-4 bg-[#F8FAFC] p-4 md:p-6">
+      <header className="flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <h1 className="text-2xl font-semibold">Quản Lí Chính Sách Trợ Cấp</h1>
         </div>
-      </div>
-      <div className="">
-        <div className="flex flex-row justify-between items-center mb-2 mt-1">
-          <h2 className="text-xl font-semibold mb-2">Các loại khoản trợ cấp</h2>
-          {/* <button className="bg-[#89cdfe] hover:bg-[#63ade3] text-blue-900 border border-blue-900 rounded-lg p-2 mr-4 cursor-pointer">+ Thêm trợ cấp, khoản mới</button> */}
-        </div>
-        <div className="w-full h-[30dvh] bg-[#d5f1f5] rounded-2xl">
-          <AllowanceTable />
-        </div>
+      </header>
+
+      <div className="flex flex-1 flex-col gap-4 overflow-hidden">
+        <section className="flex-1 overflow-hidden rounded-2xl bg-white p-4 shadow-sm flex flex-col">
+          <h2 className="text-lg font-semibold mb-4">Chính sách pháp lí</h2>
+          <div className="flex-1 overflow-hidden">
+            <LegalPolicyTable />
+          </div>
+        </section>
+
+        <section className="flex-1 overflow-hidden rounded-2xl bg-white p-4 shadow-sm flex flex-col">
+          <h2 className="text-lg font-semibold mb-4">Các loại khoản trợ cấp</h2>
+          <div className="flex-1 overflow-hidden">
+            <AllowanceTable />
+          </div>
+        </section>
       </div>
     </div>
   )

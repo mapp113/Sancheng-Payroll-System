@@ -22,10 +22,6 @@ export default function LeavesToolBar() {
           <br />
           <span className="font-bold text-lg mr-2">Mã nhân viên:</span> <span>{userCode}</span>
         </div>
-        <div className="ml-auto">
-          <button className="border border-black bg-[#79deeb] text-[#4577a0] py-2 px-4 rounded hover:bg-[#49bee1] cursor-pointer">Create Report</button>
-          <button className="mx-5 border border-black bg-[#79deeb] text-[#4577a0] py-2 px-4 rounded hover:bg-[#4bacca] cursor-pointer">Create Leave</button>
-        </div>
       </div>
     </div>
   );
