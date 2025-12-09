@@ -3,6 +3,7 @@ package com.g98.sangchengpayrollmanager.service.impl;
 
 import com.g98.sangchengpayrollmanager.model.dto.payroll.PaySummaryComponentItem;
 import com.g98.sangchengpayrollmanager.model.entity.*;
+import com.g98.sangchengpayrollmanager.model.enums.PaySummaryStatus;
 import com.g98.sangchengpayrollmanager.repository.*;
 import com.g98.sangchengpayrollmanager.service.*;
 import lombok.RequiredArgsConstructor;
@@ -105,9 +106,8 @@ public class PayrollServiceImpl implements PayrollService {
         if (summary == null) {
             // chưa có draft -> tạo mới
             summary = PaySummary.builder()
-                    .salaryInformation(salaryInformationList.get(0))
                     .date(month)
-                    .status("draft")
+                    .status(String.valueOf(PaySummaryStatus.DRAFT).toUpperCase())
                     .user(salaryInformationList.get(0).getUser())
                     .components(new ArrayList<>())
                     .build();
@@ -120,6 +120,7 @@ public class PayrollServiceImpl implements PayrollService {
 
 
         // set lại các field đã tính
+        summary.setSalaryInformation(salaryInformationList.get(0));
         summary.setGrossIncome(grossIncome);
         summary.setAssessableIncome(assessableIncome);
         summary.setTaxableIncome(taxableIncome);

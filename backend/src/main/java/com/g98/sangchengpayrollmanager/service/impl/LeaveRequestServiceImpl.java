@@ -49,7 +49,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         leaveRequestDTO.setToDate(toDate);
 
         if (leaveRequestDTO.getFromDate().isBefore(today)) {
-            throw new IllegalArgumentException("Ngày bắt đầu nghỉ phải từ hôm nay ");
+            throw new IllegalArgumentException("Ngày bắt đầu không được trong quá khứ ");
         }
 
         if (leaveRequestDTO.getToDate().isBefore(leaveRequestDTO.getFromDate())) {

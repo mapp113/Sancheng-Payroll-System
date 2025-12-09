@@ -16,20 +16,18 @@ import java.util.List;
 class PayrollServiceImplTest {
 
 
-//    private PayrollServiceImpl payrollService;
+    //    private PayrollServiceImpl payrollService;
+    @Autowired
+    private AttDailySummaryService attDailySummaryService;
     @Autowired
     private AttMonthSummaryService attMonthSummaryService;
 
-
-    //private AttDailySummaryService attDailySummaryService;
-    //SalaryInformationRepository salaryInformationRepository;
-
     @Test
     void testCalculateMonthlySalary() {
-        attMonthSummaryService.createMonthSummary("EMP007", LocalDate.of(2023, 8, 31));
-        attMonthSummaryService.createMonthSummary("EMP006", LocalDate.of(2023, 8, 31));
-        attMonthSummaryService.createMonthSummary("EMP005", LocalDate.of(2023, 8, 31));
-        attMonthSummaryService.createMonthSummary("EMP004", LocalDate.of(2023, 8, 31));
+//        attMonthSummaryService.createMonthSummary("EMP007", LocalDate.of(2023, 8, 31));
+//        attMonthSummaryService.createMonthSummary("EMP006", LocalDate.of(2023, 8, 31));
+//        attMonthSummaryService.createMonthSummary("EMP005", LocalDate.of(2023, 8, 31));
+//        attMonthSummaryService.createMonthSummary("EMP004", LocalDate.of(2023, 8, 31));
 //        payrollService.calculateMonthlySalary(
 //                "EMP010",
 //                LocalDate.of(2023, 8, 1),   // tháng tính lương để lấy monthSumary
@@ -37,68 +35,40 @@ class PayrollServiceImplTest {
 //                LocalDate.of(2023, 8, 31)  //monthEnd
 //        );
 //        attMonthSummaryService.createMonthSummary("EMP010", LocalDate.of(2023, 8, 31));
+        attDailySummaryService.createDailySummary("EMP002", LocalDate.of(2025, 12, 22));
 
-//                payrollService.calculateMonthlySalary(
-//                "EMP001",
-//                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
-//                LocalDate.of(2025, 9, 1), //monthStart
-//                LocalDate.of(2025, 9, 30)  //monthEnd
-//        );
-//        payrollService.calculateMonthlySalary(
-//                "EMP002",
-//                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
-//                LocalDate.of(2025, 9, 1), //monthStart
-//                LocalDate.of(2025, 9, 30)  //monthEnd
-//        );
-//        payrollService.calculateMonthlySalary(
-//                "EMP003",
-//                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
-//                LocalDate.of(2025, 9, 1), //monthStart
-//                LocalDate.of(2025, 9, 30)  //monthEnd
-//        );
-//        payrollService.calculateMonthlySalary(
-//                "EMP004",
-//                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
-//                LocalDate.of(2025, 9, 1), //monthStart
-//                LocalDate.of(2025, 9, 30)  //monthEnd
-//        );
-//        payrollService.calculateMonthlySalary(
-//                "EMP005",
-//                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
-//                LocalDate.of(2025, 9, 1), //monthStart
-//                LocalDate.of(2025, 9, 30)  //monthEnd
-//        );
-//        payrollService.calculateMonthlySalary(
-//                "EMP006",
-//                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
-//                LocalDate.of(2025, 9, 1), //monthStart
-//                LocalDate.of(2025, 9, 30)  //monthEnd
-//        );
-//        payrollService.calculateMonthlySalary(
-//                "EMP007",
-//                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
-//                LocalDate.of(2025, 9, 1), //monthStart
-//                LocalDate.of(2025, 9, 30)  //monthEnd
-//        );
-//        payrollService.calculateMonthlySalary(
-//                "EMP008",
-//                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
-//                LocalDate.of(2025, 9, 1), //monthStart
-//                LocalDate.of(2025, 9, 30)  //monthEnd
-//        );
-//        payrollService.calculateMonthlySalary(
-//                "EMP009",
-//                LocalDate.of(2025, 9, 1),   // tháng tính lương để lấy monthSumary
-//                LocalDate.of(2025, 9, 1), //monthStart
-//                LocalDate.of(2025, 9, 30)  //monthEnd
-//        );
-
-
-
-
-
-//          attDailySummaryService.createDailySummary("EMP001", LocalDate.of(2025, 11, 16));
-
+//        attMonthSummaryService.createMonthSummary("EMP001", LocalDate.of(2025, 10, 31));
+//        attMonthSummaryService.createMonthSummary("EMP002", LocalDate.of(2025, 10, 31));
+//        attMonthSummaryService.createMonthSummary("EMP003", LocalDate.of(2025, 10, 31));
+//        attMonthSummaryService.createMonthSummary("EMP004", LocalDate.of(2025, 10, 31));
+//        attMonthSummaryService.createMonthSummary("EMP005", LocalDate.of(2025, 10, 31));
+//        attMonthSummaryService.createMonthSummary("EMP006", LocalDate.of(2025, 10, 31));
+//        attMonthSummaryService.createMonthSummary("EMP007", LocalDate.of(2025, 10, 31));
+//        attMonthSummaryService.createMonthSummary("EMP008", LocalDate.of(2025, 10, 31));
+//        attMonthSummaryService.createMonthSummary("EMP009", LocalDate.of(2025, 10, 31));
+//        attMonthSummaryService.createMonthSummary("EMP010", LocalDate.of(2025, 10, 31));
+//
+//        attMonthSummaryService.createMonthSummary("EMP001", LocalDate.of(2025, 11, 30));
+//        attMonthSummaryService.createMonthSummary("EMP002", LocalDate.of(2025, 11, 30));
+//        attMonthSummaryService.createMonthSummary("EMP003", LocalDate.of(2025, 11, 30));
+//        attMonthSummaryService.createMonthSummary("EMP004", LocalDate.of(2025, 11, 30));
+//        attMonthSummaryService.createMonthSummary("EMP005", LocalDate.of(2025, 11, 30));
+//        attMonthSummaryService.createMonthSummary("EMP006", LocalDate.of(2025, 11, 30));
+//        attMonthSummaryService.createMonthSummary("EMP007", LocalDate.of(2025, 11, 30));
+//        attMonthSummaryService.createMonthSummary("EMP008", LocalDate.of(2025, 11, 30));
+//        attMonthSummaryService.createMonthSummary("EMP009", LocalDate.of(2025, 11, 30));
+//        attMonthSummaryService.createMonthSummary("EMP010", LocalDate.of(2025, 11, 30));
+//
+//        attMonthSummaryService.createMonthSummary("EMP001", LocalDate.of(2025, 12, 31));
+//        attMonthSummaryService.createMonthSummary("EMP002", LocalDate.of(2025, 12, 31));
+//        attMonthSummaryService.createMonthSummary("EMP003", LocalDate.of(2025, 12, 31));
+//        attMonthSummaryService.createMonthSummary("EMP004", LocalDate.of(2025, 12, 31));
+//        attMonthSummaryService.createMonthSummary("EMP005", LocalDate.of(2025, 12, 31));
+//        attMonthSummaryService.createMonthSummary("EMP006", LocalDate.of(2025, 12, 31));
+//        attMonthSummaryService.createMonthSummary("EMP007", LocalDate.of(2025, 12, 31));
+//        attMonthSummaryService.createMonthSummary("EMP008", LocalDate.of(2025, 12, 31));
+//        attMonthSummaryService.createMonthSummary("EMP009", LocalDate.of(2025, 12, 31));
+//        attMonthSummaryService.createMonthSummary("EMP010", LocalDate.of(2025, 12, 31));
     }
 }
 
