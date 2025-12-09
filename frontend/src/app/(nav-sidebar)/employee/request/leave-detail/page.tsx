@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { File } from "lucide-react";
 import type { LeaveDetailResponse } from "@/app/_components/employee/request/types";
@@ -8,7 +8,7 @@ import DeleteConfirmation from "@/app/_components/common/pop-box/delete-confirma
 import SuccessNotification from "@/app/_components/common/pop-box/notification/success";
 import ErrorNotification from "@/app/_components/common/pop-box/notification/error";
 
-export default function LeavesDetailPage() {
+function LeavesDetailContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const [leaveData, setLeaveData] = useState<LeaveDetailResponse | null>(null);
@@ -278,5 +278,13 @@ export default function LeavesDetailPage() {
         message={errorMessage}
       />
     </div>
+  );
+}
+
+export default function LeavesDetailPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LeavesDetailContent />
+    </Suspense>
   );
 }

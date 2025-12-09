@@ -1,13 +1,13 @@
 "use client"
 
 import { getUserMeta } from "@/app/_components/utils/getUserData";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import OvertimeBalancePopup from "@/app/_components/manager/requests/overtime/overtime-balance-popup";
 import { OTResponseData } from "@/app/_components/employee/request/types";
 import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Info } from "lucide-react";
 
-export default function OvertimePage() {
+function OvertimeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -231,5 +231,13 @@ export default function OvertimePage() {
         <OvertimeBalancePopup onClose={() => setShowOvertimePopup(false)} />
       )}
     </div>
+  );
+}
+
+export default function OvertimePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <OvertimeContent />
+    </Suspense>
   );
 }

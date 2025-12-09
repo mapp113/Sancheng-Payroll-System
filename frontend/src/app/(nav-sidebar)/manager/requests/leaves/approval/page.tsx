@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { File } from "lucide-react";
 import type { LeaveDetailResponse } from "@/app/_components/employee/request/types";
@@ -8,7 +8,7 @@ import RequestConfirmation from "@/app/_components/common/pop-box/request-confir
 import SuccessNotification from "@/app/_components/common/pop-box/notification/success";
 import ErrorNotification from "@/app/_components/common/pop-box/notification/error";
 
-export default function ManagerApprovalLeavesPage() {
+function ManagerApprovalLeavesContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const id = searchParams.get("id");
@@ -296,5 +296,13 @@ export default function ManagerApprovalLeavesPage() {
         message={errorMessage}
       />
     </div>
+  );
+}
+
+export default function ManagerApprovalLeavesPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ManagerApprovalLeavesContent />
+    </Suspense>
   );
 }

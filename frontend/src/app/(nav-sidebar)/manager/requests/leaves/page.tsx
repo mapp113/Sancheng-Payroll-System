@@ -3,12 +3,12 @@
 import { ManagerLeavesTable } from "@/app/_components/manager/requests/leaves/table";
 import { ManagerLeavesParams, ManagerLeavesResonse } from "@/app/_components/manager/requests/leaves/types";
 import { ParamsContext, DataContext } from "@/app/_components/manager/requests/leaves/context";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getUserMeta } from "@/app/_components/utils/getUserData";
 import LeaveQuotaPopup from "@/app/_components/manager/requests/leaves/leave-quota-popup";
 
-export default function ManagerLeavesPage() {
+function ManagerLeavesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -79,5 +79,13 @@ export default function ManagerLeavesPage() {
         )}
       </DataContext.Provider>
     </ParamsContext.Provider>
+  );
+}
+
+export default function ManagerLeavesPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ManagerLeavesContent />
+    </Suspense>
   );
 }
