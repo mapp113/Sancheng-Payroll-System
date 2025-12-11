@@ -1,6 +1,7 @@
 package com.g98.sangchengpayrollmanager.controller;
 
 import com.g98.sangchengpayrollmanager.model.dto.ContractPdfDTO;
+import com.g98.sangchengpayrollmanager.model.dto.ContractTemplateDTO;
 import com.g98.sangchengpayrollmanager.model.dto.ContractUploadResponse;
 import com.g98.sangchengpayrollmanager.model.dto.UserDTO;
 import com.g98.sangchengpayrollmanager.model.dto.api.response.ApiResponse;
@@ -162,6 +163,22 @@ public class HrController {
                 .body(resource);
     }
 
+    @GetMapping("/users/{employeeCode}/contract/template")
+    public ResponseEntity<Resource> downloadContractTemplate(
+            @PathVariable String employeeCode
+    ) {
+        ContractTemplateDTO contractTemplate = employeeService.generateContractTemplate(employeeCode);
+
+        ByteArrayResource resource = new ByteArrayResource(contractTemplate.getContent());
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+                .contentLength(contractTemplate.getSize())
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + contractTemplate.getFileName() + "\"")
+                .body(resource);
+    }
 
     @PostMapping("/users/{employeeCode}/pay-components")
     public ApiResponse<PayComponentResponse> addPayComponent(

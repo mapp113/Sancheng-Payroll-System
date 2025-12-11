@@ -1,6 +1,7 @@
 package com.g98.sangchengpayrollmanager.service;
 
 import com.g98.sangchengpayrollmanager.model.dto.ContractPdfDTO;
+import com.g98.sangchengpayrollmanager.model.dto.ContractTemplateDTO;
 import com.g98.sangchengpayrollmanager.model.dto.ContractUploadResponse;
 import com.g98.sangchengpayrollmanager.model.dto.employee.EmployeeInfoResponse;
 import com.g98.sangchengpayrollmanager.model.dto.employee.EmployeeProfileResponse;
@@ -14,19 +15,27 @@ import com.g98.sangchengpayrollmanager.repository.EmployeeInformationRepository;
 import com.g98.sangchengpayrollmanager.repository.PositionRepository;
 import com.g98.sangchengpayrollmanager.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.apache.poi.xwpf.usermodel.XWPFTable;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Objects;
+import java.time.format.DateTimeFormatterBuilder;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -142,6 +151,111 @@ public class EmployeeService {
         } else {
             updateStatus(user, null, request.getStatus());
         }
+    }
+
+    @Transactional(readOnly = true)
+    public ContractTemplateDTO generateContractTemplate(String employeeCode) {
+        EmployeeInformation info = repo.findByEmployeeCodeFetchAll(employeeCode)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên có mã: " + employeeCode));
+
+        Contract contract = contractRepository.findFirstByUserEmployeeCodeOrderByStartDateDesc(employeeCode)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng của nhân viên"));
+
+        ClassPathResource templateResource = new ClassPathResource("templates/contract-template.docx");
+
+        try (InputStream is = templateResource.getInputStream();
+             XWPFDocument document = new XWPFDocument(is);
+             ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+
+            Map<String, String> replacements = buildTemplateReplacements(info, contract);
+            replaceInParagraphs(document.getParagraphs(), replacements);
+            replaceInTables(document.getTables(), replacements);
+
+            document.write(os);
+            byte[] content = os.toByteArray();
+
+            return ContractTemplateDTO.builder()
+                    .fileName("hop-dong-" + employeeCode + ".docx")
+                    .content(content)
+                    .size((long) content.length)
+                    .build();
+        } catch (IOException e) {
+            throw new RuntimeException("Không thể tạo hợp đồng từ template: " + e.getMessage(), e);
+        }
+    }
+
+    private Map<String, String> buildTemplateReplacements(EmployeeInformation info, Contract contract) {
+        User user = info.getUser();
+
+        String employeeName = Optional.ofNullable(user.getFullName()).orElse("");
+        String dob = formatDate(user.getDob());
+        String citizenId = Optional.ofNullable(info.getSocialNo()).orElse("");
+        String address = Optional.ofNullable(info.getAddress()).orElse("");
+        String startDate = formatDate(contract.getStartDate());
+        String endDate = formatDate(contract.getEndDate());
+        String baseSalary = formatSalary(contract.getBaseSalary());
+
+        Map<String, String> replacements = new LinkedHashMap<>();
+        replacements.put("{{employee_name}}", employeeName);
+        replacements.put("{{dob}}", dob);
+        replacements.put("{{id}}", citizenId);
+        replacements.put("{{addr}}", address);
+        replacements.put("{{from}}", startDate);
+        replacements.put("{{to}}", endDate);
+        replacements.put("lương cơ bản:", "lương cơ bản: " + baseSalary);
+
+        return replacements;
+    }
+
+    private String formatDate(LocalDate date) {
+        if (date == null) {
+            return "";
+        }
+        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                .appendPattern("dd/MM/yyyy")
+                .toFormatter();
+        return date.format(formatter);
+    }
+
+    private String formatSalary(Integer amount) {
+        if (amount == null) {
+            return "";
+        }
+        return String.format("%,d", amount);
+    }
+
+    private void replaceInParagraphs(List<XWPFParagraph> paragraphs, Map<String, String> replacements) {
+        for (XWPFParagraph paragraph : paragraphs) {
+            for (XWPFRun run : paragraph.getRuns()) {
+                String text = run.getText(0);
+                if (text == null) {
+                    continue;
+                }
+                String replacedText = replaceWithValues(text, replacements);
+                if (!text.equals(replacedText)) {
+                    run.setText(replacedText, 0);
+                }
+            }
+        }
+    }
+
+    private void replaceInTables(List<XWPFTable> tables, Map<String, String> replacements) {
+        for (XWPFTable table : tables) {
+            table.getRows().forEach(row -> row.getTableCells().forEach(cell -> {
+                replaceInParagraphs(cell.getParagraphs(), replacements);
+                replaceInTables(cell.getTables(), replacements);
+            }));
+        }
+    }
+
+    private String replaceWithValues(String text, Map<String, String> replacements) {
+        String replacedText = text;
+        for (Map.Entry<String, String> entry : replacements.entrySet()) {
+            if (replacedText.contains(entry.getKey())) {
+                replacedText = replacedText.replace(entry.getKey(), entry.getValue());
+            }
+        }
+        return replacedText;
     }
 
     private EmployeeProfileResponse mapToProfile(EmployeeInformation info, Contract contract) {
