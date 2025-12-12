@@ -10,21 +10,27 @@ export default function TaxInsurancePage() {
   const [insurancePolicies, setInsurancePolicies] = useState<InsuranceListResponse[]>([]);
 
   return (
-    <div className="w-full h-full p-6">
-      <div className="w-full p-5 bg-[#c6f3fd] text-2xl font-bold mb-6">
-        Thông tin về Thuế và Bảo Hiểm
-      </div>
+    <div className="flex h-full flex-col gap-4 bg-[#F8FAFC] p-4 md:p-6">
+      <header className="flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <h1 className="text-2xl font-semibold">Thông Tin Về Thuế Và Bảo Hiểm</h1>
+        </div>
+      </header>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-1 flex-col gap-4">
         {/* Bảng Thuế */}
-        <TaxLevelListContext.Provider value={{ taxLevels, setTaxLevels }}>
-          <TaxLevelComponent />
-        </TaxLevelListContext.Provider>
+        <section className="flex-1 rounded-2xl bg-white p-4 shadow-sm flex flex-col">
+          <TaxLevelListContext.Provider value={{ taxLevels, setTaxLevels }}>
+            <TaxLevelComponent />
+          </TaxLevelListContext.Provider>
+        </section>
 
         {/* Bảng Bảo hiểm */}
-        <InsuranceListContext.Provider value={{ insurancePolicies, setInsurancePolicies }}>
-          <InsuranceComponent />
-        </InsuranceListContext.Provider>
+        <section className="flex-1 rounded-2xl bg-white p-4 shadow-sm flex flex-col">
+          <InsuranceListContext.Provider value={{ insurancePolicies, setInsurancePolicies }}>
+            <InsuranceComponent />
+          </InsuranceListContext.Provider>
+        </section>
       </div>
     </div>
   );
