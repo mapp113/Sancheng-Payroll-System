@@ -135,6 +135,8 @@ export default function UserManagement() {
     const [profileError, setProfileError] = useState<string | null>(null);
     const [contractUploadError, setContractUploadError] = useState<string | null>(null);
     const [uploadingContract, setUploadingContract] = useState(false);
+    const [downloadingTemplate, setDownloadingTemplate] = useState(false);
+
 
     // ⭐ NEW: State to track current user info
     const [currentUserRole, setCurrentUserRole] = useState<string>("");
@@ -176,6 +178,44 @@ export default function UserManagement() {
 
         fetchUsers();
     }, []);
+
+    const handleDownloadTemplate = async () => {
+        if (!selectedEmployeeCode) {
+            alert("Vui lòng chọn nhân viên trước khi tải hợp đồng mẫu");
+            return;
+        }
+
+        setDownloadingTemplate(true);
+        try {
+            const response = await fetch(
+                `${API_BASE}/api/v1/hr/users/${selectedEmployeeCode}/contract/template`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
+                    },
+                },
+            );
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `contract-template-${selectedEmployeeCode}.docx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (error) {
+            console.error("Tải hợp đồng mẫu thất bại", error);
+            alert("Không thể tải hợp đồng mẫu. Vui lòng thử lại.");
+        } finally {
+            setDownloadingTemplate(false);
+        }
+    };
 
     const filteredUsers = useMemo(() => {
         let list = [...users];
@@ -688,6 +728,20 @@ export default function UserManagement() {
                                         onChange={handleContractUpload}
                                         disabled={profileLoading || uploadingContract || isEditingOwnProfile}
                                     />
+
+                                    <button
+                                        type="button"
+                                        onClick={handleDownloadTemplate}
+                                        disabled={
+                                            profileLoading ||
+                                            downloadingTemplate ||
+                                            !selectedEmployeeCode ||
+                                            isEditingOwnProfile
+                                        }
+                                        className="inline-flex w-fit items-center gap-2 rounded-lg border border-[#4AB4DE] px-4 py-2 text-sm font-medium text-[#4AB4DE] transition enabled:hover:bg-[#E0F2FE] disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        {downloadingTemplate ? "Đang tải..." : "Tải hợp đồng mẫu"}
+                                    </button>
 
                                     {/* ⭐ THÊM PHẦN XEM HỢP ĐỒNG */}
                                     {selectedProfile.contractUrl && (
