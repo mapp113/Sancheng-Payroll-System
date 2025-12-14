@@ -52,6 +52,11 @@ public class LeaveRequestController {
         return ResponseEntity.created(location).build();
     }
 
+    @GetMapping("/remaining-by-type")
+    public ResponseEntity<Double> getMyRemainingLeaveByType(@RequestParam String leaveTypeCode) {
+        return ResponseEntity.ok(leaveRequestService.getMyRemainingLeaveByType(leaveTypeCode));
+    }
+
     // Lấy leave request cho Manager xem
     @GetMapping("/all")
     public ResponseEntity<Page<LeaveRequestResponse>> getAllOrSearch( @RequestParam(required = false) String keyword,

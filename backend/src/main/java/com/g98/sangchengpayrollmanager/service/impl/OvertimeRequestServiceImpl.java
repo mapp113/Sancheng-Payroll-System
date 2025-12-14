@@ -332,8 +332,9 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
         LocalDate monthStart = LocalDate.of(year, month, 1);
         LocalDate monthEnd = otDate.withDayOfMonth(otDate.lengthOfMonth());
 
-        int monthlyHours = overtimeRequestRespository.sumWorkedHoursInMonth(
-                empCode, monthStart, monthEnd);
+        int monthlyHours = overtimeRequestRespository.sumApprovedWorkedHoursInMonth(
+                user.getEmployeeCode(), monthStart, monthEnd
+        );
 
         int monthlimit = 40;
         int excessHours = monthlyHours - monthlimit;
@@ -371,22 +372,14 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
                     q.setLeaveTypeCode("OT_COMP");
                     q.setLeaveType(compType);
                     q.setYear(year); // dùng đúng năm OT
-                    q.setEntitledDays(0.0);
-                    q.setCarriedOver(0.0);
-                    q.setUsedDays(0.0);
+                    q.setEntitledDays(0.000);
+                    q.setCarriedOver(0.000);
+                    q.setUsedDays(0.000);
                     return q;
                 });
 
-        double prevRemainder = quota.getCarriedOver() == null ? 0.0 : quota.getCarriedOver();
-        double totalRemainder = prevRemainder + excessHours;
-        int extraDays = (int) (totalRemainder / 8);
-        double newRemainder = totalRemainder % 8;
-        if (extraDays > 0) {
-            double currentEntitled = quota.getEntitledDays() == null ? 0.0 : quota.getEntitledDays();
-            quota.setEntitledDays(currentEntitled + extraDays);
-        }
-
-        quota.setCarriedOver(newRemainder);
+        double entitledDaysFromExcess = excessHours / 8.0;
+        quota.setEntitledDays(entitledDaysFromExcess);
         leaveQuotaRepository.save(quota);
     }
 
@@ -410,6 +403,16 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
         balance.setHourBalance(currentWorkedHours + workedHours);
 
         overtimeBalanceRepository.save(balance);
+    }
+
+    private int calcIntRemainingFromQuota(LeaveQuota quota) {
+        double entitledDaysRaw = quota.getEntitledDays();
+        double usedRaw = quota.getUsedDays();
+
+        int entitledInt = (int) Math.floor(entitledDaysRaw) ;
+        int usedInt = (int) Math.floor(usedRaw) ;
+
+        return Math.max(entitledInt - usedInt,0);
     }
 
 

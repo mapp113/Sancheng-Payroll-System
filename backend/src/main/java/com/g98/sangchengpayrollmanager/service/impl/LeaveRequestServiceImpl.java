@@ -397,6 +397,31 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         return mapToResponse(savedLeaveRequest);
     }
 
+    @Override
+    public double getMyRemainingLeaveType(String leaveTypeCode) {
+        String username = getCurrentUsername();
+        User user = userRepository.findByUsernameWithRole(username)
+                .orElseThrow(() -> new RuntimeException("Người không tồn tại : " + username));
+        LeaveType leaveType = leaveTypeRepository.findByCode(leaveTypeCode)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ngày nghỉ" + leaveTypeCode));
+        boolean counted = Boolean.TRUE.equals(leaveType.getIsCountedAsLeave());
+        boolean paid = Boolean.TRUE.equals(leaveType.getIsPaid());
+        if (!counted || !paid) {
+            return 0.0;
+        }
+
+        int year = LocalDate.now().getYear();
+        LeaveQuota quota = leaveQuotaRepository
+                .findByEmployeeCodeAndLeaveTypeCodeAndYear(user.getEmployeeCode(), leaveType.getCode(), year)
+                .orElseThrow(() -> new RuntimeException("Chưa có quota cho loại nghỉ này trong năm nay"));
+
+        Double entitled = quota.getEntitledDays() == null ? 0.0 : quota.getEntitledDays();
+        Double carried = quota.getCarriedOver() == null ? 0.0 : quota.getCarriedOver();
+        Double used = quota.getUsedDays() == null ? 0.0 : quota.getUsedDays();
+
+        return Math.max((entitled + carried) - used, 0.0);
+    }
+
     private boolean isWorkingDay(LocalDate date) {
         if (specialDaysRepository.existsByDate(date)) {
             return false;
