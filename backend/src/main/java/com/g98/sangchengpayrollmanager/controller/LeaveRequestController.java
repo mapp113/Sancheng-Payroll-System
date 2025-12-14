@@ -58,9 +58,8 @@ public class LeaveRequestController {
                                                                       @RequestParam(required = false) Integer month,
                                                                       @RequestParam(required = false) Integer year,
                                                                       @RequestParam(defaultValue = "0") int page,
-                                                                      @RequestParam(defaultValue = "20") int size,
+                                                                      @RequestParam(defaultValue = "10") int size,
                                                                       @RequestParam(defaultValue = "createdDate,desc") String sort
-
     ) {
         Pageable pageable = toPageable(page, size, sort);
 
@@ -77,17 +76,19 @@ public class LeaveRequestController {
     }
 
 
+
     // Lấy list leave request cho chính employee xem
     @GetMapping("/myrequest")
     public ResponseEntity<Page<LeaveRequestResponse>> getMyLeaveRequests(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "createdDate,desc") String sort
     ) {
         Pageable pageable = toPageable(page, size, sort);
         Page<LeaveRequestResponse> result = leaveRequestService.getMyLeaveRequests(pageable);
         return ResponseEntity.ok(result);
     }
+
 
     // xem chi tiết yêu cầu ( của mình )
 //    @GetMapping("/myrequest/{id}")
@@ -116,6 +117,7 @@ public class LeaveRequestController {
     }
 
 
+
     // Số ngày nghỉ còn lại của employee xem
     @GetMapping("/remainingLeave")
     public ResponseEntity<Double> getMyAnnualRemainingLeave() {
@@ -126,7 +128,7 @@ public class LeaveRequestController {
     @GetMapping("/status")
     public ResponseEntity<Page<LeaveRequestResponse>> getByStatus(@RequestParam String status,
                                                                   @RequestParam(defaultValue = "0") int page,
-                                                                  @RequestParam(defaultValue = "20") int size,
+                                                                  @RequestParam(defaultValue = "5") int size,
                                                                   @RequestParam(defaultValue = "createdDate,desc") String sort
     ) {
         String[] parts = sort.split(",");
@@ -139,6 +141,7 @@ public class LeaveRequestController {
         Page<LeaveRequestResponse> result = leaveRequestService.findByStatus(st, pageable);
         return ResponseEntity.ok(result);
     }
+
 
 
 

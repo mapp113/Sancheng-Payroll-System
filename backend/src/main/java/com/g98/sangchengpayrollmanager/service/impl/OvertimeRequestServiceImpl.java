@@ -316,7 +316,7 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
         LocalDate monthStart = today.withDayOfMonth(1);
         LocalDate monthEnd   = today.withDayOfMonth(today.lengthOfMonth());
 
-        int monthlyHours = overtimeRequestRespository.sumWorkedHoursInMonth(
+        int monthlyHours = overtimeRequestRespository.sumApprovedWorkedHoursInMonth(
                 user.getEmployeeCode(), monthStart, monthEnd
         );
 

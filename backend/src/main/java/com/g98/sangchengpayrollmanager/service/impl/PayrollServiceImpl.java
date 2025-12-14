@@ -78,7 +78,7 @@ public class PayrollServiceImpl implements PayrollService {
         // lương tính bảo hiểm =  Lương cơ bản + insuredBaseExtra
         int insuranceBase = baseSalaryAmount + insuredBaseExtra;
         InsuranceService.Result insResult = insuranceService.calculateInsurance(insuranceBase, month);
-        snapshot.addAll(insResult.getPaySummaryComponentItems());           // 👉 chỉ add thêm
+        snapshot.addAll(insResult.getPaySummaryComponentItems());           //  chỉ add thêm
         int employeeInsurance = insResult.getEmployeeInsurance();
 
         // 7.assessable_income

@@ -78,6 +78,17 @@ import java.util.Optional;
                               @Param("monthEnd") LocalDate monthEnd);
 
 
+    @Query("""
+    SELECT COALESCE(SUM(o.workedTime), 0)
+    FROM OvertimeRequest o
+    WHERE o.user.employeeCode = :empCode
+     AND o.otDate BETWEEN :monthStart AND :monthEnd
+     AND o.status = 'APPROVED'
+""")
+    int sumApprovedWorkedHoursInMonth(@Param("empCode") String empCode,
+                                      @Param("monthStart") LocalDate monthStart,
+                                      @Param("monthEnd") LocalDate monthEnd);
+
 
     // đếm để tránh bị trunùng
     @Query("""

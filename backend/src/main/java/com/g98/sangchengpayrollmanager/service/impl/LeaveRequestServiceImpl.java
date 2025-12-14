@@ -62,6 +62,17 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         LeaveType leaveType = leaveTypeRepository.findByCode(leaveRequestDTO.getLeaveType())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy ngày nghỉ: " + leaveRequestDTO.getLeaveType()));
 
+        DurationType durationType = DurationType.valueOf(leaveRequestDTO.getDuration().toUpperCase());
+
+        if((durationType == DurationType.HALF_DAY_AM || durationType == DurationType.HALF_DAY_PM)
+                && !leaveType.getCode().equals("unpaid_half")) {
+            throw new IllegalArgumentException("Nghỉ nửa ngày bắt buộc phải là nghỉ không phép");
+        }
+
+        if ((durationType == DurationType.HALF_DAY_AM || durationType == DurationType.HALF_DAY_PM)
+                && !fromDate.equals(toDate)) {
+            throw new IllegalArgumentException("Nghỉ nửa ngày chỉ được chọn 1 ngày");
+        }
 
         boolean overlap = LeaveRequestRepository.existsOverlappingLeave(
                 user.getEmployeeCode(), fromDate, toDate
@@ -134,9 +145,11 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                return days;
 
            }
-//           case HALF_DAY_AM, HALF_DAY_PM -> {
-//               return (fromDate.toEpochDay() - toDate.toEpochDay()) / 2;
-//           }
+
+           case HALF_DAY_AM, HALF_DAY_PM -> {
+               return isWorkingDay(fromDate) ? 0.5 : 0.0;
+           }
+
            default -> throw new RuntimeException("Unsupported duration type: " + durationType);
        }
     }
@@ -378,7 +391,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                 "Đơn xin nghỉ của bạn đã không được chấp nhận ",
                 " Đơn xin nghỉ ngày " + leaveRequest.getFromDate() +
                         " Tới ngày " +leaveRequest.getToDate() + " không được duyệt ",
-                "LEAVE_APPROVED",
+                "LEAVE_REJECTED",
                 savedLeaveRequest.getId()
         );
         return mapToResponse(savedLeaveRequest);
@@ -410,7 +423,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         entity.setLeaveType(leaveType);
         entity.setFromDate(dto.getFromDate());
         entity.setToDate(dto.getToDate());
-        entity.setDurationType(DurationType.valueOf(dto.getDuration()));;
+        entity.setDurationType(DurationType.valueOf(dto.getDuration().trim().toUpperCase()));
         entity.setIsPaidLeave(isPaidByType);
         entity.setReason(dto.getReason());
         entity.setStatus(LeaveandOTStatus.PENDING.name());
