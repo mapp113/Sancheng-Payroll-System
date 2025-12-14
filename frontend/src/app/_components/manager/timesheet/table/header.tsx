@@ -1,13 +1,14 @@
 export default function TimesheetTableHeader() {
   return (
-    <thead className="bg-gray-200">
+    <thead className="bg-[#F8FAFC] text-left">
       <tr>
-        <th className="px-4 py-3 text-left font-semibold">Mã nhân viên</th>
-        <th className="px-4 py-3 text-left font-semibold">Tên</th>
-        <th className="px-4 py-3 text-left font-semibold">Chức vụ</th>
-        <th className="px-4 py-3 text-left font-semibold">Số giờ làm việc</th>
-        <th className="px-4 py-3 text-center font-semibold">Nghỉ phép năm đã dùng</th>
-        <th className="px-4 py-3 text-left font-semibold"/>
+        <th className="px-4 py-3 font-medium">Mã nhân viên</th>
+        <th className="px-4 py-3 font-medium">Họ và tên</th>
+        <th className="px-4 py-3 font-medium">Chức vụ</th>
+        <th className="px-4 py-3 font-medium">Thời gian làm việc<br />(chưa bao gồm OT)</th>
+        <th className="px-4 py-3 font-medium">Làm thêm</th>
+        <th className="px-4 py-3 font-medium text-center">Nghỉ phép năm đã dùng</th>
+        <th className="px-4 py-3 font-medium"/>
       </tr>
     </thead>
   );

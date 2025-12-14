@@ -9,6 +9,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,16 +33,57 @@ public class TaxLevelService {
         if (fromValue == null || toValue == null) {
             throw new RuntimeException("Khoảng thu nhập không được null");
         }
-        if (fromValue > fromValue) {
+        if (fromValue > toValue) {
             throw new RuntimeException("Giá trị 'from' phải nhỏ hơn hoặc bằng 'to'");
         }
 
-        List<TaxLevel> existingLevels = taxLevelRepository.findAll();
+        // Validate effectiveTo
+        if (request.getEffectiveTo() != null &&
+                request.getEffectiveTo().isBefore(request.getEffectiveFrom())) {
+            throw new RuntimeException("effectiveTo phải >= effectiveFrom");
+        }
+
+
+        List<TaxLevel> allTaxLevelList = taxLevelRepository.findAll();
+        System.out.println("xon chao quang dan");
+        for(TaxLevel taxLevel : allTaxLevelList) {
+            LocalDate from = taxLevel.getEffectiveFrom();
+            LocalDate to   = taxLevel.getEffectiveTo(); // có thể null
+
+            if(to != null) {
+                boolean dateOverlap =
+                        !request.getEffectiveFrom().isBefore(from) &&       // newFrom >= from
+                                request.getEffectiveFrom().isBefore(to); // và newFrom < to
+                if (dateOverlap) {
+                    throw new RuntimeException("effectiveFrom bị trùng với khoảng thời gian khác");
+                }
+            }
+
+        }
+        System.out.println("xon chao quang dan222222");
+        List<TaxLevel> existingLevels = taxLevelRepository.findByEffectiveFrom(request.getEffectiveFrom());
+
+        // Policy đang áp dụng tại thời điểm hiện tại
+        List<TaxLevel> activeLevels = taxLevelRepository.findActiveLevels(LocalDate.now());
+        LocalDate currentPolicyFrom = activeLevels.isEmpty()
+                ? request.getEffectiveFrom()
+                : activeLevels.get(0).getEffectiveFrom();
+
+        boolean isNewPolicy = activeLevels.isEmpty()
+                || request.getEffectiveFrom().isAfter(currentPolicyFrom);
+
+        if(existingLevels.isEmpty()) {
+            if (isNewPolicy) {
+                taxLevelRepository.closeCurrentPolicy(request.getEffectiveFrom().minusDays(1));
+            }
+        }
+
         for (TaxLevel t : existingLevels) {
-            boolean overlap = fromValue <= t.getToValue() && toValue >= t.getFromValue();
+            boolean overlap = fromValue < t.getToValue();
             if (overlap) {
                 throw new RuntimeException(
-                        "Khoảng thu nhập bị trùng với bậc thuế đang tồn tại: "
+                        "Khoảng thu nhập " + fromValue + " - " + toValue
+                                + " bị trùng với bậc thuế " + t.getFromValue() + " - " + t.getToValue()
                 );
             }
         }
@@ -54,10 +96,8 @@ public class TaxLevelService {
                 .effectiveTo(request.getEffectiveTo())
                 .build();
 
-
         taxLevel = taxLevelRepository.save(taxLevel);
         return toResponse(taxLevel);
-
     }
 
     @Transactional

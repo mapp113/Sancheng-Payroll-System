@@ -1,6 +1,6 @@
 interface ConfirmPopBoxProps {
   title: string;
-  message: string;
+  message: string | React.ReactNode;
   onConfirm: () => void;
   onCancel: () => void;
   confirmText?: string;
@@ -26,7 +26,11 @@ export default function ConfirmPopBox({
 
           {/* Message */}
           <div className="py-4">
-            <p className="text-[#56749A]">{message}</p>
+            {typeof message === 'string' ? (
+              <p className="text-[#56749A]">{message}</p>
+            ) : (
+              <div className="text-[#56749A]">{message}</div>
+            )}
           </div>
 
           {/* Action Buttons */}

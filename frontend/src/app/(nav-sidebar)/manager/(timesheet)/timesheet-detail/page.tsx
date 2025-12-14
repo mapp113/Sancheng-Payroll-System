@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 import ManagerTimesheetDetail from "@/app/_components/manager-timesheet-detail";
@@ -9,7 +9,7 @@ import ManagerTimesheetDetailToolbar from "@/app/_components/manager-timesheet-d
 import { ManagerTimeSheetDetailParam } from "@/app/_components/manager-timesheet-detail/types";
 import { TimesheetDetailParam } from "@/app/_components/manager-timesheet-detail/context";
 
-export default function ManagerTimesheetDetailPage() {
+function ManagerTimesheetDetailContent() {
     const searchParams = useSearchParams();
     const timesheetDetailParams: ManagerTimeSheetDetailParam = {
         employeeCode: searchParams.get("employeeCode") ?? "",
@@ -30,7 +30,7 @@ export default function ManagerTimesheetDetailPage() {
         [activeTab]
     );
 
-    const view = activeTab === "Other" ? "other" : "timesheet";
+    const view = activeTab === "Khác" ? "other" : "timesheet";
 
     return (
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 pb-12">
@@ -45,5 +45,13 @@ export default function ManagerTimesheetDetailPage() {
                 <ManagerTimesheetDetail detail={managerTimesheetDetail} view={view} />
             </TimesheetDetailParam.Provider>
         </div>
+    );
+}
+
+export default function ManagerTimesheetDetailPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <ManagerTimesheetDetailContent />
+        </Suspense>
     );
 }

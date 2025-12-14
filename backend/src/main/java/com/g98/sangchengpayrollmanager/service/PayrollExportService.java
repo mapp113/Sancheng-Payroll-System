@@ -5,6 +5,7 @@ import com.g98.sangchengpayrollmanager.util.PayrollRecord;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -25,6 +26,7 @@ public class PayrollExportService {
         return records;
     }
 
+    @PreAuthorize("hasRole('HR')")
     public byte[] exportPayrollExcel(LocalDate monthDate) throws Exception {
         List<PayrollRecord> records = buildPayrollRecords(monthDate);
 

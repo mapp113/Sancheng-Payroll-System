@@ -3,7 +3,7 @@ import { useContext } from "react";
 import { DataContext, ParamsContext } from "../timesheet-context";
 import { TimesheetQuery } from "../query";
 
-export default function TimesheetToolbar( { showForm }: { showForm: () => void }) {
+export default function TimesheetToolbar( { showForm }: { showForm?: () => void }) {
   const params = useContext(ParamsContext)!;
   const data = useContext(DataContext)!;
 
@@ -39,15 +39,17 @@ export default function TimesheetToolbar( { showForm }: { showForm: () => void }
           }}
         />
       </div>
-      <div className="flex items-center gap-2 ml-auto">
-        <button
-          id="payroll-toolbar-back-button"
-          className="mr-15 py-3 px-10 border rounded-sm text-xs border-black bg-[#9ee87b] text-[#5a896b] hover:bg-[#91d771] transition-all cursor-pointer"
-          onClick={() => showForm()}
-        >
-          Tạo bảng lương nháp
-        </button>
-      </div>
+      {showForm && (
+        <div className="flex items-center gap-2 ml-auto">
+          <button
+            id="payroll-toolbar-back-button"
+            className="mr-15 py-3 px-10 border rounded-sm text-xs border-black bg-[#9ee87b] text-[#5a896b] hover:bg-[#91d771] transition-all cursor-pointer"
+            onClick={() => showForm()}
+          >
+            Tạo bảng lương nháp
+          </button>
+        </div>
+      )}
     </div>
   );
 }

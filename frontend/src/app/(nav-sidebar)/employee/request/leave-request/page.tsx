@@ -275,7 +275,7 @@ function LeavesPageContent() {
             className="ml-2 border border-black rounded px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
             onClick={handleReset}
           >
-            Reset / Clear
+            Đặt lại
           </button>
           <div className="ml-auto">
             <button
