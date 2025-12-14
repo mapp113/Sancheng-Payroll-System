@@ -32,7 +32,7 @@ public interface LeaveRequestService {
     double getMyRemainingLeaveByType(String leaveTypeCode);
 
     // kiểm tra số ngày sẽ có khi overtime vượt quá luật
-    int getMyRemainingOTCompDays();
+    // int getMyRemainingOTCompDays();
 
     // Xóa đơn xin nghỉ chưa được duyệt
     void deleteMyLeaveRequest(Integer id);
