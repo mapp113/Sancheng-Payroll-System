@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public interface LegalPolicyRepository extends JpaRepository<LegalPolicy,Integer> {
@@ -22,6 +23,16 @@ public interface LegalPolicyRepository extends JpaRepository<LegalPolicy,Integer
             @Param("asOfDate") LocalDate asOfDate
     );
 
+    @Query("""
+        SELECT p FROM LegalPolicy p
+        WHERE p.calculationType = :calculationType
+          AND p.effectiveFrom <= :asOfDate
+          AND (p.effectiveTo IS NULL OR p.effectiveTo >= :asOfDate)
+        """)
+    List<LegalPolicy> findActiveByCalculationType(
+            @Param("calculationType") String calculationType,
+            @Param("asOfDate") LocalDate asOfDate
+    );
 
     Optional<LegalPolicy> findByCode(String code);
 }
