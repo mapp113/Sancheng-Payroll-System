@@ -2,13 +2,13 @@
 
 import OTDetail from "@/app/_components/employee/request/overtime/detail";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { OTResponseData } from "@/app/_components/employee/request/types";
 import DeleteConfirmation from "@/app/_components/common/pop-box/delete-confirmation";
 import SuccessNotification from "@/app/_components/common/pop-box/notification/success";
 import ErrorNotification from "@/app/_components/common/pop-box/notification/error";
 
-export default function OTDetailPage() {
+function OTDetailContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const id = searchParams.get("id");
@@ -114,5 +114,13 @@ export default function OTDetailPage() {
         message={errorMessage}
       />
     </div>
+  );
+}
+
+export default function OTDetailPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <OTDetailContent />
+    </Suspense>
   );
 }

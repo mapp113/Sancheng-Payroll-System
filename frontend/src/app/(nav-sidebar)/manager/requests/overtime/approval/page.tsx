@@ -2,13 +2,13 @@
 
 import OTDetail from "@/app/_components/employee/request/overtime/detail";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { OTResponseData } from "@/app/_components/employee/request/types";
 import RequestConfirmation from "@/app/_components/common/pop-box/request-confirmation";
 import SuccessNotification from "@/app/_components/common/pop-box/notification/success";
 import ErrorNotification from "@/app/_components/common/pop-box/notification/error";
 
-export default function OTApprovalPage() {
+function OTApprovalContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const id = searchParams.get("id");
@@ -184,5 +184,13 @@ export default function OTApprovalPage() {
         message={errorMessage}
       />
     </div>
+  );
+}
+
+export default function OTApprovalPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <OTApprovalContent />
+    </Suspense>
   );
 }

@@ -4,11 +4,11 @@ import { DataContext, ParamsContext } from "@/app/_components/payroll/payroll-co
 import PayrollTable from "@/app/_components/payroll/table";
 import PayrollToolbar from "@/app/_components/payroll/toolbar";
 import { PayrollParam, PayrollRecord } from "@/app/_components/payroll/type";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 
-export default function PayrollPage() {
+function PayrollContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -57,5 +57,13 @@ export default function PayrollPage() {
         </div>
       </DataContext.Provider>
     </ParamsContext.Provider>
+  );
+}
+
+export default function PayrollPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PayrollContent />
+    </Suspense>
   );
 }
