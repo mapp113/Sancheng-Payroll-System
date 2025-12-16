@@ -157,13 +157,13 @@ export default function InsuranceComponent() {
   };
   
   return (
-    <div className="w-full bg-[#e0f7fa] rounded-lg p-6">
+    <div className="w-full">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Bảo hiểm</h2>
         {userRole === "HR" && (
           <button 
             onClick={() => setShowAddForm(true)}
-            className="px-4 py-2 bg-[#81d4fa] rounded-md hover:bg-[#4fc3f7] transition-colors cursor-pointer"
+            className="px-4 py-2 bg-[#4AB4DE] rounded-md hover:bg-[#3A9DC9] transition-colors cursor-pointer text-white"
           >
             +Thêm mới
           </button>
@@ -171,7 +171,17 @@ export default function InsuranceComponent() {
       </div>
 
       <div className="bg-white rounded-lg overflow-hidden">
-        <table className="w-full">
+        <table className="w-full table-fixed">
+          <colgroup>
+            <col style={{width: '16%'}} />
+            <col style={{width: '10%'}} />
+            <col style={{width: '10%'}} />
+            <col style={{width: '13%'}} />
+            <col style={{width: '13%'}} />
+            <col style={{width: '13%'}} />
+            <col style={{width: '11%'}} />
+            <col style={{width: '14%'}} />
+          </colgroup>
           <thead>
             <tr className="border-b">
               <th className="px-4 py-3 text-left font-medium">Loại bảo hiểm</th>
@@ -184,7 +194,20 @@ export default function InsuranceComponent() {
               <th className="px-4 py-3 text-left font-medium"></th>
             </tr>
           </thead>
-          <tbody>
+        </table>
+        <div className="overflow-y-auto max-h-[400px]" style={{scrollbarGutter: 'stable'}}>
+          <table className="w-full table-fixed">
+            <colgroup>
+              <col style={{width: '16%'}} />
+              <col style={{width: '10%'}} />
+              <col style={{width: '10%'}} />
+              <col style={{width: '13%'}} />
+              <col style={{width: '13%'}} />
+              <col style={{width: '13%'}} />
+              <col style={{width: '11%'}} />
+              <col style={{width: '14%'}} />
+            </colgroup>
+            <tbody>
             {loading ? (
               <tr>
                 <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
@@ -216,9 +239,9 @@ export default function InsuranceComponent() {
                       <div className="flex gap-2">
                         <button 
                           onClick={() => handleEdit(insurance)}
-                          className="px-3 py-1 bg-[#81d4fa] rounded hover:bg-[#4fc3f7] transition-colors text-sm cursor-pointer"
+                          className="px-3 py-1 bg-[#4AB4DE] rounded hover:bg-[#3A9DC9] transition-colors text-sm cursor-pointer text-white"
                         >
-                          Edit
+                          Chỉnh sửa
                         </button>
                         <button 
                           onClick={() => handleDelete(insurance.insurancePolicyId, insurance.insurancePolicyName)}
@@ -234,6 +257,7 @@ export default function InsuranceComponent() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Add Insurance Policy Form */}
@@ -245,7 +269,7 @@ export default function InsuranceComponent() {
               <h2 className="text-2xl font-bold text-[#1D3E6A]">Thêm Bảo Hiểm Mới</h2>
               <button
                 onClick={() => setShowAddForm(false)}
-                className="rounded-full p-2 text-[#56749A] hover:bg-[#E6F7FF] transition cursor-pointer"
+                className="rounded-full p-2 text-gray-500 hover:bg-gray-100 transition cursor-pointer"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -342,14 +366,14 @@ export default function InsuranceComponent() {
                 <button
                   type="button"
                   onClick={() => setShowAddForm(false)}
-                  className="flex-1 px-4 py-2 border border-[#CCE1F0] text-[#56749A] rounded-lg hover:bg-[#F4FBFF] transition cursor-pointer"
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition cursor-pointer"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 px-4 py-2 bg-[#81d4fa] text-white rounded-lg hover:bg-[#4fc3f7] transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 bg-[#4AB4DE] text-white rounded-lg hover:bg-[#3A9DC9] transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting ? "Đang thêm..." : "Thêm"}
                 </button>
@@ -372,7 +396,7 @@ export default function InsuranceComponent() {
                   setEditingId(null);
                   setFormData({ insurancePolicyName: "", employeePercentage: 0, companyPercentage: 0, maxAmount: 0, effectiveFrom: "", effectiveTo: "" });
                 }}
-                className="rounded-full p-2 text-[#56749A] hover:bg-[#E6F7FF] transition cursor-pointer"
+                className="rounded-full p-2 text-gray-500 hover:bg-gray-100 transition cursor-pointer"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -472,14 +496,14 @@ export default function InsuranceComponent() {
                     setEditingId(null);
                     setFormData({ insurancePolicyName: "", employeePercentage: 0, companyPercentage: 0, maxAmount: 0, effectiveFrom: "", effectiveTo: "" });
                   }}
-                  className="flex-1 px-4 py-2 border border-[#CCE1F0] text-[#56749A] rounded-lg hover:bg-[#F4FBFF] transition cursor-pointer"
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition cursor-pointer"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 px-4 py-2 bg-[#81d4fa] text-white rounded-lg hover:bg-[#4fc3f7] transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 bg-[#4AB4DE] text-white rounded-lg hover:bg-[#3A9DC9] transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting ? "Đang cập nhật..." : "Cập nhật"}
                 </button>
@@ -505,4 +529,4 @@ export default function InsuranceComponent() {
       )}
     </div>
   );
-};
+}
