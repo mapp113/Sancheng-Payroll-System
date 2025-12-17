@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import {useLanguage} from "@/lib/language-context";
 import NotificationPanel from "../common/notification/panel";
+import {getDashboardTitle, getDashboardTitleByRole} from "../utils/dashboard-title-mapping";
 
 const iceland = localFont({
     src: "../../../../public/fonts/Iceland-Regular.ttf",
@@ -78,25 +79,6 @@ export default function Navbar() {
     // Ẩn navbar ở các route không cần layout
     // if (pathname && noLayoutRoutes.includes(pathname)) return null;
     const {language, toggleLanguage} = useLanguage();
-    const getDashboardTitle = () => {
-        // Lấy từ localStorage, nếu không có thì dựa vào pathname
-        const savedTitle = localStorage.getItem("scpm.dashboard.title");
-        if (savedTitle) {
-            return savedTitle;
-        }
-        
-        // Fallback: xác định dựa vào pathname
-        if (pathname?.startsWith("/employee")) {
-            return "Employee Dashboard";
-        } else if (pathname?.startsWith("/manager")) {
-            return "Manager Dashboard";
-        } else if (pathname?.startsWith("/contract") || pathname?.startsWith("/payroll")) {
-            return "HR Dashboard";
-        } else if (pathname?.startsWith("/admin")) {
-            return "Admin Dashboard";
-        }
-        return "Dashboard";
-    };
 
     useEffect(() => {
         // try {
@@ -243,12 +225,21 @@ export default function Navbar() {
     const handleSwitchView = () => {
         setIsMenuOpen(false);
         if (isEmployeeView) {
-            // Đang ở view nhân viên, chuyển sang quản lý
-            localStorage.setItem("scpm.dashboard.title", "Manager Dashboard");
-            setDashboardTitle("Manager Dashboard");
-            router.push("/manager/timesheet");
+            // Đang ở view nhân viên, chuyển về view gốc theo role
+            if (userRole) {
+                const title = getDashboardTitleByRole(userRole);
+                localStorage.setItem("scpm.dashboard.title", title);
+                setDashboardTitle(title);
+                
+                // Redirect dựa trên role
+                if (userRole === "MANAGER") {
+                    router.push("/manager/timesheet");
+                } else if (userRole === "HR") {
+                    router.push("/contract");
+                }
+            }
         } else if (isManagerOrHR) {
-            // Đang ở view quản lý, chuyển sang nhân viên
+            // Đang ở view quản lý/HR, chuyển sang view nhân viên
             localStorage.setItem("scpm.dashboard.title", "Employee Dashboard");
             setDashboardTitle("Employee Dashboard");
             router.push("/employee");
@@ -308,10 +299,10 @@ export default function Navbar() {
                     )}
                 </div>
 
-                <button id="clock" className="flex items-center gap-1">
+                {/* <button id="clock" className="flex items-center gap-1">
                     <Clock/>
                     <ChevronDown/>
-                </button>
+                </button> */}
 
 
                 <Link

@@ -5,7 +5,7 @@
  */
 export function mapStatus(status: string): string {
     const statusMap: Record<string, string> = {
-        'draft': 'nháp',
+        'draft': 'Nháp',
         'pending': 'Chờ duyệt',
         'approved': 'Đã duyệt',
         'rejected': 'Từ chối',

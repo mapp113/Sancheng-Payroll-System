@@ -409,11 +409,11 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
             <div className="mx-auto max-w-6xl space-y-6">
                 <button
                     type="button"
-                    className="flex items-center gap-3 text-sm font-semibold text-[#4AB4DE]"
+                    className="flex items-center gap-3 text-sm font-semibold text-[#4AB4DE] hover:underline cursor-pointer"
                     onClick={() => window.history.back()}
                 >
                     <ArrowLeft className="h-5 w-5"/>
-                    <span>BACK</span>
+                    <span>QUAY LẠI</span>
                 </button>
 
                 <header className="rounded-3xl bg-white p-6 shadow-sm">
