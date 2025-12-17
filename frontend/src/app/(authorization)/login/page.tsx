@@ -11,7 +11,7 @@ import {
     AuthCardHeader,
 } from "@app/_components/common/auth-card"
 
-import {login, resolveRedirectPath} from "@app/_components/common/login"
+import {login, resolveRedirectPath, getDashboardTitleByRole} from "@app/_components/common/login"
 import {useTranslations} from "@/lib/translations"
 
 export default function LoginPage() {
@@ -42,6 +42,13 @@ export default function LoginPage() {
                 window.sessionStorage.setItem(
                     "scpm.auth.token",
                     authenticatedUser.token
+                )
+                
+                // lưu dashboard title vào localStorage theo role
+                const dashboardTitle = getDashboardTitleByRole(authenticatedUser.role)
+                window.localStorage.setItem(
+                    "scpm.dashboard.title",
+                    dashboardTitle
                 )
             }
 

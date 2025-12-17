@@ -80,3 +80,15 @@ export function resolveRedirectPath(user: AuthenticatedUser): string {
     const path = ROLE_REDIRECTS[user.role] ?? "/payroll"
     return path
 }
+
+// 🔁 Lấy dashboard title theo role
+export function getDashboardTitleByRole(role: string): string {
+    const ROLE_TITLES: Record<string, string> = {
+        ADMIN: "Admin Dashboard",
+        HR: "HR Dashboard",
+        MANAGER: "Manager Dashboard",
+        ACCOUNTANT: "Accountant Dashboard",
+        EMPLOYEE: "Employee Dashboard",
+    }
+    return ROLE_TITLES[role] ?? "Dashboard"
+}
