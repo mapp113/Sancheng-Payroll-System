@@ -1,6 +1,7 @@
 package com.g98.sangchengpayrollmanager.service;
 
 import com.g98.sangchengpayrollmanager.model.entity.User;
+import com.g98.sangchengpayrollmanager.model.enums.PaySummaryStatus;
 import com.g98.sangchengpayrollmanager.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ public class PayrollNotificationService {
 
     private final UserRepository userRepository;
     private final JavaMailSender mailSender;
+    private final PaySummaryService paySummaryService;
 
     @Value("${app.payroll-notification.mail.from:${spring.mail.username}}")
     private String defaultFromAddress;
@@ -40,6 +42,7 @@ public class PayrollNotificationService {
                 log.warn("Bỏ qua gửi thông báo lương cho {} vì thiếu email", user.getEmployeeCode());
                 continue;
             }
+            paySummaryService.updatePaySummaryStatus(user.getEmployeeCode(), payrollMonth, PaySummaryStatus.APPROVED.toString());
             sendNotification(user, payrollMonth);
         }
     }
