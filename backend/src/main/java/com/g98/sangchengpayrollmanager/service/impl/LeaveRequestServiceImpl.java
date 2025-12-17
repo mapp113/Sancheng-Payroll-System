@@ -49,7 +49,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         leaveRequestDTO.setToDate(toDate);
 
         if (leaveRequestDTO.getFromDate().isBefore(today)) {
-            throw new IllegalArgumentException("Ngày bắt đầu nghỉ phải từ hôm nay ");
+            throw new IllegalArgumentException("Ngày bắt đầu không được trong quá khứ ");
         }
 
         if (leaveRequestDTO.getToDate().isBefore(leaveRequestDTO.getFromDate())) {
@@ -62,6 +62,17 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         LeaveType leaveType = leaveTypeRepository.findByCode(leaveRequestDTO.getLeaveType())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy ngày nghỉ: " + leaveRequestDTO.getLeaveType()));
 
+        DurationType durationType = DurationType.valueOf(leaveRequestDTO.getDuration().toUpperCase());
+
+        if((durationType == DurationType.HALF_DAY_AM || durationType == DurationType.HALF_DAY_PM)
+                && !leaveType.getCode().equals("unpaid_half")) {
+            throw new IllegalArgumentException("Nghỉ nửa ngày bắt buộc phải là nghỉ không phép");
+        }
+
+        if ((durationType == DurationType.HALF_DAY_AM || durationType == DurationType.HALF_DAY_PM)
+                && !fromDate.equals(toDate)) {
+            throw new IllegalArgumentException("Nghỉ nửa ngày chỉ được chọn 1 ngày");
+        }
 
         boolean overlap = LeaveRequestRepository.existsOverlappingLeave(
                 user.getEmployeeCode(), fromDate, toDate
@@ -103,7 +114,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
         for (User u : managers) {
             notificationService.createNotification(
-                    managers.getLast().getEmployeeCode(),
+                    u.getEmployeeCode(),
                     "Có đơn xin nghỉ mới từ nhân viên ",
                     user.getFullName()
                             + " Đã xin nghỉ từ " + leaveRequestDTO.getFromDate()
@@ -134,9 +145,11 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                return days;
 
            }
-//           case HALF_DAY_AM, HALF_DAY_PM -> {
-//               return (fromDate.toEpochDay() - toDate.toEpochDay()) / 2;
-//           }
+
+           case HALF_DAY_AM, HALF_DAY_PM -> {
+               return isWorkingDay(fromDate) ? 0.5 : 0.0;
+           }
+
            default -> throw new RuntimeException("Unsupported duration type: " + durationType);
        }
     }
@@ -217,8 +230,9 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     @Override
     public Page<LeaveRequestResponse> findByStatus(LeaveandOTStatus status, Pageable pageable) {
         return LeaveRequestRepository
-                .findByStatus(LeaveandOTStatus.valueOf(String.valueOf(status)), pageable)
+                .findByStatus(status, pageable)
                 .map(this::mapToResponse);
+
 
     }
 
@@ -269,7 +283,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         String roleName = approver.getRole().getName();
 
         if ("HR".equals(roleName)) {
-            throw new RuntimeException("HR chỉ được xem, không được từ chối đơn nghỉ.");
+            throw new RuntimeException("HR chỉ được xem, không được phê duyệt đơn nghỉ.");
         }
 
         if (!"Manager".equals(roleName)) {
@@ -377,10 +391,35 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                 "Đơn xin nghỉ của bạn đã không được chấp nhận ",
                 " Đơn xin nghỉ ngày " + leaveRequest.getFromDate() +
                         " Tới ngày " +leaveRequest.getToDate() + " không được duyệt ",
-                "LEAVE_APPROVED",
+                "LEAVE_REJECTED",
                 savedLeaveRequest.getId()
         );
         return mapToResponse(savedLeaveRequest);
+    }
+
+    @Override
+    public double getMyRemainingLeaveType(String leaveTypeCode) {
+        String username = getCurrentUsername();
+        User user = userRepository.findByUsernameWithRole(username)
+                .orElseThrow(() -> new RuntimeException("Người không tồn tại : " + username));
+        LeaveType leaveType = leaveTypeRepository.findByCode(leaveTypeCode)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ngày nghỉ" + leaveTypeCode));
+        boolean counted = Boolean.TRUE.equals(leaveType.getIsCountedAsLeave());
+        boolean paid = Boolean.TRUE.equals(leaveType.getIsPaid());
+        if (!counted || !paid) {
+            return 0.0;
+        }
+
+        int year = LocalDate.now().getYear();
+        LeaveQuota quota = leaveQuotaRepository
+                .findByEmployeeCodeAndLeaveTypeCodeAndYear(user.getEmployeeCode(), leaveType.getCode(), year)
+                .orElseThrow(() -> new RuntimeException("Chưa có quota cho loại nghỉ này trong năm nay"));
+
+        Double entitled = quota.getEntitledDays() == null ? 0.0 : quota.getEntitledDays();
+        Double carried = quota.getCarriedOver() == null ? 0.0 : quota.getCarriedOver();
+        Double used = quota.getUsedDays() == null ? 0.0 : quota.getUsedDays();
+
+        return Math.max((entitled + carried) - used, 0.0);
     }
 
     private boolean isWorkingDay(LocalDate date) {
@@ -409,7 +448,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         entity.setLeaveType(leaveType);
         entity.setFromDate(dto.getFromDate());
         entity.setToDate(dto.getToDate());
-        entity.setDurationType(DurationType.valueOf(dto.getDuration()));;
+        entity.setDurationType(DurationType.valueOf(dto.getDuration().trim().toUpperCase()));
         entity.setIsPaidLeave(isPaidByType);
         entity.setReason(dto.getReason());
         entity.setStatus(LeaveandOTStatus.PENDING.name());

@@ -5,6 +5,7 @@ import com.g98.sangchengpayrollmanager.model.dto.attendant.response.AttDailySumm
 import com.g98.sangchengpayrollmanager.model.entity.*;
 import com.g98.sangchengpayrollmanager.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -326,16 +327,17 @@ public class AttDailySummaryService {
         }).toList();
     }
 
+    @PreAuthorize("hasRole('HR')")
     @Transactional
     public void updateDailySummary(Integer id, AttDailySummaryUpdateRequest req) {
         AttDailySummary entity = attDailySummaryRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Daily summary not found: " + id));
 
-        if (req.getIsLateCounted() != null) {
-            entity.setIsLateCounted(req.getIsLateCounted());
+        if (req.getIsLateCounted() != null && req.getIsLateCounted()) {
+            entity.setIsLateCounted(false);
         }
-        if (req.getIsEarlyLeaveCounted() != null) {
-            entity.setIsEarlyLeaveCounted(req.getIsEarlyLeaveCounted());
+        if (req.getIsEarlyLeaveCounted() != null && req.getIsEarlyLeaveCounted()) {
+            entity.setIsEarlyLeaveCounted(false);
         }
         if (req.getIsDayMeal() != null) {
             entity.setIsDayMeal(req.getIsDayMeal());
