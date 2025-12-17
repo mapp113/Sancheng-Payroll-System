@@ -120,152 +120,166 @@ function ManagerApprovalLeavesContent() {
   }, [id]);
 
   if (loading) {
-    return <div className="p-4 text-center">Đang tải...</div>;
+    return (
+      <div className="flex h-full flex-col gap-4 p-4 md:p-6">
+        <div className="flex items-center justify-center p-8 text-center">Đang tải...</div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="p-4 text-center text-red-500">{error}</div>;
+    return (
+      <div className="flex h-full flex-col gap-4 p-4 md:p-6">
+        <div className="flex items-center justify-center p-8 text-center text-red-500">{error}</div>
+      </div>
+    );
   }
 
   if (!leaveData) {
-    return <div className="p-4 text-center">Không tìm thấy dữ liệu</div>;
+    return (
+      <div className="flex h-full flex-col gap-4 p-4 md:p-6">
+        <div className="flex items-center justify-center p-8 text-center">Không tìm thấy dữ liệu</div>
+      </div>
+    );
   }
 
   return (
-    <div className="p-4 flex flex-col gap-4">
-      <button 
-        onClick={handleBack}
-        className="w-fit h-fit border border-black bg-[#8acefd] text-[#4577a0] hover:bg-[#66befc] py-2 px-4 rounded cursor-pointer"
-      >
-        Back
-      </button>
-      <div className="flex justify-center">
-        <div className="w-[60rem] bg-[#d5f1f5] rounded-2xl py-5 px-10">
-          <h1 className="text-2xl font-bold text-center mb-6">Yêu cầu xin nghỉ</h1>
-          
-          <div className="flex flex-col gap-3">
-            <div className="flex">
-              <div className="w-1/3">
-                <strong>Mã nhân viên:</strong>
-              </div>
-              <div className="w-2/3">
-                {leaveData.employeeCode}
-              </div>
-            </div>
+    <div className="flex h-full flex-col gap-4 p-4 md:p-6">
+      <header className="flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm mx-auto w-full max-w-5xl">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={handleBack}
+            className="rounded-full bg-[#4AB4DE] px-6 py-2 text-sm font-medium text-white hover:bg-[#3a9bc5] transition-colors cursor-pointer"
+          >
+            Quay lại
+          </button>
+        </div>
+      </header>
 
-            <div className="flex">
-              <div className="w-1/3">
-                <strong>Tên nhân viên:</strong>
-              </div>
-              <div className="w-2/3">
-                {leaveData.fullName}
-              </div>
-            </div>
-
-            <div className="flex">
-              <div className="w-1/3">
-                <strong>Loại nghỉ:</strong>
-              </div>
-              <div className="w-2/3">
-                {leaveData.leaveTypeCode}
-              </div>
-            </div>
-
-            <div className="flex">
-              <div className="w-1/3">
-                <strong>Ngày bắt đầu:</strong>
-              </div>
-              <div className="w-2/3">
-                {leaveData.fromDate}
-              </div>
-            </div>
-
-            <div className="flex">
-              <div className="w-1/3">
-                <strong>Ngày kết thúc:</strong>
-              </div>
-              <div className="w-2/3">
-                {leaveData.toDate}
-              </div>
-            </div>
-
-            <div className="flex">
-              <div className="w-1/3">
-                <strong>Thời gian:</strong>
-              </div>
-              <div className="w-2/3">
-                {leaveData.duration}
-              </div>
-            </div>
-
-            <div className="flex">
-              <div className="w-1/3">
-                <strong>Lí do:</strong>
-              </div>
-              <div className="w-2/3 bg-[#7aeade] rounded-2xl px-4 py-3 min-h-[100px]">
-                {leaveData.reason}
-              </div>
-            </div>
-
-            {leaveData.file && (
-              <div className="flex">
-                <div className="w-1/3">
-                  <File />
+      <div className="flex flex-1 flex-col gap-4 xl:overflow-hidden">
+        <section className="overflow-hidden rounded-2xl bg-white p-6 shadow-sm mx-auto w-full max-w-5xl">
+          <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Yêu Cầu Nghỉ Phép</h2>
+          <div className="mx-auto max-w-4xl">
+            <div className="mb-6 space-y-4">
+              {/* Employee Information */}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="rounded-lg bg-gray-50 p-4">
+                  <div className="text-sm font-medium text-gray-500">Mã nhân viên</div>
+                  <div className="mt-1 text-base font-semibold text-gray-900">{leaveData.employeeCode}</div>
                 </div>
-                <div className="w-2/3">
-                  <a href={leaveData.file} className="text-blue-600 underline">Xem file</a>
+                <div className="rounded-lg bg-gray-50 p-4">
+                  <div className="text-sm font-medium text-gray-500">Tên nhân viên</div>
+                  <div className="mt-1 text-base font-semibold text-gray-900">{leaveData.fullName}</div>
                 </div>
               </div>
-            )}
 
-            <div className="flex">
-              <div className="w-1/3">
-                <strong>Trạng thái:</strong>
+              {/* Leave Details */}
+              <div className="rounded-lg border border-gray-200 bg-gradient-to-br from-blue-50 to-cyan-50 p-6">
+                <h3 className="mb-4 text-lg font-semibold text-gray-800">Thông tin nghỉ phép</h3>
+                <div className="space-y-3">
+                  <div className="flex items-start">
+                    <span className="w-32 text-sm font-medium text-gray-600">Loại nghỉ:</span>
+                    <span className="flex-1 text-sm text-gray-900">{leaveData.leaveTypeCode}</span>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="w-32 text-sm font-medium text-gray-600">Ngày bắt đầu:</span>
+                    <span className="flex-1 text-sm text-gray-900">{leaveData.fromDate}</span>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="w-32 text-sm font-medium text-gray-600">Ngày kết thúc:</span>
+                    <span className="flex-1 text-sm text-gray-900">{leaveData.toDate}</span>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="w-32 text-sm font-medium text-gray-600">Thời gian:</span>
+                    <span className="flex-1 text-sm font-semibold text-blue-600">{leaveData.duration}</span>
+                  </div>
+                </div>
               </div>
-              <div className="w-2/3 font-semibold">
-                {leaveData.status}
+
+              {/* Reason */}
+              <div className="rounded-lg border border-gray-200 bg-white p-4">
+                <div className="mb-2 text-sm font-medium text-gray-700">Lý do nghỉ phép</div>
+                <div className="rounded-md bg-gradient-to-br from-teal-50 to-cyan-100 px-4 py-3 text-sm text-gray-800">
+                  {leaveData.reason}
+                </div>
+              </div>
+
+              {/* File Attachment */}
+              {leaveData.file && (
+                <div className="rounded-lg border border-gray-200 bg-white p-4">
+                  <div className="flex items-center gap-3">
+                    <File className="h-5 w-5 text-gray-600" />
+                    <a 
+                      href={leaveData.file} 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium text-blue-600 hover:text-blue-700 underline"
+                    >
+                      Xem file đính kèm
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {/* Status */}
+              <div className="rounded-lg bg-gray-50 p-4">
+                <div className="text-sm font-medium text-gray-500">Trạng thái</div>
+                <div className="mt-1">
+                  <span className={`inline-block rounded-full px-3 py-1 text-sm font-semibold ${
+                    leaveData.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                    leaveData.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                    'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {leaveData.status}
+                  </span>
+                </div>
+              </div>
+
+              {/* Note Section */}
+              <div className="rounded-lg border border-gray-200 bg-white p-4">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Ghi chú / Thông báo
+                </label>
+                <textarea
+                  value={leaveData.note ? leaveData.note : note}
+                  onChange={(e) => setNote(e.target.value)}
+                  disabled={leaveData.note ? true : false}
+                  className="w-full rounded-lg border border-gray-300 bg-gradient-to-br from-cyan-50 to-blue-50 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-70"
+                  placeholder="Nhập ghi chú..."
+                  rows={4}
+                />
               </div>
             </div>
 
-            <div className="mt-4">
-              <div className="mb-2">
-                <strong>Thông báo:</strong>
-              </div>
-              <textarea
-                value={leaveData.note ? leaveData.note : note}
-                onChange={(e) => setNote(e.target.value)}
-                className="w-full bg-[#7adfeb] rounded-2xl px-4 py-3 min-h-[100px] resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
-                placeholder="Nhập ghi chú..."
-              />
-            </div>
-          </div>
+            {/* Action Buttons */}
             {leaveData.status !== 'APPROVED' && leaveData.status !== 'REJECTED' && (() => {
               const userStr = sessionStorage.getItem("scpm.auth.user");
               if (!userStr) return null;
               try {
-              const user = JSON.parse(userStr);
-              if (user.role !== 'MANAGER') return null;
+                const user = JSON.parse(userStr);
+                if (user.role !== 'MANAGER') return null;
               } catch {
-              return null;
+                return null;
               }
               return (
-              <div className="flex gap-4 justify-center mt-6">
-                <button 
-                onClick={() => setShowApproveConfirm(true)}
-                className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded cursor-pointer"
-                >
-                Đồng ý
-                </button>
-                <button 
-                onClick={() => setShowRejectConfirm(true)}
-                className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded cursor-pointer"
-                >
-                Từ chối
-                </button>
-              </div>
+                <div className="mt-6 flex justify-center gap-4">
+                  <button 
+                    onClick={() => setShowApproveConfirm(true)}
+                    className="rounded-lg bg-green-500 px-8 py-3 font-semibold text-white shadow-md transition-all hover:bg-green-600 hover:shadow-lg cursor-pointer"
+                  >
+                    ✓ Phê duyệt
+                  </button>
+                  <button 
+                    onClick={() => setShowRejectConfirm(true)}
+                    className="rounded-lg bg-red-500 px-8 py-3 font-semibold text-white shadow-md transition-all hover:bg-red-600 hover:shadow-lg cursor-pointer"
+                  >
+                    ✗ Từ chối
+                  </button>
+                </div>
               );
             })()}
-        </div>
+          </div>
+        </section>
       </div>
 
       {/* Confirmation Dialogs */}
