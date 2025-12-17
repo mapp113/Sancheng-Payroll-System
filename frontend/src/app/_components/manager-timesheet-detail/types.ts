@@ -76,6 +76,7 @@ export interface AttendanceSummary {
     usedleave: number;
     dayStandard: number;
     daysMeal: number;
+    daysPayable: number;
     lateCount: number;
     earlyLeaveCount: number;
     daysHours: number;

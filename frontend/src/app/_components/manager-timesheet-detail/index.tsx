@@ -397,6 +397,14 @@ function LeaveSummaryCard({
                 <div
                     className="inline-flex items-center w-full gap-2 rounded-full border border-black bg-white px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] shadow-[3px_3px_0_#CCE1F0]"
                 >
+                    Số ngày công thực tế
+                    <span className="ml-auto rounded-full bg-[#4AB4DE] px-2 py-0.5 text-xs font-semibold text-white">
+                        {attendanceSummary?.daysPayable ?? 0}
+                    </span>
+                </div>
+                <div
+                    className="inline-flex items-center w-full gap-2 rounded-full border border-black bg-white px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] shadow-[3px_3px_0_#CCE1F0]"
+                >
                     Số ngày công cơm
                     <span className="ml-auto rounded-full bg-[#4AB4DE] px-2 py-0.5 text-xs font-semibold text-white">
                         {attendanceSummary?.daysMeal ?? 0}
