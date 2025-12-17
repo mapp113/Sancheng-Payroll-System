@@ -36,15 +36,10 @@ public class AttDailySummaryService {
         User user = userRepo.findByEmployeeCode(employeeCode)
                 .orElseThrow(() -> new IllegalStateException("User not found: " + employeeCode));
 
-        // 1. Nếu đã tồn tại daily summary => báo lỗi và dừng=================================================
-        attDailySummaryRepo.findByUserAndDate(user, date)
-                .ifPresent(ds -> {
-                    throw new IllegalStateException(
-                            "Daily summary for " + employeeCode + " on " + date + " already exists."
-                    );
-                });
-
-        AttDailySummary dailySummary = new AttDailySummary();
+        // 1. Nếu đã tồn tại daily summary ghi đè
+        AttDailySummary dailySummary = attDailySummaryRepo
+                .findByUserAndDate(user, date)
+                .orElseGet(AttDailySummary::new);
 
         // 2. Lấy policy mặc định (ALL)=================================================================
         AttPolicy policy = attPolicyRepo.findFirstByApplyScopeOrderByIdAsc("ALL")
@@ -151,6 +146,34 @@ public class AttDailySummaryService {
             // Có chấm công
             checkInTime = records.get(0).getCheckTime();
             checkOutTime = records.get(records.size() - 1).getCheckTime();
+
+            boolean missingCheckout = false;
+
+            //không checkout
+            if (schedule != null && shiftEnd != null && checkInTime != null && checkOutTime != null) {
+                long gapMinutes = Duration.between(checkInTime, checkOutTime).toMinutes();
+                // coi như không checkout nếu record cuối quá sát record đầu (VD <= 15 phút)
+                if (gapMinutes <= 15) {
+                    missingCheckout = true;
+                    //gửi thông báo
+                }
+            }
+
+            if (missingCheckout) {
+                checkOutTime = null;
+
+                // reset toàn bộ kết quả tính
+                workHours = 0;
+                otHour = 0;
+                lateMinutes = 0;
+                earlyLeaveMinutes = 0;
+                isLateCounted = false;
+                isEarlyLeaveCounted = false;
+                isPayableDay = false;
+                isCountPayableDay = false;
+                isDayMeal = false;
+            }
+
             System.out.println("checkInTime: " + checkInTime);
             System.out.println("checkOutTime: " + checkOutTime);
             if (checkOutTime != null && checkInTime != null) {
@@ -162,7 +185,10 @@ public class AttDailySummaryService {
                     if(checkOutTime.isAfter(shiftEnd)) checkOutTime1 = shiftEnd;
                 }
                 Integer workMinutes = (int) Duration.between(checkInTime1, checkOutTime1).toMinutes() - breakMinutes;
-                if (workMinutes > 0) workHours = workMinutes / 60;
+                if (workMinutes > 0) {
+                    workHours = roundMinutesToHours(workMinutes, policy.getOtRoundingUnitMinutes()); // hoặc policy.getOtRoundingUnitMinutes()
+                }
+
                 // 🔹 CHỈ cap khi có schedule (ngày làm việc bình thường)
                 if (schedule != null && workHours >= policy.getStandardHoursPerDay()) {
                     workHours = policy.getStandardHoursPerDay();
@@ -187,7 +213,7 @@ public class AttDailySummaryService {
                         otMinutes = (int) Duration.between(otCheckInTime, otCheckOutTime).toMinutes();
                     }
 
-                    otHour = otMinutes > 0 ? (otMinutes / 60) : 0;
+                    otHour = otMinutes > 0 ? roundMinutesToHours(otMinutes, policy.getOtRoundingUnitMinutes()) : 0;
                     workHours = 0;
                 }
 
@@ -209,11 +235,11 @@ public class AttDailySummaryService {
                         otMinutes = (int) Duration.between(otCheckInTime, otCheckOutTime).toMinutes();
                     }
 
-                    otHour = otMinutes > 0 ? otMinutes / 60 : 0;
+                    otHour = otMinutes > 0 ? roundMinutesToHours(otMinutes, policy.getOtRoundingUnitMinutes()) : 0;
                 }
             }
             // Tính đi muộn / về sớm nếu có shift
-            if (shiftStart != null && shiftEnd != null) {
+            if (shiftStart != null && shiftEnd != null && !missingCheckout) {
                 if (checkInTime.isAfter(shiftStart)) {
                     System.out.println("shiftStart: " + shiftStart);
                     lateMinutes = (int) Duration.between(shiftStart, checkInTime).toMinutes();
@@ -327,20 +353,40 @@ public class AttDailySummaryService {
         }).toList();
     }
 
+    private int roundMinutesToHours(int minutes, int unitMinutes) {
+        if (minutes <= 0) return 0;
+        return (int) Math.ceil((double) minutes / unitMinutes) * unitMinutes / 60;
+    }
+
+
     @PreAuthorize("hasRole('HR')")
     @Transactional
     public void updateDailySummary(Integer id, AttDailySummaryUpdateRequest req) {
         AttDailySummary entity = attDailySummaryRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Daily summary not found: " + id));
 
-        if (req.getIsLateCounted() != null && req.getIsLateCounted()) {
-            entity.setIsLateCounted(false);
+        String username = AuthService.getCurrentUsername();
+        User user = userRepo.findByUsernameWithRole(username)
+                .orElseThrow(() -> new RuntimeException("Không có người này: " + username));
+
+        if (entity.getUser().getEmployeeCode().equals(user.getEmployeeCode())) {
+            throw new RuntimeException("Không có quyền sửa chính mình!");
         }
-        if (req.getIsEarlyLeaveCounted() != null && req.getIsEarlyLeaveCounted()) {
-            entity.setIsEarlyLeaveCounted(false);
+
+        if (req.getIsLateCounted() != null) {
+            entity.setIsLateCounted(req.getIsLateCounted());
+        }
+        if (req.getIsEarlyLeaveCounted() != null) {
+            entity.setIsEarlyLeaveCounted(req.getIsEarlyLeaveCounted());
         }
         if (req.getIsDayMeal() != null) {
             entity.setIsDayMeal(req.getIsDayMeal());
+        }
+
+        if (req.getIsCountPayableDay() != null && req.getIsCountPayableDay()) {
+            entity.setIsCountPayableDay(true); //tính ngày công
+            entity.setIsPayableDay(true); //trả full ngày lương
+            entity.setIsAbsent(false);
         }
 
         // ✔️ Save daily summary để đảm bảo dữ liệu mới được flush vào database

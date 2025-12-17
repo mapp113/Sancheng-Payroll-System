@@ -398,7 +398,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     }
 
     @Override
-    public double getMyRemainingLeaveType(String leaveTypeCode) {
+    public double getMyRemainingLeaveByType(String leaveTypeCode) {
         String username = getCurrentUsername();
         User user = userRepository.findByUsernameWithRole(username)
                 .orElseThrow(() -> new RuntimeException("Người không tồn tại : " + username));

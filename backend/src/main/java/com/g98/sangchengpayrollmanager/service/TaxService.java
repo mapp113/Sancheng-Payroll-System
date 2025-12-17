@@ -52,17 +52,18 @@ public class TaxService {
 
         // 2. Lấy chính sách giảm trừ bản thân & người phụ thuộc từ legal_policy
         // giả sử code là "PERSONAL_DEDUCTION" và "DEPENDENT_DEDUCTION"
-        LegalPolicy personalPolicy =
-                legalPolicyRepo.findActiveByCode("PERSONAL_DEDUCTION", asOfDate);
-        LegalPolicy dependentPolicy =
-                legalPolicyRepo.findActiveByCode("DEPENDENT_DEDUCTION", asOfDate);
+        List<LegalPolicy> taxDeductionlPolicy =
+                legalPolicyRepo.findActiveByCalculationType("TAX_DEDUCTION", asOfDate);
 
-        int personalDeduction = (personalPolicy != null && personalPolicy.getAmount() != null)
-                ? personalPolicy.getAmount()
-                : 0;
-        int perDependentDeduction = (dependentPolicy != null && dependentPolicy.getAmount() != null)
-                ? dependentPolicy.getAmount()
-                : 0;
+        int personalDeduction = 0;
+        int perDependentDeduction = 0;
+        for (LegalPolicy policy : taxDeductionlPolicy) {
+            if (policy.getCode().contains("PERSONAL_DEDUCTION")) {
+                personalDeduction = (policy.getAmount() != null) ? policy.getAmount() : 0;
+            } else if (policy.getCode().contains("DEPENDENT_DEDUCTION")) {
+                perDependentDeduction = (policy.getAmount() != null) ? policy.getAmount() : 0;
+            }
+        }
         int dependentsDeduction = perDependentDeduction * dependentsNo;
 
         // ghi snapshot giảm trừ

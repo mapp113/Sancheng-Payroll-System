@@ -4,6 +4,7 @@ import com.g98.sangchengpayrollmanager.model.dto.payroll.response.PaySummaryComp
 import com.g98.sangchengpayrollmanager.model.dto.payroll.response.PaySummaryDto;
 import com.g98.sangchengpayrollmanager.model.dto.payroll.response.PaySummaryResponse;
 import com.g98.sangchengpayrollmanager.model.entity.PaySummary;
+import com.g98.sangchengpayrollmanager.model.enums.PaySummaryStatus;
 import com.g98.sangchengpayrollmanager.repository.PaySummaryRepository;
 import com.g98.sangchengpayrollmanager.util.PaySummarySorts;
 import lombok.RequiredArgsConstructor;
@@ -12,8 +13,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 @Service
@@ -58,4 +61,34 @@ public class PaySummaryService {
                 ).toList()
         );
     }
+
+    @Transactional
+    public PaySummary updatePaySummaryStatus(String employeeCode, YearMonth payrollMonth, String status) {
+        if (employeeCode == null || employeeCode.isBlank()) {
+            throw new IllegalArgumentException("employeeCode is required");
+        }
+        if (payrollMonth == null) {
+            throw new IllegalArgumentException("payrollMonth is required");
+        }
+        if (status == null || status.isBlank()) {
+            throw new IllegalArgumentException("status is required");
+        }
+
+        String normalizedStatus = status.trim().toUpperCase();
+        LocalDate monthDate = payrollMonth.atDay(1);
+
+        PaySummary summary = repo.findByUserEmployeeCodeAndDateAndStatus(employeeCode, monthDate, PaySummaryStatus.DRAFT.toString())
+                .orElseThrow(() -> new IllegalStateException(
+                        "PaySummary not found for " + employeeCode + " on " + payrollMonth
+                ));
+
+        // check null
+        if (summary == null) {
+            throw new IllegalStateException("Payslip draft not found for " + employeeCode + " on " + payrollMonth);
+        }
+
+        summary.setStatus(normalizedStatus);
+        return repo.save(summary);
+    }
+
 }

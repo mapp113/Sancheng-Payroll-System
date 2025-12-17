@@ -35,7 +35,7 @@ class PayrollServiceImplTest {
 //                LocalDate.of(2023, 8, 31)  //monthEnd
 //        );
 //        attMonthSummaryService.createMonthSummary("EMP010", LocalDate.of(2023, 8, 31));
-        attDailySummaryService.createDailySummary("EMP002", LocalDate.of(2025, 12, 22));
+        attDailySummaryService.createDailySummary("EMP002", LocalDate.of(2025, 12, 21));
 
 //        attMonthSummaryService.createMonthSummary("EMP001", LocalDate.of(2025, 10, 31));
 //        attMonthSummaryService.createMonthSummary("EMP002", LocalDate.of(2025, 10, 31));
