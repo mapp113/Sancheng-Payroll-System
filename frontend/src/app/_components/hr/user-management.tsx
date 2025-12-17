@@ -3,6 +3,7 @@
 import {Search, X} from "lucide-react";
 import {ChangeEvent, useEffect, useMemo, useState} from "react";
 import {useRouter} from "next/navigation";
+import Toast from "@/app/_components/common/notification/toast";
 
 type UserItem = {
     userId: string;
@@ -139,6 +140,7 @@ export default function UserManagement() {
     // ⭐ NEW: State to track current user info
     const [currentUserRole, setCurrentUserRole] = useState<string>("");
     const [currentUserEmployeeCode, setCurrentUserEmployeeCode] = useState<string>("");
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "warning" } | null>(null);
 
     // ⭐ NEW: Extract token info on mount
     useEffect(() => {
@@ -370,7 +372,7 @@ export default function UserManagement() {
                 const fullViewUrl = `${API_BASE}${viewUrl}`;
                 setSelectedProfile((prev) => ({...prev, contractUrl: fullViewUrl}));
 
-                alert(`Tải lên thành công: ${json.data?.fileName || file.name}`);
+                setToast({ message: `Tải lên thành công: ${json.data?.fileName || file.name}`, type: "success" });
             }
         } catch (error) {
             console.error(error);
@@ -773,7 +775,7 @@ export default function UserManagement() {
                                                             document.body.removeChild(a);
                                                         } catch (error) {
                                                             console.error("Download failed:", error);
-                                                            alert("Không thể tải xuống file");
+                                                            setToast({ message: "Không thể tải xuống file", type: "error" });
                                                         }
                                                     }}
                                                     className="inline-flex items-center gap-1.5 rounded-lg border border-[#4AB4DE] bg-white px-4 py-2 text-sm font-medium text-[#4AB4DE] transition hover:bg-[#E0F2FE]"
@@ -871,6 +873,14 @@ export default function UserManagement() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
             )}
         </div>
     );

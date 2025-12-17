@@ -2,6 +2,7 @@
 
 import {useEffect, useMemo, useState} from "react";
 import {Pencil, Plus, Search, X} from "lucide-react";
+import Toast from "@/app/_components/common/notification/toast";
 
 type Role = "HR" | "EMPLOYEE" | "ADMIN" | "MANAGER" | "ACCOUNTANT";
 
@@ -18,6 +19,11 @@ type UserItem = {
     roleName?: string;
 };
 
+type ToastMessage = {
+    message: string;
+    type: "success" | "error" | "warning";
+};
+
 const API_BASE = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 
 export default function AdminPage() {
@@ -28,6 +34,7 @@ export default function AdminPage() {
     const [openEdit, setOpenEdit] = useState(false);
     const [editingUser, setEditingUser] = useState<UserItem | null>(null);
     const [search, setSearch] = useState("");
+    const [toast, setToast] = useState<ToastMessage | null>(null);
 
     const [roleSummaries, setRoleSummaries] = useState<
         { name: string; roleName: string; total: number }[]
@@ -234,6 +241,14 @@ export default function AdminPage() {
                 </section>
             </div>
 
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
+
             {openCreate && (
                 <CreateAccountModal
                     onClose={() => setOpenCreate(false)}
@@ -241,6 +256,7 @@ export default function AdminPage() {
                         setOpenCreate(false);
                         await reloadUsers();
                     }}
+                    showToast={(message, type) => setToast({ message, type })}
                 />
             )}
 
@@ -280,10 +296,11 @@ export default function AdminPage() {
 
                         const json = await res.json();
                         if (!res.ok || json.status !== 200) {
-                            alert(json.message || "Cập nhật thất bại");
+                            setToast({ message: json.message || "Cập nhật thất bại", type: "error" });
                             return;
                         }
 
+                        setToast({ message: "Cập nhật tài khoản thành công", type: "success" });
                         setOpenEdit(false);
                         await reloadUsers();
                     }}
@@ -297,9 +314,11 @@ export default function AdminPage() {
 function CreateAccountModal({
                                 onClose,
                                 onSubmit,
+                                showToast,
                             }: {
     onClose: () => void;
     onSubmit: () => void;
+    showToast: (message: string, type: "success" | "error" | "warning") => void;
 }) {
     const [employeeCode, setEmployeeCode] = useState("");
     const [userId, setUserId] = useState(""); // NEW
@@ -338,16 +357,16 @@ function CreateAccountModal({
 
             const json = await res.json();
             if (!res.ok || json.status !== 200) {
-                alert(json.message || "Tạo tài khoản thất bại!");
+                showToast(json.message || "Tạo tài khoản thất bại!", "error");
                 return;
             }
 
-            alert("✅ Tạo tài khoản thành công!");
+            showToast("Tạo tài khoản thành công!", "success");
             onSubmit();
             onClose();
         } catch (err) {
             console.error("Lỗi khi tạo tài khoản:", err);
-            alert("Đã xảy ra lỗi khi tạo tài khoản!");
+            showToast("Đã xảy ra lỗi khi tạo tài khoản!", "error");
         }
     };
 
