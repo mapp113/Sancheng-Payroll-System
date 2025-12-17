@@ -33,7 +33,7 @@ public class OvertimeRequestController {
     @GetMapping("/myrequest")
     public ResponseEntity<Page<OvertimeRequestResponse>> getMyOvertime(
             @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(defaultValue = "5") Integer size,
             @RequestParam(defaultValue = "createdDateOT,DESC") String sort
     ) {
         Pageable pageable = toPageable(page, size, sort);
@@ -60,7 +60,8 @@ public class OvertimeRequestController {
                                                                          @RequestParam(required = false) Integer month,
                                                                          @RequestParam(required = false) Integer year,
                                                                          @RequestParam(defaultValue = "0") Integer page,
-                                                                         @RequestParam(defaultValue = "10") Integer size,
+                                                                         @RequestParam(defaultValue = "10" +
+                                                                                 "") Integer size,
                                                                          @RequestParam(defaultValue = "createdDateOT,DESC") String sort
     ) {
         Pageable pageable = toPageable(page, size, sort);

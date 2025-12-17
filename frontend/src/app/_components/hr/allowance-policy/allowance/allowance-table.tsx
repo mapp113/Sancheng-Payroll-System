@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import type { allowanceTypeResponse } from "./types";
+import Toast from "@/app/_components/common/notification/toast";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 
 export default function AllowanceTable() {
   const [allowances, setAllowances] = useState<allowanceTypeResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "warning" } | null>(null);
 
   useEffect(() => {
     async function fetchAllowances() {
@@ -67,7 +69,7 @@ export default function AllowanceTable() {
       setAllowances(allowances.filter(item => item.id !== id));
     } catch (error) {
       console.error("Error deleting allowance:", error);
-      alert("Không thể xóa khoản trợ cấp này");
+      setToast({ message: "Không thể xóa khoản trợ cấp này", type: "error" });
     }
   };
 
@@ -80,7 +82,15 @@ export default function AllowanceTable() {
   }
 
   return (
-    <div className="w-full h-full overflow-auto rounded-2xl">
+    <>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+      <div className="w-full h-full overflow-auto rounded-2xl">
       <table className="w-full border-collapse">
         <thead className="sticky top-0 bg-[#b8e9f7] z-10">
           <tr>
@@ -168,5 +178,6 @@ export default function AllowanceTable() {
         </tbody>
       </table>
     </div>
+    </>
   );
 }

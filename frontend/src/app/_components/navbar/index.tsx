@@ -79,31 +79,23 @@ export default function Navbar() {
     // if (pathname && noLayoutRoutes.includes(pathname)) return null;
     const {language, toggleLanguage} = useLanguage();
     const getDashboardTitle = () => {
-        const userStr = window.sessionStorage.getItem("scpm.auth.user");
-        if (userStr) {
-            try {
-                const parsed: UserData = JSON.parse(userStr);
-                const role = parsed?.role;
-
-                if (role === "MANAGER") {
-                    return "Manager Dashboard";
-                } else if (role === "HR") {
-                    return "HR Dashboard";
-                } else if (role === "EMPLOYEE") {
-                    return "Employee Dashboard";
-                }
-
-            } catch (error) {
-                console.error("Failed to parse user data:", error);
-            }
+        // Lấy từ localStorage, nếu không có thì dựa vào pathname
+        const savedTitle = localStorage.getItem("scpm.dashboard.title");
+        if (savedTitle) {
+            return savedTitle;
         }
-
-        // Fallback to pathname-based logic
-        return pathname?.startsWith("/admin")
-            ? "Admin Dashboard"
-            : pathname?.startsWith("/manager")
-                ? "Manager Dashboard"
-                : "HR Dashboard";
+        
+        // Fallback: xác định dựa vào pathname
+        if (pathname?.startsWith("/employee")) {
+            return "Employee Dashboard";
+        } else if (pathname?.startsWith("/manager")) {
+            return "Manager Dashboard";
+        } else if (pathname?.startsWith("/contract") || pathname?.startsWith("/payroll")) {
+            return "HR Dashboard";
+        } else if (pathname?.startsWith("/admin")) {
+            return "Admin Dashboard";
+        }
+        return "Dashboard";
     };
 
     useEffect(() => {
@@ -144,7 +136,7 @@ export default function Navbar() {
         fetchUnreadCount();
         checkForNewNotifications();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [pathname]);
 
     // Fetch unread notification count
     const fetchUnreadCount = async () => {
@@ -252,9 +244,13 @@ export default function Navbar() {
         setIsMenuOpen(false);
         if (isEmployeeView) {
             // Đang ở view nhân viên, chuyển sang quản lý
+            localStorage.setItem("scpm.dashboard.title", "Manager Dashboard");
+            setDashboardTitle("Manager Dashboard");
             router.push("/manager/timesheet");
         } else if (isManagerOrHR) {
             // Đang ở view quản lý, chuyển sang nhân viên
+            localStorage.setItem("scpm.dashboard.title", "Employee Dashboard");
+            setDashboardTitle("Employee Dashboard");
             router.push("/employee");
         }
     };

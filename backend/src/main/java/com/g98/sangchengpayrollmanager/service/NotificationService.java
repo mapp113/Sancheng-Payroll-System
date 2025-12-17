@@ -57,14 +57,14 @@ public class NotificationService {
     @Transactional
     public void markAsRead(Integer id) {
         Notification notification = notificationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Notification not found"));
+                .orElseThrow(() -> new RuntimeException("Không có thông bao nào"));
         notification.setIsRead(true);
     }
 
     private String getCurrentUsername() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByUsernameWithRole(username)
-                .orElseThrow(() -> new RuntimeException("Người dun không tồn tại "))
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại "))
                 .getEmployeeCode();
     }
 }

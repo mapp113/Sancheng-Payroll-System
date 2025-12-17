@@ -103,4 +103,5 @@ export interface AttDailySummaryUpdateRequest {
     isLateCounted: boolean;
     isEarlyLeaveCounted: boolean;
     isDayMeal: boolean;
+    isCountPayableDay: boolean;
 }

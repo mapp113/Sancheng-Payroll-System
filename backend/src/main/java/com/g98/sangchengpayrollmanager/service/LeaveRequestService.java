@@ -28,6 +28,12 @@ public interface LeaveRequestService {
     // kiểm tra số ngày nghỉ còn lai
     double getMyAnnualRemainingLeave();
 
+    // kiểm tra số ngày nghỉ còn lại của từng loại khi tạo đơn nghỉ
+    double getMyRemainingLeaveByType(String leaveTypeCode);
+
+    // kiểm tra số ngày sẽ có khi overtime vượt quá luật
+    // int getMyRemainingOTCompDays();
+
     // Xóa đơn xin nghỉ chưa được duyệt
     void deleteMyLeaveRequest(Integer id);
 

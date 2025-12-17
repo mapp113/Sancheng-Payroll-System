@@ -82,8 +82,16 @@ export default function ManagerTimesheetDetail({
 
             setIsLoading(true);
             try {
+                const userStr = window.sessionStorage.getItem("scpm.auth.user");
+                const token = userStr ? JSON.parse(userStr)?.token : null;
+
                 const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/employees/${timesheetParams.employeeCode}`
+                    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/employees/${timesheetParams.employeeCode}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    }
                 );
 
                 if (!response.ok) {
@@ -111,9 +119,17 @@ export default function ManagerTimesheetDetail({
             
             setIsLoading(true);
             try {
+                const userStr = window.sessionStorage.getItem("scpm.auth.user");
+                const token = userStr ? JSON.parse(userStr)?.token : null;
+
                 const monthParam = `${month}-01`;
                 const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/attsummary/month?month=${monthParam}&employeeCode=${timesheetParams.employeeCode}`
+                    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/attsummary/month?month=${monthParam}&employeeCode=${timesheetParams.employeeCode}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    }
                 );
 
                 if (!response.ok) {
@@ -141,9 +157,17 @@ export default function ManagerTimesheetDetail({
 
             setIsLoading(true);
             try {
+                const userStr = window.sessionStorage.getItem("scpm.auth.user");
+                const token = userStr ? JSON.parse(userStr)?.token : null;
+
                 const monthParam = `${month}-01`;
                 const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/attsummary/by-month?employeeCode=${timesheetParams.employeeCode}&month=${monthParam}`
+                    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/attsummary/by-month?employeeCode=${timesheetParams.employeeCode}&month=${monthParam}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    }
                 );
 
                 if (!response.ok) {
@@ -174,8 +198,16 @@ export default function ManagerTimesheetDetail({
 
             setIsLoading(true);
             try {
+                const userStr = window.sessionStorage.getItem("scpm.auth.user");
+                const token = userStr ? JSON.parse(userStr)?.token : null;
+
                 const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/v1/hr/users/${timesheetParams.employeeCode}/pay-components/month?year=${year}&month=${month}`
+                    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/v1/hr/users/${timesheetParams.employeeCode}/pay-components/month?year=${year}&month=${month}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    }
                 );
 
                 if (!response.ok) {
@@ -740,12 +772,14 @@ function AttendanceDayDetailPopup({
     const [isLateCounted, setIsLateCounted] = useState(attendanceData.isLateCounted);
     const [isEarlyLeaveCounted, setIsEarlyLeaveCounted] = useState(attendanceData.isEarlyLeaveCounted);
     const [isDayMeal, setIsDayMeal] = useState(attendanceData.isDayMeal);
+    const [isCountPayableDay, setIsCountPayableDay] = useState(attendanceData.isCountPayableDay);
     const [isSaving, setIsSaving] = useState(false);
 
     // Lưu giá trị ban đầu để kiểm tra
     const initialIsLateCounted = attendanceData.isLateCounted;
     const initialIsEarlyLeaveCounted = attendanceData.isEarlyLeaveCounted;
     const initialIsDayMeal = attendanceData.isDayMeal;
+    const initialIsCountPayableDay = attendanceData.isCountPayableDay;
 
     const formatDateTime = (dateTime: string) => {
         if (!dateTime) return "--";
@@ -756,10 +790,14 @@ function AttendanceDayDetailPopup({
     const handleSave = async () => {
         setIsSaving(true);
         try {
+            const userStr = window.sessionStorage.getItem("scpm.auth.user");
+            const token = userStr ? JSON.parse(userStr)?.token : null;
+
             const body: AttDailySummaryUpdateRequest = {
                 isLateCounted,
                 isEarlyLeaveCounted,
                 isDayMeal,
+                isCountPayableDay,
             };
 
             const response = await fetch(
@@ -767,6 +805,7 @@ function AttendanceDayDetailPopup({
                 {
                     method: 'PATCH',
                     headers: {
+                        'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(body),
@@ -897,7 +936,7 @@ function AttendanceDayDetailPopup({
                                 <input
                                     type="checkbox"
                                     checked={isLateCounted}
-                                    disabled={!isEditing || !initialIsLateCounted}
+                                    disabled={!isEditing}
                                     onChange={(e) => setIsLateCounted(e.target.checked)}
                                     className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE] cursor-pointer disabled:cursor-not-allowed"
                                 />
@@ -908,7 +947,7 @@ function AttendanceDayDetailPopup({
                                 <input
                                     type="checkbox"
                                     checked={isEarlyLeaveCounted}
-                                    disabled={!isEditing || !initialIsEarlyLeaveCounted}
+                                    disabled={!isEditing}
                                     onChange={(e) => setIsEarlyLeaveCounted(e.target.checked)}
                                     className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE] cursor-pointer disabled:cursor-not-allowed"
                                 />
@@ -918,8 +957,9 @@ function AttendanceDayDetailPopup({
                             <div className="flex items-center gap-2">
                                 <input
                                     type="checkbox"
-                                    checked={attendanceData.isCountPayableDay}
-                                    disabled
+                                    checked={isCountPayableDay}
+                                    disabled={!isEditing}
+                                    onChange={(e) => setIsCountPayableDay(e.target.checked)}
                                     className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE] cursor-pointer disabled:cursor-not-allowed"
                                 />
                                 <label className="text-sm font-semibold text-[#1D3E6A]">Tính ngày công</label>
@@ -939,7 +979,7 @@ function AttendanceDayDetailPopup({
                                 <input
                                     type="checkbox"
                                     checked={isDayMeal}
-                                    disabled={!isEditing || !initialIsDayMeal}
+                                    disabled={!isEditing}
                                     onChange={(e) => setIsDayMeal(e.target.checked)}
                                     className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE] cursor-pointer disabled:cursor-not-allowed"
                                 />
@@ -969,6 +1009,7 @@ function AttendanceDayDetailPopup({
                                     setIsLateCounted(attendanceData.isLateCounted);
                                     setIsEarlyLeaveCounted(attendanceData.isEarlyLeaveCounted);
                                     setIsDayMeal(attendanceData.isDayMeal);
+                                    setIsCountPayableDay(attendanceData.isCountPayableDay);
                                 }}
                                 className="rounded-full border border-[#56749A] bg-white px-6 py-2 text-xs md:text-sm font-semibold uppercase tracking-[0.3em] text-[#56749A] transition hover:bg-gray-50 cursor-pointer"
                                 disabled={isSaving}
