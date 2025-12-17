@@ -1,6 +1,7 @@
 package com.g98.sangchengpayrollmanager.service;
 
 import com.g98.sangchengpayrollmanager.model.entity.AttDailySummary;
+import com.g98.sangchengpayrollmanager.model.entity.AttMonthSummary;
 import com.g98.sangchengpayrollmanager.model.entity.SalaryInformation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,17 +17,20 @@ public class OtService {
 
     public int getTotalOtAmount(
             List<AttDailySummary> adsList,
-            List<SalaryInformation> salaryInformationList
+            List<SalaryInformation> salaryInformationList,
+            AttMonthSummary ams
     ) {
-        int normal = getTotalOtNormalPort(adsList, salaryInformationList);
-        int extra = getTotalOtExtraPort(adsList, salaryInformationList);
+        int normal = getTotalOtNormalPort(adsList, salaryInformationList, ams);
+        int extra = getTotalOtExtraPort(adsList, salaryInformationList, ams);
+        System.out.println("normal: " + normal + ", extra: " + extra);
         return normal + extra;
     }
 
     //phần OT bị tính thuế
     public int getTotalOtNormalPort(
             List<AttDailySummary> adsList,
-            List<SalaryInformation> salaryInformationList
+            List<SalaryInformation> salaryInformationList,
+            AttMonthSummary ams
     ) {
         BigDecimal total = BigDecimal.ZERO;
 
@@ -37,7 +41,11 @@ public class OtService {
             SalaryInformation si = findSalaryInfoForDate(salaryInformationList, ads.getDate());
             if (si == null) continue;
 
-            BigDecimal baseHourly = BigDecimal.valueOf(si.getBaseHourlyRate());
+//            BigDecimal baseHourly = BigDecimal.valueOf(si.getBaseSalary()/ams.getDayStandard());
+            BigDecimal baseHourly =
+                    BigDecimal.valueOf(si.getBaseSalary())
+                            .divide(ams.getDayStandard().multiply(BigDecimal.valueOf(8)), 0, RoundingMode.HALF_UP);
+
             total = total.add(baseHourly.multiply(BigDecimal.valueOf(otHour)));
         }
 
@@ -47,7 +55,8 @@ public class OtService {
     // phần Ot miễn thiếu
     public int getTotalOtExtraPort(
             List<AttDailySummary> adsList,
-            List<SalaryInformation> salaryInformationList
+            List<SalaryInformation> salaryInformationList,
+            AttMonthSummary ams
     ) {
         BigDecimal total = BigDecimal.ZERO;
 
@@ -62,7 +71,11 @@ public class OtService {
                     ? ads.getDayType().getOtRate()
                     : BigDecimal.ONE;
 
-            BigDecimal baseHourly = BigDecimal.valueOf(si.getBaseHourlyRate());
+//            BigDecimal baseHourly = BigDecimal.valueOf(si.getBaseHourlyRate());
+            BigDecimal baseHourly =
+                    BigDecimal.valueOf(si.getBaseSalary())
+                            .divide(ams.getDayStandard().multiply(BigDecimal.valueOf(8)), 0, RoundingMode.HALF_UP);
+
             BigDecimal rateExtra = otRate.subtract(BigDecimal.ONE);
             if (rateExtra.compareTo(BigDecimal.ZERO) < 0) rateExtra = BigDecimal.ZERO;
 

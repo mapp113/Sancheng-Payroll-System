@@ -55,7 +55,7 @@ public class PayrollServiceImpl implements PayrollService {
         int baseSalaryAmount = baseSalaryService.calculateBaseSalaryAmt(monthStart, monthEnd, adsList, ams, salaryInformationList);
 
         // 3. tính OT
-        int otAmount = otService.getTotalOtAmount(adsList, salaryInformationList);
+        int otAmount = otService.getTotalOtAmount(adsList, salaryInformationList, ams);
 
         // 4. Phụ cấp, thưởng, deduction
         PayComponentService.Result pcResult =
@@ -82,7 +82,7 @@ public class PayrollServiceImpl implements PayrollService {
         int employeeInsurance = insResult.getEmployeeInsurance();
 
         // 7.assessable_income
-        int nonTaxableOtAmount = otService.getTotalOtExtraPort(adsList, salaryInformationList);
+        int nonTaxableOtAmount = otService.getTotalOtExtraPort(adsList, salaryInformationList, ams);
         int assessableIncome = grossIncome - nonTaxableAddition - nonTaxableOtAmount;
         System.out.println("grossIncome: " + grossIncome);
         System.out.println("nonTaxableOtAmount: " + nonTaxableOtAmount);
@@ -97,10 +97,20 @@ public class PayrollServiceImpl implements PayrollService {
         // 10.net_salary
         int netSalary = grossIncome - taxAmount - employeeInsurance - totalDeduction;
 
+        // Nếu đã APPROVED thì không cho sửa nữa
+        PaySummary approvedExists = paySummaryRepo
+                .findByUserEmployeeCodeAndDateAndStatus(employeeCode, month, String.valueOf(PaySummaryStatus.APPROVED))
+                .orElse(null);
+
+        if (approvedExists != null) {
+            throw new IllegalStateException(
+                    "Payslip for " + employeeCode + " " + month + " is already APPROVED and cannot be modified"
+            );
+        }
 
         // 11. update draft hay tạo mới
         PaySummary summary = paySummaryRepo
-                .findByUserEmployeeCodeAndDateAndStatus(employeeCode, month, "draft")
+                .findByUserEmployeeCodeAndDateAndStatus(employeeCode, month, String.valueOf(PaySummaryStatus.DRAFT))
                 .orElse(null);
 
         if (summary == null) {

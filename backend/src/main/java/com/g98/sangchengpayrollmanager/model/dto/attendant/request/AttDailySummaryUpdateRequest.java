@@ -13,6 +13,7 @@ public class AttDailySummaryUpdateRequest {
     private Boolean isLateCounted;
     private Boolean isEarlyLeaveCounted;
     private Boolean isDayMeal;
+    private Boolean isCountPayableDay;
     // sau này thêm field khác cứ bổ sung ở đây
 }
 
