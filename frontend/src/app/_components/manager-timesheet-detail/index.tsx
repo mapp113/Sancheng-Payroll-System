@@ -783,6 +783,21 @@ function AttendanceDayDetailPopup({
     const [isCountPayableDay, setIsCountPayableDay] = useState(attendanceData.isCountPayableDay);
     const [isSaving, setIsSaving] = useState(false);
 
+    // Kiểm tra xem có phải employee của chính mình không
+    const isOwnEmployee = () => {
+        const userStr = window.sessionStorage.getItem("scpm.auth.user");
+        if (!userStr) return false;
+        
+        try {
+            const user = JSON.parse(userStr);
+            return user.employeeCode === employeeInfo?.employeeCode;
+        } catch {
+            return false;
+        }
+    };
+
+    const canEdit = !isOwnEmployee();
+
     // Lưu giá trị ban đầu để kiểm tra
     const initialIsLateCounted = attendanceData.isLateCounted;
     const initialIsEarlyLeaveCounted = attendanceData.isEarlyLeaveCounted;
@@ -841,7 +856,7 @@ function AttendanceDayDetailPopup({
                 <div className="flex items-center justify-between pb-4 border-b border-[#CCE1F0]">
                     <h2 className="text-xl md:text-2xl font-bold text-[#1D3E6A]">Chi tiết chấm công</h2>
                     <div className="flex items-center gap-2">
-                        {!isEditing && (
+                        {!isEditing && canEdit && (
                             <button
                                 onClick={() => setIsEditing(true)}
                                 className="rounded-full border border-[#4AB4DE] bg-white px-3 md:px-4 py-2 text-xs md:text-sm font-semibold uppercase tracking-[0.2em] text-[#1D3E6A] transition hover:bg-[#E6F7FF] cursor-pointer"
@@ -966,7 +981,7 @@ function AttendanceDayDetailPopup({
                                 <input
                                     type="checkbox"
                                     checked={isCountPayableDay}
-                                    disabled={!isEditing}
+                                    disabled={!isEditing || isCountPayableDay}
                                     onChange={(e) => setIsCountPayableDay(e.target.checked)}
                                     className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE] cursor-pointer disabled:cursor-not-allowed"
                                 />

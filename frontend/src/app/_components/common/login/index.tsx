@@ -9,6 +9,7 @@ export type AuthenticatedUser = {
     fullName: string
     role: string
     token: string
+    employeeCode: string
 }
 
 const API_BASE_URL =
@@ -17,6 +18,7 @@ const API_BASE_URL =
 type LoginSuccessResponse = {
     message?: string
     token: string
+    employeeCode?: string
 }
 
 type LoginErrorResponse = {
@@ -26,6 +28,7 @@ type JwtPayload = {
     full_name?: string
     name?: string
     role_name?: string
+    employee_code?: string
 }
 // ánh xạ role → đường dẫn
 const ROLE_REDIRECTS: Record<string, string> = {
@@ -67,11 +70,13 @@ export async function login(payload: LoginPayload): Promise<AuthenticatedUser> {
 
     const fullName = decoded.full_name ?? decoded.name ?? ""
     const role = decoded.role_name?.toUpperCase?.() ?? "EMPLOYEE"
+    const employeeCode = data.employeeCode ?? decoded.employee_code ?? ""
 
     return {
         fullName,
         role,
         token: data.token,
+        employeeCode,
     }
 }
 
