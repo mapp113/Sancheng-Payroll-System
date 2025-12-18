@@ -305,23 +305,31 @@ export default function Navbar() {
                 </button> */}
 
 
-                <Link
-                    href={
-                        userRole === "MANAGER"
-                            ? "/manager/profile"
-                            : userRole === "HR"
-                                ? "/contract/profile"
-                                : "/employee/profile"
-                    }
-                    className="flex items-center gap-2 rounded-full px-2 py-1 transition hover:bg-white/50">
-                    {/*<Avatar className="h-12 w-12">*/}
-                    {/*    <AvatarImage src="/logo.jpg" alt="User avatar"/>*/}
-                    {/*    <AvatarFallback>Avatar</AvatarFallback>*/}
-                    {/*</Avatar>*/}
-                    <span id="username" className="font-semibold">
-                        {username || "Loading..."}
-                    </span>
-                </Link>
+                {userRole === "ADMIN" ? (
+                    <div className="flex items-center gap-2 rounded-full px-2 py-1">
+                        <span id="username" className="font-semibold">
+                            {username || "Loading..."}
+                        </span>
+                    </div>
+                ) : (
+                    <Link
+                        href={
+                            userRole === "MANAGER"
+                                ? "/manager/profile"
+                                : userRole === "HR"
+                                    ? "/contract/profile"
+                                    : "/employee/profile"
+                        }
+                        className="flex items-center gap-2 rounded-full px-2 py-1 transition hover:bg-white/50">
+                        {/*<Avatar className="h-12 w-12">*/}
+                        {/*    <AvatarImage src="/logo.jpg" alt="User avatar"/>*/}
+                        {/*    <AvatarFallback>Avatar</AvatarFallback>*/}
+                        {/*</Avatar>*/}
+                        <span id="username" className="font-semibold">
+                            {username || "Loading..."}
+                        </span>
+                    </Link>
+                )}
                 <div className="relative" ref={menuRef}>
                     <button
                         className="cursor-pointer hover:opacity-80 transition-opacity"
