@@ -331,7 +331,7 @@ export default function Navbar() {
                     <Link
                         href={
                             userRole === "MANAGER"
-                                ? "/manager/profile"
+                                ? "/contract/profile"
                                 : userRole === "HR"
                                     ? "/contract/profile"
                                     : "/employee/profile"
