@@ -23,7 +23,14 @@ type ToastMessage = {
     message: string;
     type: "success" | "error" | "warning";
 };
-
+type EmployeePrefill = {
+    employeeCode?: string;
+    fullName?: string;
+    username?: string;
+    email?: string;
+    dob?: string;
+    phoneNo?: string;
+};
 const API_BASE = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 
 export default function AdminPage() {
@@ -256,7 +263,7 @@ export default function AdminPage() {
                         setOpenCreate(false);
                         await reloadUsers();
                     }}
-                    showToast={(message, type) => setToast({ message, type })}
+                    showToast={(message, type) => setToast({message, type})}
                 />
             )}
 
@@ -296,11 +303,11 @@ export default function AdminPage() {
 
                         const json = await res.json();
                         if (!res.ok || json.status !== 200) {
-                            setToast({ message: json.message || "Cập nhật thất bại", type: "error" });
+                            setToast({message: json.message || "Cập nhật thất bại", type: "error"});
                             return;
                         }
 
-                        setToast({ message: "Cập nhật tài khoản thành công", type: "success" });
+                        setToast({message: "Cập nhật tài khoản thành công", type: "success"});
                         setOpenEdit(false);
                         await reloadUsers();
                     }}
@@ -328,7 +335,53 @@ function CreateAccountModal({
     const [role, setRole] = useState<Role>("EMPLOYEE");
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
+    const [prefillLoading, setPrefillLoading] = useState(false);
+    const [prefillError, setPrefillError] = useState<string | null>(null);
 
+    useEffect(() => {
+        const code = employeeCode.trim();
+        if (!code) {
+            setPrefillError(null);
+            return;
+        }
+
+        const controller = new AbortController();
+
+        const fetchEmployee = async () => {
+            try {
+                setPrefillLoading(true);
+                setPrefillError(null);
+                const token = localStorage.getItem("access_token") ?? "";
+                const res = await fetch(`${API_BASE}/api/employees/${encodeURIComponent(code)}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                    signal: controller.signal,
+                });
+
+                if (!res.ok) {
+                    throw new Error("Không tìm thấy nhân viên");
+                }
+
+                const data: EmployeePrefill = await res.json();
+                setName(data.fullName ?? "");
+                setUsername(data.username ?? "");
+                setEmail(data.email ?? "");
+                setPhone(data.phoneNo ?? "");
+            } catch (err) {
+                if ((err as Error).name === "AbortError") return;
+                console.error("fetch employee error", err);
+                setPrefillError("Không tìm thấy thông tin nhân viên để tự điền");
+            } finally {
+                setPrefillLoading(false);
+            }
+        };
+
+        fetchEmployee();
+
+        return () => controller.abort();
+    }, [employeeCode]);
+    
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {

@@ -65,6 +65,13 @@ type EmployeeProfileResponse = {
     dependentsNo?: string;
 };
 
+type UserDetailResponse = {
+    fullName?: string;
+    phoneNo?: string;
+    email?: string;
+    position?: string;
+};
+
 const emptyProfile: EmployeeProfile = {
     id: "",
     name: "",
@@ -257,28 +264,58 @@ export default function UserManagement() {
         setProfileLoading(true);
         setProfileError(null);
         try {
-            const res = await fetch(
-                `${API_BASE}/api/v1/hr/users/${employeeCode}/profile`,
-                {
+            // const res = await fetch(
+            //     `${API_BASE}/api/v1/hr/users/${employeeCode}/profile`,
+            //     {
+            const token = localStorage.getItem("access_token") ?? "";
+            const [profileRes, userRes] = await Promise.all([
+                fetch(`${API_BASE}/api/v1/hr/users/${employeeCode}/profile`, {
                     headers: {
-                        Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
+                        // Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
+                        Authorization: `Bearer ${token}`,
                     },
-                }
-            );
-            if (!res.ok) {
+                    //     }
+                    // );
+                    // if (!res.ok) {
+                }),
+                fetch(`${API_BASE}/api/v1/hr/users/${employeeCode}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }),
+            ]);
+
+            if (!profileRes.ok) {
                 throw new Error("Không thể tải thông tin hồ sơ");
             }
-            const data = (await res.json()) as EmployeeProfileResponse;
+            //    const data = (await res.json()) as EmployeeProfileResponse;
+            const [profileData, userData] = await Promise.all([
+                profileRes.json() as Promise<EmployeeProfileResponse>,
+                userRes.ok
+                    ? (userRes.json() as Promise<UserDetailResponse>)
+                    : Promise.resolve({} as UserDetailResponse),
+            ]);
+
 
             // ⭐ MAP VÀ THÊM API_BASE VÀO CONTRACT URL
-            const mappedProfile = mapProfileResponse(data);
+            //  const mappedProfile = mapProfileResponse(data);
+            const mappedProfile = mapProfileResponse(profileData);
 
             // Nếu contractUrl là relative path, thêm API_BASE
             if (mappedProfile.contractUrl && !mappedProfile.contractUrl.startsWith('http')) {
                 mappedProfile.contractUrl = `${API_BASE}${mappedProfile.contractUrl}`;
             }
 
-            setSelectedProfile(mappedProfile);
+            //          setSelectedProfile(mappedProfile);
+            setSelectedProfile((prev) => ({
+                ...prev,
+                ...mappedProfile,
+                name: userData.fullName ?? mappedProfile.name,
+                personalEmail: userData.email ?? mappedProfile.personalEmail,
+                phone: userData.phoneNo ?? mappedProfile.phone,
+                position: userData.position ?? mappedProfile.position,
+            }));
+
         } catch (error) {
             console.error(error);
             setProfileError("Không thể tải thông tin hồ sơ");
@@ -412,7 +449,7 @@ export default function UserManagement() {
                 const fullViewUrl = `${API_BASE}${viewUrl}`;
                 setSelectedProfile((prev) => ({...prev, contractUrl: fullViewUrl}));
 
-                setToast({ message: `Tải lên thành công: ${json.data?.fileName || file.name}`, type: "success" });
+                setToast({message: `Tải lên thành công: ${json.data?.fileName || file.name}`, type: "success"});
             }
         } catch (error) {
             console.error(error);
@@ -829,7 +866,10 @@ export default function UserManagement() {
                                                             document.body.removeChild(a);
                                                         } catch (error) {
                                                             console.error("Download failed:", error);
-                                                            setToast({ message: "Không thể tải xuống file", type: "error" });
+                                                            setToast({
+                                                                message: "Không thể tải xuống file",
+                                                                type: "error"
+                                                            });
                                                         }
                                                     }}
                                                     className="inline-flex items-center gap-1.5 rounded-lg border border-[#4AB4DE] bg-white px-4 py-2 text-sm font-medium text-[#4AB4DE] transition hover:bg-[#E0F2FE]"
