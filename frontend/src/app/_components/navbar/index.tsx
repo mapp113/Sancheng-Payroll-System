@@ -68,6 +68,7 @@ export default function Navbar() {
     const shouldHideNavbar = pathname && noLayoutRoutes.includes(pathname);
     const [username, setUsername] = useState<string | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
+    const [currentMode, setCurrentMode] = useState<string | null>(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [dashboardTitle, setDashboardTitle] = useState("Dashboard");
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -114,6 +115,7 @@ export default function Navbar() {
             console.error("JWT decode error:", error);
             setUsername("Unknown User");
         }
+        setCurrentMode(getUserMode());
         setDashboardTitle(getDashboardTitle());
         fetchUnreadCount();
         checkForNewNotifications();
@@ -217,32 +219,46 @@ export default function Navbar() {
         router.push("/login");
     };
 
-    // Kiểm tra quyền chuyển đổi view dựa trên role
+    // Kiểm tra quyền chuyển đổi view dựa trên role và mode
     const isManagerOrHR = userRole === "MANAGER" || userRole === "HR";
-    const isEmployeeView = pathname?.startsWith("/employee");
-    const canSwitchView = isManagerOrHR && (isManagerOrHR || isEmployeeView);
+    const isEmployeeView = currentMode === "EMPLOYEE";
+    const canSwitchView = isManagerOrHR;
 
     const handleSwitchView = () => {
         setIsMenuOpen(false);
-        if (isEmployeeView) {
-            // Đang ở view nhân viên, chuyển về view gốc theo role
-            if (userRole) {
-                localStorage.setItem("scpm.user.mode", userRole);
-                const title = getDashboardTitleByRole(userRole);
-                setDashboardTitle(title);
-                
-                // Redirect dựa trên role
-                if (userRole === "MANAGER") {
-                    router.push("/manager/timesheet");
-                } else if (userRole === "HR") {
-                    router.push("/contract");
+        
+        // Lấy role thực từ sessionStorage
+        const userStr = window.sessionStorage.getItem("scpm.auth.user");
+        if (!userStr) return;
+        
+        try {
+            const parsed: UserData = JSON.parse(userStr);
+            const actualRole = parsed?.role; // Role thực của user (MANAGER hoặc HR)
+            
+            if (isEmployeeView) {
+                // Đang ở mode EMPLOYEE → chuyển sang mode MANAGER/HR (theo role thực)
+                if (actualRole && (actualRole === "MANAGER" || actualRole === "HR")) {
+                    localStorage.setItem("scpm.user.mode", actualRole);
+                    setCurrentMode(actualRole);
+                    const title = getDashboardTitleByRole(actualRole);
+                    setDashboardTitle(title);
+                    
+                    // Redirect dựa trên role thực
+                    if (actualRole === "MANAGER") {
+                        router.push("/manager/timesheet");
+                    } else if (actualRole === "HR") {
+                        router.push("/contract");
+                    }
                 }
+            } else {
+                // Đang ở mode MANAGER/HR → chuyển sang mode EMPLOYEE
+                localStorage.setItem("scpm.user.mode", "EMPLOYEE");
+                setCurrentMode("EMPLOYEE");
+                setDashboardTitle("Employee Dashboard");
+                router.push("/employee");
             }
-        } else if (isManagerOrHR) {
-            // Đang ở view quản lý/HR, chuyển sang view nhân viên
-            localStorage.setItem("scpm.user.mode", "EMPLOYEE");
-            setDashboardTitle("Employee Dashboard");
-            router.push("/employee");
+        } catch (error) {
+            console.error("Error switching view:", error);
         }
     };
 

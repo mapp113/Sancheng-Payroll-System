@@ -886,9 +886,9 @@ function InfoField({ label, icon, children }: InfoFieldProps) {
                 {icon}
                 {label}
             </p>
-            <p className="break-words text-sm font-semibold text-[#1F2A44]">
+            <div className="break-words text-sm font-semibold text-[#1F2A44]">
                 {children}
-            </p>
+            </div>
         </div>
     );
 }
