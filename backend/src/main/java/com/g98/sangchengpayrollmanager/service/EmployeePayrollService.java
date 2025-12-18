@@ -4,6 +4,7 @@ import com.g98.sangchengpayrollmanager.model.dto.payroll.response.EmployeePayrol
 import com.g98.sangchengpayrollmanager.model.entity.AttMonthSummary;
 import com.g98.sangchengpayrollmanager.model.entity.PaySummary;
 import com.g98.sangchengpayrollmanager.model.entity.User;
+import com.g98.sangchengpayrollmanager.model.enums.PaySummaryStatus;
 import com.g98.sangchengpayrollmanager.repository.AttMonthSummaryRepository;
 import com.g98.sangchengpayrollmanager.repository.PaySummaryRepository;
 import com.g98.sangchengpayrollmanager.repository.UserRepository;
@@ -46,7 +47,7 @@ public class EmployeePayrollService {
         // 4) Lấy bảng lương đã chốt (status = 'confirmed')
         List<PaySummary> payList =
                 paySummaryRepo.findByUserEmployeeCodeAndDateBetweenAndStatus(
-                        employeeCode, start, end, "draft"
+                        employeeCode, start, end, PaySummaryStatus.APPROVED.toString()
                 );
 
         // Map pay_summary theo month
