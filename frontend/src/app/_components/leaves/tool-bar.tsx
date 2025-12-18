@@ -13,14 +13,20 @@ export default function LeavesToolBar() {
   }, []);
 
   return (
-    <div className="flex flex-row w-full items-center">
-      <a href="./" className="w-fit h-fit border border-black bg-[#8acefd] text-[#4577a0] hover:bg-[#66befc] py-2 px-4 rounded cursor-pointer">Back</a>
-      <div className="flex flex-row items-center w-full h-fit px-4 py-2 ml-10 bg-[#c0f2fd] rounded-2xl">
-        <div>
-          <span className="font-bold text-2xl mr-3">Nhân viên:</span>
-          <span className="font-bold text-xl text-[#3e699f]">{userName}</span>
-          <br />
-          <span className="font-bold text-lg mr-2">Mã nhân viên:</span> <span>{userCode}</span>
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <a href="./" className="rounded-full border border-[#4AB4DE] bg-white px-4 py-2 text-sm font-semibold text-[#4AB4DE] transition hover:bg-[#F4FBFF]">
+        Quay lại
+      </a>
+      <div className="flex-1 rounded-3xl bg-white p-4 shadow-sm">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-baseline gap-2">
+            <span className="text-sm font-medium text-[#1F2A44]/60">Nhân viên:</span>
+            <span className="text-lg font-semibold text-[#4AB4DE]">{userName}</span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-sm font-medium text-[#1F2A44]/60">Mã nhân viên:</span>
+            <span className="text-base text-[#1F2A44]">{userCode}</span>
+          </div>
         </div>
       </div>
     </div>

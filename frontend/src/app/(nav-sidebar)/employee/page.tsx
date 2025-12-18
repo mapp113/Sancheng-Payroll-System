@@ -246,6 +246,37 @@ export default function EmployeesDashboardPage() {
                         </dl>
                     </section>
 
+                    {/* Theo dõi chấm công */}
+                    <section className="rounded-3xl bg-white p-6 shadow-sm">
+                        <header>
+                            <h2 className="text-lg font-semibold text-[#1F2A44]">
+                                Theo dõi chấm công
+                            </h2>
+                            <p className="mt-1 text-xs text-[#1F2A44]/60">
+                                Kiểm tra giờ làm việc của bạn trong hôm nay
+                            </p>
+                            {errorCheckIn && (
+                                <p className="mt-1 text-xs text-red-500">{errorCheckIn}</p>
+                            )}
+                        </header>
+
+                        <div className="grid gap-3 sm:grid-cols-1 mt-4">
+                            {timelineNotes.map((item) => (
+                                <div
+                                    key={item.title}
+                                    className="rounded-xl border border-dashed border-[#CCE1F0] p-3 text-center"
+                                >
+                                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[#4AB4DE]">
+                                        {item.title}
+                                    </p>
+                                    <p className="mt-2 text-xl font-semibold text-[#1F2A44]">
+                                        {item.value}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
                     {/* Summary Cards */}
                     {attendanceSummary && (
                         <section className="space-y-3">
@@ -278,37 +309,6 @@ export default function EmployeesDashboardPage() {
                 </aside>
 
                 <section className="flex flex-col gap-6">
-                    <div className="rounded-3xl bg-white p-6 shadow-sm">
-                        <div className="rounded-3xl bg-white p-4 shadow-sm">
-                            <header>
-                                <h2 className="text-lg font-semibold text-[#1F2A44]">
-                                    Theo dõi chấm công
-                                </h2>
-                                <p className="mt-1 text-xs text-[#1F2A44]/60">
-                                    Kiểm tra giờ làm việc của bạn trong hôm nay
-                                </p>
-                                {errorCheckIn && (
-                                    <p className="mt-1 text-xs text-red-500">{errorCheckIn}</p>
-                                )}
-                            </header>
-
-                            <div className="grid gap-3 sm:grid-cols-2 mt-4">
-                                {timelineNotes.map((item) => (
-                                    <div
-                                        key={item.title}
-                                        className="rounded-xl border border-dashed border-[#CCE1F0] p-3 text-center"
-                                    >
-                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[#4AB4DE]">
-                                            {item.title}
-                                        </p>
-                                        <p className="mt-2 text-xl font-semibold text-[#1F2A44]">
-                                            {item.value}
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
 
                     {/* DANH SÁCH CHẤM CÔNG */}
                     <section className="rounded-3xl bg-white p-6 shadow-sm">
@@ -323,7 +323,7 @@ export default function EmployeesDashboardPage() {
                             <button
                                 type="button"
                                 onClick={() => setShowCalendar(true)}
-                                className="inline-flex items-center gap-2 rounded-full border border-[#4AB4DE] px-4 py-2 text-sm font-medium text-[#4AB4DE] transition hover:bg-[#EAF5FF]"
+                                className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#4AB4DE] px-4 py-2 text-sm font-medium text-[#4AB4DE] transition hover:bg-[#EAF5FF]"
                             >
                                 <CalendarDays className="h-4 w-4" />
                                 Xem lịch tháng
@@ -366,14 +366,14 @@ export default function EmployeesDashboardPage() {
                             <button
                                 type="button"
                                 onClick={() => setShowCalendar(false)}
-                                className="rounded-full bg-[#E5E7EB] px-4 py-2 text-sm font-semibold text-[#374151] hover:bg-[#d4d7dd]"
+                                className="cursor-pointer rounded-full bg-[#E5E7EB] px-4 py-2 text-sm font-semibold text-[#374151] hover:bg-[#d4d7dd]"
                             >
                                 Đóng
                             </button>
                             <button
                                 type="button"
                                 onClick={handleChoose}
-                                className="rounded-full bg-[#4AB4DE] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3ba1ca]"
+                                className="cursor-pointer rounded-full bg-[#4AB4DE] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3ba1ca]"
                             >
                                 Xem dữ liệu
                             </button>

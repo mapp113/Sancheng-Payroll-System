@@ -71,27 +71,27 @@ function OTDetailContent() {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 p-6">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <a href="./" className="w-fit h-fit border border-black bg-[#8acefd] text-[#4577a0] hover:bg-[#66befc] py-2 px-4 rounded cursor-pointer">Back</a>
-        </div>
-
-        {/* Main Card */}
-        <OTDetail otData={otData} loading={loading}>
-          {otData?.status === "PENDING" && (
-            <div className="flex justify-center">
-              <button 
-                onClick={() => setShowDeleteConfirm(true)}
-                className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors cursor-pointer"
-              >
-                Xóa
-              </button>
-            </div>
-          )}
-        </OTDetail>
+    <div className="relative flex min-h-full flex-col gap-6 p-6 text-[#1F2A44]">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <a href="./" className="cursor-pointer rounded-full border border-[#4AB4DE] bg-white px-4 py-2 text-sm font-semibold text-[#4AB4DE] transition hover:bg-[#F4FBFF]">
+          Quay lại
+        </a>
       </div>
+
+      {/* Main Card */}
+      <OTDetail otData={otData} loading={loading}>
+        {otData?.status === "PENDING" && (
+          <div className="flex justify-center">
+            <button 
+              onClick={() => setShowDeleteConfirm(true)}
+              className="cursor-pointer rounded-full border border-red-500 bg-red-500 px-6 py-2 text-sm font-semibold text-white transition hover:bg-red-600"
+            >
+              Xóa yêu cầu
+            </button>
+          </div>
+        )}
+      </OTDetail>
 
       {/* Delete Confirmation Dialog */}
       <DeleteConfirmation

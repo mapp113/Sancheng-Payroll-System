@@ -189,16 +189,17 @@ function OTRequestsPageContent() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full p-5">
+    <div className="relative flex min-h-full flex-col gap-6 p-6 text-[#1F2A44]">
       <LeavesToolBar />
-      <div className="w-3xl px-5 pt-2 pb-5 mt-10 bg-[#d5f1f5] rounded-2xl">
-        <h1 className="text-lg text-center">Yêu cầu xin OT</h1>
-        <div className="my-2 grid grid-cols-[150px_1fr] items-center">
-          <label htmlFor="ot-date">Ngày làm thêm:</label>
-          <div className="flex items-center gap-4">
+      <section className="mx-auto w-full max-w-3xl rounded-3xl bg-white p-6 shadow-sm">
+        <h1 className="mb-6 text-center text-2xl font-semibold text-[#1F2A44]">Yêu cầu xin OT</h1>
+        
+        <div className="mb-4 flex items-center gap-3">
+          <label htmlFor="ot-date" className="min-w-[140px] text-sm font-medium text-[#1F2A44]">Ngày làm thêm:</label>
+          <div className="flex flex-1 items-center gap-3">
             <input
               id="ot-date"
-              className="border border-black rounded px-2 py-1 w-fit"
+              className="flex-1 rounded-xl border border-[#CCE1F0] px-3 py-2 text-sm text-[#1F2A44] outline-none focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/40"
               type="date"
               value={formData.otDate}
               onChange={(e) => {
@@ -209,18 +210,18 @@ function OTRequestsPageContent() {
                 handleInputChange("otType", autoOTType);
               }}
             />
-
-            <div className="px-2 py-1 rounded border bg-white text-sm text-gray-700">
+            <div className="rounded-full border border-[#4AB4DE] bg-[#F4FBFF] px-4 py-2 text-sm font-semibold text-[#4AB4DE]">
               {formData.otType || "-"}
             </div>
           </div>
         </div>
-        <div className="my-2 grid grid-cols-[150px_1fr] items-center">
-          <label htmlFor="fromTime">Từ:</label>
+        
+        <div className="mb-4 flex items-center gap-3">
+          <label htmlFor="fromTime" className="min-w-[140px] text-sm font-medium text-[#1F2A44]">Từ:</label>
           <div className="flex items-center gap-2">
             <input
               id="fromTime"
-              className="border border-black rounded px-2 py-1 w-fit"
+              className="w-20 rounded-xl border border-[#CCE1F0] px-3 py-2 text-sm text-[#1F2A44] outline-none focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/40"
               type="number"
               min="0"
               max="23"
@@ -236,15 +237,16 @@ function OTRequestsPageContent() {
                 }
               }}
             />
-            <span>giờ</span>
+            <span className="text-sm text-[#1F2A44]">giờ</span>
           </div>
         </div>
-        <div className="my-2 grid grid-cols-[150px_1fr] items-center">
-          <label htmlFor="toTime">Đến:</label>
+        
+        <div className="mb-4 flex items-center gap-3">
+          <label htmlFor="toTime" className="min-w-[140px] text-sm font-medium text-[#1F2A44]">Đến:</label>
           <div className="flex items-center gap-2">
             <input
               id="toTime"
-              className="border border-black rounded px-2 py-1 w-fit"
+              className="w-20 rounded-xl border border-[#CCE1F0] px-3 py-2 text-sm text-[#1F2A44] outline-none focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/40"
               type="number"
               min="0"
               max="23"
@@ -252,43 +254,45 @@ function OTRequestsPageContent() {
               value={formData.toTime}
               onChange={(e) => handleInputChange("toTime", parseInt(e.target.value) || 0)}
             />
-            <span>giờ</span>
+            <span className="text-sm text-[#1F2A44]">giờ</span>
           </div>
         </div>
-        <div className="font-semibold my-2 grid grid-cols-[150px_1fr] items-center">Tổng số giờ OT:
-            <span className="text-lg">
+        
+        <div className="mb-4 rounded-xl border border-dashed border-[#CCE1F0] bg-[#F4FBFF] p-4">
+          <span className="text-sm text-[#1F2A44]/80">Tổng số giờ OT: </span>
+          <span className="text-lg font-semibold text-[#4AB4DE]">
             {formData.fromTime !== undefined && formData.toTime !== undefined && formData.toTime > formData.fromTime
               ? `${formData.toTime - formData.fromTime} giờ`
               : '0 giờ'}
-            </span>
+          </span>
         </div>
         
-        <div className="my-2 grid grid-cols-[150px_1fr] items-start">
-          <span className="pt-1">Lý do:</span>
+        <div className="mb-6">
+          <label className="mb-2 block text-sm font-medium text-[#1F2A44]">Lý do:</label>
           <textarea
-            className="border border-black rounded px-2 py-1 max-h-md w-96 resize-y"
-            rows={3}
+            className="w-full rounded-xl border border-[#CCE1F0] px-3 py-2 text-sm text-[#1F2A44] outline-none focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/40 resize-y"
+            rows={4}
             value={formData.reason}
             onChange={(e) => handleInputChange("reason", e.target.value)}
+            placeholder="Nhập lý do làm thêm giờ..."
           />
         </div>
-        <div className="flex">
+        
+        <div className="flex justify-end gap-3">
           <button
-            className="ml-2 border border-black rounded px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
+            className="cursor-pointer rounded-full border border-[#CCE1F0] bg-white px-6 py-2 text-sm font-semibold text-[#1F2A44] transition hover:bg-[#F4FBFF]"
             onClick={handleReset}
           >
             Đặt lại
           </button>
-          <div className="ml-auto">
-            <button
-              className="border border-black rounded px-4 py-2 bg-green-500 text-white hover:bg-green-600 cursor-pointer"
-              onClick={handleSubmitClick}
-            >
-              Gửi yêu cầu
-            </button>
-          </div>
+          <button
+            className="cursor-pointer rounded-full border border-[#4AB4DE] bg-[#4AB4DE] px-6 py-2 text-sm font-semibold text-white transition hover:bg-[#3ba1ca]"
+            onClick={handleSubmitClick}
+          >
+            Gửi yêu cầu
+          </button>
         </div>
-      </div>
+      </section>
       
       <SubmitConfirmation
         isOpen={showSubmitConfirm}

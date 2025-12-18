@@ -166,136 +166,214 @@ export default function LeavesPage() {
   };
 
   return (
-    <div className="py-2 px-10">
+    <div className="relative flex min-h-full flex-col gap-6 p-6 text-[#1F2A44]">
       <LeavesToolBar />
-      <div className="flex flex-row w-full my-2">
-        <h2 className="font-bold">Yêu cầu xin nghỉ</h2>
-        <span className="flex-1 text-center">
-          Số ngày nghỉ còn lại: <span className="font-bold">{remainingLeave !== null ? remainingLeave : "..."}</span>
-        </span>
-      </div>
-      <div className="w-full h-fit my-5 bg-[#d5f1f5] border rounded-lg shadow-md p-2">
-        <table className="w-full table-auto border-0">
-          <thead className="sticky top-0 rounded-lg">
-            <tr>
-              <th className="px-4 py-2 text-left">STT</th>
-              <th className="px-4 py-2 text-center">Ngày bắt đầu</th>
-              <th className="px-4 py-2 text-center">Ngày kết thúc</th>
-              <th className="px-4 py-2 text-center">Loại nghỉ</th>
-              <th className="px-4 py-2 text-left">Trạng thái</th>
-              <th className="px-4 py-2 text-center">Thông báo</th>
-              <th className="px-4 py-2 text-center"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {leaveLoading ? (
-              <tr key="loading">
-                <td colSpan={7} className="text-center py-4">
-                  Đang tải...
-                </td>
+      
+      {/* Leave Requests Section */}
+      <section className="rounded-3xl bg-white p-6 shadow-sm">
+        <header className="flex flex-col gap-3 border-b border-[#CCE1F0] pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-xl font-semibold text-[#1F2A44]">Yêu cầu Xin Nghỉ</h3>
+            <p className="text-sm text-[#1F2A44]/60">
+              Danh sách các yêu cầu nghỉ phép của bạn
+            </p>
+          </div>
+          <div className="rounded-full border border-[#4AB4DE] bg-[#F4FBFF] px-4 py-2">
+            <span className="text-sm text-[#1F2A44]/80">Số ngày nghỉ còn lại: </span>
+            <span className="font-semibold text-[#4AB4DE]">{remainingLeave !== null ? remainingLeave : "..."}</span>
+          </div>
+        </header>
+
+        <div className="mt-6 overflow-hidden rounded-xl border border-[#CCE1F0]">
+          <table className="w-full">
+            <thead className="sticky top-0">
+              <tr className="bg-gradient-to-r from-[#4AB4DE] to-[#5cc6ef] text-white">
+                <th className="border-b border-r border-[#CCE1F0] px-4 py-3 text-left font-semibold">STT</th>
+                <th className="border-b border-r border-[#CCE1F0] px-4 py-3 text-center font-semibold">Ngày bắt đầu</th>
+                <th className="border-b border-r border-[#CCE1F0] px-4 py-3 text-center font-semibold">Ngày kết thúc</th>
+                <th className="border-b border-r border-[#CCE1F0] px-4 py-3 text-center font-semibold">Loại nghỉ</th>
+                <th className="border-b border-r border-[#CCE1F0] px-4 py-3 text-left font-semibold">Trạng thái</th>
+                <th className="border-b border-r border-[#CCE1F0] px-4 py-3 text-center font-semibold">Thông báo</th>
+                <th className="border-b border-[#CCE1F0] px-4 py-3 text-center font-semibold"></th>
               </tr>
-            ) : leaveRequests.length === 0 ? (
-              <tr key="empty">
-                <td colSpan={7} className="text-center py-4">
-                  Không có dữ liệu
-                </td>
-              </tr>
-            ) : (
-              leaveRequests.map((request, index) => (
-                <tr key={`${request.id}`} className="border-b hover:bg-white/50">
-                  <td className="px-4 py-2 text-left">{index + 1}</td>
-                  <td className="px-4 py-2 text-center">
-                    {new Date(request.fromDate).toLocaleDateString('vi-VN')}
-                  </td>
-                  <td className="px-4 py-2 text-center">
-                    {new Date(request.toDate).toLocaleDateString('vi-VN')}
-                  </td>
-                  <td className="px-4 py-2 text-center">{request.leaveTypeCode}</td>
-                  <td className={`px-4 py-2 text-left font-semibold ${getStatusColor(request.status)}`}>
-                    {getStatusText(request.status)}
-                  </td>
-                  <td className="px-4 py-2 text-center max-w-full overflow-auto">{request.note || ""}</td>
-                  <td className="px-4 py-2 text-center">
-                    <a className="hover:underline cursor-pointer" href={`/employee/request/leave-detail?id=${request.id}`}><Info /></a>
+            </thead>
+            <tbody>
+              {leaveLoading ? (
+                <tr key="loading">
+                  <td colSpan={7} className="px-4 py-10 text-center text-[#1F2A44]/60">
+                    Đang tải...
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-        <div className="flex justify-end align-middle my-3 mr-2">
-          <button className="cursor-pointer" onClick={() => changeLeavePageHandler("first")}><ChevronFirst /></button>
-          <button className="cursor-pointer" onClick={() => changeLeavePageHandler("prev")}><ChevronLeft /></button>
-          <span className="mx-2">Trang {leaveIndexPage + 1} trên {leaveTotalPages}</span>
-          <button className="cursor-pointer" onClick={() => changeLeavePageHandler("next")}><ChevronRight /></button>
-          <button className="cursor-pointer" onClick={() => changeLeavePageHandler("last")}><ChevronLast /></button>
-        </div>
-      </div>
-      <div className="flex flex-row w-full my-2">
-        <h2 className="font-bold">Yêu cầu Overtime</h2>
-        <span className="flex-1 text-center">Số giờ đã OT trong tháng: <span className="font-bold">{remainingOT !== null ? remainingOT : "..."}</span></span>
-      </div>
-      <div className="w-full h-fit my-5 bg-[#d5f1f5] border rounded-lg shadow-md p-2">
-        <table className="w-full table-auto border-0">
-          <thead className="sticky top-0 rounded-lg">
-            <tr>
-              <th className="px-4 py-2 text-left">STT</th>
-              <th className="px-4 py-2 text-center">Ngày OT</th>
-              <th className="px-4 py-2 text-center">Giờ bắt đầu</th>
-              <th className="px-4 py-2 text-center">Giờ kết thúc</th>
-              <th className="px-4 py-2 text-center">Số giờ OT</th>
-              <th className="px-4 py-2 text-left">Trạng thái</th>
-              <th className="px-4 py-2 text-center">Thông báo</th>
-              <th className="px-4 py-2 text-center"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {otLoading ? (
-              <tr key="loading">
-                <td colSpan={7} className="text-center py-4">
-                  Đang tải...
-                </td>
-              </tr>
-            ) : otRequests.length === 0 ? (
-              <tr key="empty">
-                <td colSpan={7} className="text-center py-4">
-                  Không có dữ liệu
-                </td>
-              </tr>
-            ) : (
-              otRequests.map((request, index) => (
-                <tr key={`${request.id}`} className="border-b hover:bg-white/50">
-                  <td className="px-4 py-2 text-left">{index + 1}</td>
-                  <td className="px-4 py-2 text-center">
-                    {new Date(request.otDate).toLocaleDateString('vi-VN')}
-                  </td>
-                  <td className="px-4 py-2 text-center">
-                    {request.fromTime.substring(11, 16)}
-                  </td>
-                  <td className="px-4 py-2 text-center">
-                    {request.toTime.substring(11, 16)}
-                  </td>
-                  <td className="px-4 py-2 text-center">{request.workedTime}</td>
-                  <td className={`px-4 py-2 text-left font-semibold ${getStatusColor(request.status)}`}>
-                    {getStatusText(request.status)}
-                  </td>
-                  <td className="px-4 py-2 text-center max-w-full overflow-auto">{request.note || ""}</td>
-                  <td className="px-4 py-2 text-center">
-                    <a className="hover:underline cursor-pointer" href={`/employee/request/ot-detail?id=${request.id}`}><Info /></a>
+              ) : leaveRequests.length === 0 ? (
+                <tr key="empty">
+                  <td colSpan={7} className="px-4 py-10 text-center text-[#1F2A44]/60">
+                    Không có dữ liệu
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-        <div className="flex justify-end align-middle my-3 mr-2">
-          <button className="cursor-pointer" onClick={() => changeOTPageHandler("first")}><ChevronFirst /></button>
-          <button className="cursor-pointer" onClick={() => changeOTPageHandler("prev")}><ChevronLeft /></button>
-          <span className="mx-2">Trang {otIndexPage + 1} trên {otTotalPages}</span>
-          <button className="cursor-pointer" onClick={() => changeOTPageHandler("next")}><ChevronRight /></button>
-          <button className="cursor-pointer" onClick={() => changeOTPageHandler("last")}><ChevronLast /></button>
+              ) : (
+                leaveRequests.map((request, index, arr) => (
+                  <tr key={`${request.id}`} className="bg-white transition-colors hover:bg-[#F4FBFF]">
+                    <td className={`px-4 py-3 text-left text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>{index + 1}</td>
+                    <td className={`px-4 py-3 text-center text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>
+                      {new Date(request.fromDate).toLocaleDateString('vi-VN')}
+                    </td>
+                    <td className={`px-4 py-3 text-center text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>
+                      {new Date(request.toDate).toLocaleDateString('vi-VN')}
+                    </td>
+                    <td className={`px-4 py-3 text-center text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>{request.leaveTypeCode}</td>
+                    <td className={`px-4 py-3 text-left font-semibold ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'} ${getStatusColor(request.status)}`}>
+                      {getStatusText(request.status)}
+                    </td>
+                    <td className={`px-4 py-3 text-center text-[#1F2A44] max-w-xs overflow-auto ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>{request.note || ""}</td>
+                    <td className={`px-4 py-3 text-center ${index < arr.length - 1 ? 'border-b border-[#CCE1F0]' : ''}`}>
+                      <a className="inline-flex items-center gap-1 text-[#4AB4DE] hover:text-[#3ba1ca] cursor-pointer" href={`/employee/request/leave-detail?id=${request.id}`}>
+                        <Info className="h-5 w-5" />
+                      </a>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      </div>
+        
+        <div className="mt-4 flex items-center justify-end gap-2">
+          <button 
+            className="cursor-pointer rounded-lg p-2 text-[#4AB4DE] transition hover:bg-[#F4FBFF] disabled:cursor-not-allowed disabled:opacity-50" 
+            onClick={() => changeLeavePageHandler("first")}
+            disabled={leaveIndexPage === 0}
+          >
+            <ChevronFirst className="h-5 w-5" />
+          </button>
+          <button 
+            className="cursor-pointer rounded-lg p-2 text-[#4AB4DE] transition hover:bg-[#F4FBFF] disabled:cursor-not-allowed disabled:opacity-50" 
+            onClick={() => changeLeavePageHandler("prev")}
+            disabled={leaveIndexPage === 0}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <span className="mx-2 text-sm text-[#1F2A44]">Trang {leaveIndexPage + 1} trên {leaveTotalPages}</span>
+          <button 
+            className="cursor-pointer rounded-lg p-2 text-[#4AB4DE] transition hover:bg-[#F4FBFF] disabled:cursor-not-allowed disabled:opacity-50" 
+            onClick={() => changeLeavePageHandler("next")}
+            disabled={leaveIndexPage >= leaveTotalPages - 1}
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+          <button 
+            className="cursor-pointer rounded-lg p-2 text-[#4AB4DE] transition hover:bg-[#F4FBFF] disabled:cursor-not-allowed disabled:opacity-50" 
+            onClick={() => changeLeavePageHandler("last")}
+            disabled={leaveIndexPage >= leaveTotalPages - 1}
+          >
+            <ChevronLast className="h-5 w-5" />
+          </button>
+        </div>
+      </section>
+
+      {/* OT Requests Section */}
+      <section className="rounded-3xl bg-white p-6 shadow-sm">
+        <header className="flex flex-col gap-3 border-b border-[#CCE1F0] pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-xl font-semibold text-[#1F2A44]">Yêu cầu Overtime</h3>
+            <p className="text-sm text-[#1F2A44]/60">
+              Danh sách các yêu cầu làm thêm giờ của bạn
+            </p>
+          </div>
+          <div className="rounded-full border border-[#4AB4DE] bg-[#F4FBFF] px-4 py-2">
+            <span className="text-sm text-[#1F2A44]/80">Số giờ đã OT trong tháng: </span>
+            <span className="font-semibold text-[#4AB4DE]">{remainingOT !== null ? remainingOT : "..."}</span>
+          </div>
+        </header>
+
+        <div className="mt-6 overflow-hidden rounded-xl border border-[#CCE1F0]">
+          <table className="w-full">
+            <thead className="sticky top-0">
+              <tr className="bg-gradient-to-r from-[#4AB4DE] to-[#5cc6ef] text-white">
+                <th className="border-b border-r border-[#CCE1F0] px-4 py-3 text-left font-semibold">STT</th>
+                <th className="border-b border-r border-[#CCE1F0] px-4 py-3 text-center font-semibold">Ngày OT</th>
+                <th className="border-b border-r border-[#CCE1F0] px-4 py-3 text-center font-semibold">Giờ bắt đầu</th>
+                <th className="border-b border-r border-[#CCE1F0] px-4 py-3 text-center font-semibold">Giờ kết thúc</th>
+                <th className="border-b border-r border-[#CCE1F0] px-4 py-3 text-center font-semibold">Số giờ OT</th>
+                <th className="border-b border-r border-[#CCE1F0] px-4 py-3 text-left font-semibold">Trạng thái</th>
+                <th className="border-b border-r border-[#CCE1F0] px-4 py-3 text-center font-semibold">Thông báo</th>
+                <th className="border-b border-[#CCE1F0] px-4 py-3 text-center font-semibold"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {otLoading ? (
+                <tr key="loading">
+                  <td colSpan={8} className="px-4 py-10 text-center text-[#1F2A44]/60">
+                    Đang tải...
+                  </td>
+                </tr>
+              ) : otRequests.length === 0 ? (
+                <tr key="empty">
+                  <td colSpan={8} className="px-4 py-10 text-center text-[#1F2A44]/60">
+                    Không có dữ liệu
+                  </td>
+                </tr>
+              ) : (
+                otRequests.map((request, index, arr) => (
+                  <tr key={`${request.id}`} className="bg-white transition-colors hover:bg-[#F4FBFF]">
+                    <td className={`px-4 py-3 text-left text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>{index + 1}</td>
+                    <td className={`px-4 py-3 text-center text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>
+                      {new Date(request.otDate).toLocaleDateString('vi-VN')}
+                    </td>
+                    <td className={`px-4 py-3 text-center text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>
+                      {request.fromTime.substring(11, 16)}
+                    </td>
+                    <td className={`px-4 py-3 text-center text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>
+                      {request.toTime.substring(11, 16)}
+                    </td>
+                    <td className={`px-4 py-3 text-center text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>{request.workedTime}</td>
+                    <td className={`px-4 py-3 text-left font-semibold ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'} ${getStatusColor(request.status)}`}>
+                      {getStatusText(request.status)}
+                    </td>
+                    <td className={`px-4 py-3 text-center text-[#1F2A44] max-w-xs overflow-auto ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>{request.note || ""}</td>
+                    <td className={`px-4 py-3 text-center ${index < arr.length - 1 ? 'border-b border-[#CCE1F0]' : ''}`}>
+                      <a className="inline-flex items-center gap-1 text-[#4AB4DE] hover:text-[#3ba1ca] cursor-pointer" href={`/employee/request/ot-detail?id=${request.id}`}>
+                        <Info className="h-5 w-5" />
+                      </a>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        
+        <div className="mt-4 flex items-center justify-end gap-2">
+          <button 
+            className="cursor-pointer rounded-lg p-2 text-[#4AB4DE] transition hover:bg-[#F4FBFF] disabled:cursor-not-allowed disabled:opacity-50" 
+            onClick={() => changeOTPageHandler("first")}
+            disabled={otIndexPage === 0}
+          >
+            <ChevronFirst className="h-5 w-5" />
+          </button>
+          <button 
+            className="cursor-pointer rounded-lg p-2 text-[#4AB4DE] transition hover:bg-[#F4FBFF] disabled:cursor-not-allowed disabled:opacity-50" 
+            onClick={() => changeOTPageHandler("prev")}
+            disabled={otIndexPage === 0}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <span className="mx-2 text-sm text-[#1F2A44]">Trang {otIndexPage + 1} trên {otTotalPages}</span>
+          <button 
+            className="cursor-pointer rounded-lg p-2 text-[#4AB4DE] transition hover:bg-[#F4FBFF] disabled:cursor-not-allowed disabled:opacity-50" 
+            onClick={() => changeOTPageHandler("next")}
+            disabled={otIndexPage >= otTotalPages - 1}
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+          <button 
+            className="cursor-pointer rounded-lg p-2 text-[#4AB4DE] transition hover:bg-[#F4FBFF] disabled:cursor-not-allowed disabled:opacity-50" 
+            onClick={() => changeOTPageHandler("last")}
+            disabled={otIndexPage >= otTotalPages - 1}
+          >
+            <ChevronLast className="h-5 w-5" />
+          </button>
+        </div>
+      </section>
     </div>
   );
 }

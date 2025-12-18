@@ -106,80 +106,81 @@ export default function PayrollPage() {
     };
 
     return (
-        <div className="relative flex min-h-full flex-col gap-6 text-[#1F2A44] pr-5">
-            <div className="p-6">
-                {/*<button className="border border-black bg-[#79deeb] text-[#4577a0] py-2 px-4 rounded hover:bg-[#49bee1] cursor-pointer" onClick={() => router.back()}>Quay lại</button>*/}
-            </div>
-
-            <div className=" w-full h-full border border-black rounded-lg bg-[#E6F7FF]">
-                <div className="flex flex-row items-center mb-5 p-5">
-                    <span className="text-2xl font-bold">Lương nhân viên</span>
-                    <div className="ml-auto mr-4 border border-gray-300 rounded px-2 py-1 bg-white">
-                        <Calendar className="inline-block mr-2"/>
+        <div className="relative flex min-h-full flex-col gap-6 p-6 text-[#1F2A44]">
+            <section className="rounded-3xl bg-white p-6 shadow-sm">
+                <header className="flex flex-col gap-3 border-b border-[#CCE1F0] pb-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h3 className="text-xl font-semibold text-[#1F2A44]">Lương Nhân Viên</h3>
+                        <p className="text-sm text-[#1F2A44]/60">
+                            Theo dõi lương và phiếu lương của bạn
+                        </p>
+                    </div>
+                    <div className="inline-flex items-center gap-2 rounded-full border border-[#4AB4DE] bg-white px-4 py-2">
+                        <Calendar className="h-4 w-4 text-[#4AB4DE]" />
                         <input
-                            placeholder="Year"
-                            className="focus:outline-none w-24"
+                            placeholder="Năm"
+                            className="w-20 text-sm font-medium text-[#1F2A44] outline-none"
                             type="number"
                             value={year}
                             onChange={handleYearChange}
                         />
                     </div>
-                </div>
+                </header>
 
                 {loading && (
-                    <div className="text-center py-10">
-                        <p className="text-gray-600">Đang tải dữ liệu...</p>
+                    <div className="mt-6 flex items-center justify-center py-8">
+                        <p className="text-[#1F2A44]/60">Đang tải dữ liệu...</p>
                     </div>
                 )}
 
                 {error && (
-                    <div className="text-center py-10">
-                        <p className="text-red-600">{error}</p>
+                    <div className="mt-6 flex items-center justify-center py-8">
+                        <p className="text-red-500">{error}</p>
                     </div>
                 )}
 
                 {!loading && !error && payrollData.length > 0 && (
-                    <div className="overflow-x-auto rounded-b-lg">
-                        <table className="w-full border-collapse">
+                    <div className="mt-6 overflow-hidden rounded-xl border border-[#CCE1F0]">
+                        <table className="w-full">
                             <thead>
-                            <tr className="bg-[#4AB4DE] text-white">
-                                <th className="border border-gray-300 px-4 py-3 text-left">Thời gian</th>
-                                <th className="border border-gray-300 px-4 py-3 text-right">Công chuẩn</th>
-                                <th className="border border-gray-300 px-4 py-3 text-right">Công thực tế</th>
-                                <th className="border border-gray-300 px-4 py-3 text-right">Lương thực nhận</th>
-                                <th className="border border-gray-300 px-4 py-3 text-center">Phiếu lương</th>
+                            <tr className="bg-gradient-to-r from-[#4AB4DE] to-[#5cc6ef] text-white">
+                                <th className="border-b border-r border-[#CCE1F0] px-4 py-3 text-left font-semibold">Thời gian</th>
+                                <th className="border-b border-r border-[#CCE1F0] px-4 py-3 text-right font-semibold">Công chuẩn</th>
+                                <th className="border-b border-r border-[#CCE1F0] px-4 py-3 text-right font-semibold">Công thực tế</th>
+                                <th className="border-b border-r border-[#CCE1F0] px-4 py-3 text-right font-semibold">Lương thực nhận</th>
+                                <th className="border-b border-[#CCE1F0] px-4 py-3 text-center font-semibold">Phiếu lương</th>
                             </tr>
                             </thead>
                             <tbody>
                             {payrollData.filter(row => row.netSalary).length > 0 ? (
-                                payrollData.filter(row => row.netSalary).map((row, index) => (
+                                payrollData.filter(row => row.netSalary).map((row, index, arr) => (
                                     <tr
                                         key={index}
-                                        className="bg-white hover:bg-gray-50 transition-colors"
+                                        className="bg-white transition-colors hover:bg-[#F4FBFF]"
                                     >
-                                        <td className="border border-gray-300 px-4 py-3">{row.month}</td>
-                                        <td className="border border-gray-300 px-4 py-3 text-right">{row.dayStandard}</td>
-                                        <td className="border border-gray-300 px-4 py-3 text-right">{row.daysPayable}</td>
-                                        <td className="border border-gray-300 px-4 py-3 text-right font-semibold">
+                                        <td className={`px-4 py-3 text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>{row.month}</td>
+                                        <td className={`px-4 py-3 text-right text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>{row.dayStandard}</td>
+                                        <td className={`px-4 py-3 text-right text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>{row.daysPayable}</td>
+                                        <td className={`px-4 py-3 text-right font-semibold text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>
                                             {formatCurrency(row.netSalary)}
                                         </td>
-                                        <td className="border border-gray-300 px-4 py-3 text-center">
+                                        <td className={`px-4 py-3 text-center ${index < arr.length - 1 ? 'border-b border-[#CCE1F0]' : ''}`}>
                                             {(row.hasPayslip) ? (
                                                 <button
-                                                    className="rounded border border-blue-800 bg-[#89cdfe] text-blue-800 p-3 hover:bg-[#6bb8e8] transition-colors"
+                                                    className="cursor-pointer rounded-full border border-[#4AB4DE] bg-[#4AB4DE] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#3ba1ca]"
                                                     onClick={() => handleDownload(row.employeeCode, row.month)}
                                                 >
                                                     Tải về
                                                 </button>
                                             ) : (
-                                                <span className="text-gray-400">-</span>
+                                                <span className="text-[#1F2A44]/40">-</span>
                                             )}
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={5} className="border border-gray-300 px-4 py-10 text-center text-gray-600">
+                                    <td colSpan={5} className="px-4 py-10 text-center text-[#1F2A44]/60">
                                         Không có dữ liệu lương cho năm {year}
                                     </td>
                                 </tr>
@@ -190,11 +191,11 @@ export default function PayrollPage() {
                 )}
 
                 {!loading && !error && payrollData.length === 0 && (
-                    <div className="text-center py-10">
-                        <p className="text-gray-600">Không có dữ liệu lương cho năm {year}</p>
+                    <div className="mt-6 flex items-center justify-center py-8">
+                        <p className="text-[#1F2A44]/60">Không có dữ liệu lương cho năm {year}</p>
                     </div>
                 )}
-            </div>
+            </section>
         </div>
     );
 }

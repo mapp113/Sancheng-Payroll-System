@@ -182,16 +182,16 @@ function LeavesPageContent() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full p-5">
+    <div className="relative flex min-h-full flex-col gap-6 p-6 text-[#1F2A44]">
       <LeavesToolBar />
-      <div className="w-3xl px-5 pt-2 pb-5 mt-10 bg-[#d5f1f5] rounded-2xl">
-        <h1 className="text-lg text-center">Yêu cầu xin nghỉ</h1>
-        <div className="my-2 flex items-center gap-4">
-          <div className="flex items-center">
-            <label htmlFor="leave-type">Loại nghỉ:</label>
+      <section className="mx-auto w-full max-w-3xl rounded-3xl bg-white p-6 shadow-sm">
+        <h1 className="mb-6 text-center text-2xl font-semibold text-[#1F2A44]">Yêu cầu xin nghỉ</h1>
+        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <label htmlFor="leave-type" className="text-sm font-medium text-[#1F2A44]">Loại nghỉ:</label>
             <select
               id="leave-type"
-              className="ml-5 border border-black rounded px-2 py-1"
+              className="rounded-xl border border-[#CCE1F0] px-3 py-2 text-sm text-[#1F2A44] outline-none focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/40"
               value={formData.leaveType}
               onChange={(e) => handleSelectChange("leaveType", e.target.value)}
             >
@@ -202,42 +202,44 @@ function LeavesPageContent() {
               ))}
             </select>
           </div>
-          <span className="text-sm font-semibold text-black">
-            {loadingBalance ? (
-              "Đang tải..."
-            ) : leaveBalance ? (
-              `Còn lại: ${leaveBalance.remainingDays} ngày`
-            ) : (
-              "Còn lại: -- ngày"
-            )}
-          </span>
+          <div className="rounded-full border border-[#4AB4DE] bg-[#F4FBFF] px-4 py-2">
+            <span className="text-sm font-semibold text-[#4AB4DE]">
+              {loadingBalance ? (
+                "Đang tải..."
+              ) : leaveBalance ? (
+                `Còn lại: ${leaveBalance.remainingDays} ngày`
+              ) : (
+                "Còn lại: -- ngày"
+              )}
+            </span>
+          </div>
         </div>
-        <div className="my-2">
-          Ngày bắt đầu:
+        <div className="mb-4 flex items-center gap-3">
+          <label className="min-w-[120px] text-sm font-medium text-[#1F2A44]">Ngày bắt đầu:</label>
           <input
             id="leave-request-start-date"
             type="date"
-            className="ml-5 border border-black rounded px-2 py-1"
+            className="flex-1 rounded-xl border border-[#CCE1F0] px-3 py-2 text-sm text-[#1F2A44] outline-none focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/40"
             value={formData.fromDate}
             onChange={(e) => handleSelectChange("fromDate", e.target.value)}
           />
         </div>
-        <div className="my-2 flex flex-row">
-          <div>
-            <div>Ngày kết thúc:</div>
-            <div>(Nếu chọn nhiều)</div>
+        <div className="mb-4 flex items-center gap-3">
+          <div className="min-w-[120px]">
+            <div className="text-sm font-medium text-[#1F2A44]">Ngày kết thúc:</div>
+            <div className="text-xs text-[#1F2A44]/60">(Nếu chọn nhiều)</div>
           </div>
           <input
             id="leave-request-end-date"
             type="date"
-            className="ml-5 border border-black rounded px-2 py-1"
+            className="flex-1 rounded-xl border border-[#CCE1F0] px-3 py-2 text-sm text-[#1F2A44] outline-none focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/40"
             value={formData.toDate}
             onChange={(e) => handleSelectChange("toDate", e.target.value)}
           />
         </div>
-        <div className="my-2 flex">
-          <span className="">Thời gian nghỉ: </span>
-          <span className="ml-2 font-semibold">
+        <div className="mb-4 rounded-xl border border-dashed border-[#CCE1F0] bg-[#F4FBFF] p-4">
+          <span className="text-sm text-[#1F2A44]/80">Thời gian nghỉ: </span>
+          <span className="font-semibold text-[#4AB4DE]">
             {formData.fromDate && formData.toDate
               ? (() => {
                 const start = new Date(formData.fromDate);
@@ -251,42 +253,43 @@ function LeavesPageContent() {
                 : "Không xác định"}
           </span>
         </div>
-        <div className="my-2 flex">
-          <span className="pt-1">Lý do:</span>
+        <div className="mb-4">
+          <label className="mb-2 block text-sm font-medium text-[#1F2A44]">Lý do:</label>
           <textarea
-            className="ml-5 border border-black rounded px-2 py-1 max-h-md w-md resize-y"
-            rows={3}
+            className="w-full rounded-xl border border-[#CCE1F0] px-3 py-2 text-sm text-[#1F2A44] outline-none focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/40 resize-y"
+            rows={4}
             value={formData.reason}
             onChange={(e) => handleSelectChange("reason", e.target.value)}
+            placeholder="Nhập lý do nghỉ phép..."
           />
         </div>
-        <div className="h-fit my-2 items-center">
+        <div className="mb-6">
+          <label className="mb-2 block text-sm font-medium text-[#1F2A44]">File đính kèm (nếu có):</label>
           <input
             type="file"
-            className="ml-2 file:mr-4 file:py-2 file:px-4 file:rounded-full 
-             file:border-0 file:text-sm file:font-semibold
-             file:bg-blue-50 file:text-blue-700 
-             file:hover:bg-blue-100"
+            className="w-full text-sm text-[#1F2A44]
+             file:mr-4 file:rounded-full file:border-0
+             file:bg-[#4AB4DE] file:px-4 file:py-2
+             file:text-sm file:font-semibold file:text-white
+             file:transition file:hover:bg-[#3ba1ca]"
             onChange={handleFileChange}
           />
         </div>
-        <div className="flex">
+        <div className="flex justify-end gap-3">
           <button
-            className="ml-2 border border-black rounded px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
+            className="cursor-pointer rounded-full border border-[#CCE1F0] bg-white px-6 py-2 text-sm font-semibold text-[#1F2A44] transition hover:bg-[#F4FBFF]"
             onClick={handleReset}
           >
             Đặt lại
           </button>
-          <div className="ml-auto">
-            <button
-              className="border border-black rounded px-4 py-2 bg-green-500 text-white hover:bg-green-600 cursor-pointer"
-              onClick={handleSubmitClick}
-            >
-              Gửi yêu cầu
-            </button>
-          </div>
+          <button
+            className="cursor-pointer rounded-full border border-[#4AB4DE] bg-[#4AB4DE] px-6 py-2 text-sm font-semibold text-white transition hover:bg-[#3ba1ca]"
+            onClick={handleSubmitClick}
+          >
+            Gửi yêu cầu
+          </button>
         </div>
-      </div>
+      </section>
 
       <SubmitConfirmation
         isOpen={showSubmitConfirm}
