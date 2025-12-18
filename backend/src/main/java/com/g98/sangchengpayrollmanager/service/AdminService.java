@@ -6,13 +6,11 @@ import com.g98.sangchengpayrollmanager.model.dto.RoleSummaryDTO;
 import com.g98.sangchengpayrollmanager.model.dto.UpdateUserRequest;
 import com.g98.sangchengpayrollmanager.model.dto.UserDTO;
 import com.g98.sangchengpayrollmanager.model.dto.api.response.ApiResponse;
+import com.g98.sangchengpayrollmanager.model.entity.EmployeeInformation;
 import com.g98.sangchengpayrollmanager.model.entity.LeaveQuota;
 import com.g98.sangchengpayrollmanager.model.entity.Role;
 import com.g98.sangchengpayrollmanager.model.entity.User;
-import com.g98.sangchengpayrollmanager.repository.AdminRepository;
-import com.g98.sangchengpayrollmanager.repository.LeaveQuotaRepository;
-import com.g98.sangchengpayrollmanager.repository.RoleCountProjection;
-import com.g98.sangchengpayrollmanager.repository.RoleRepository;
+import com.g98.sangchengpayrollmanager.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,6 +30,8 @@ public class AdminService {
     private final AdminRepository adminRepository;
     private final BiometricSyncService biometricSyncService;
     private final LeaveQuotaService leaveQuotaService;
+    private final EmployeeInformationRepository employeeInfoRepo;
+
 
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
@@ -143,7 +143,7 @@ public class AdminService {
 
         boolean isAdmin = req.getRoleId() != null && req.getRoleId() == 1L;
         String devicePin = req.getDevicePin() != null ? req.getDevicePin().trim() : "";
-        String ip = "192.168.0.2";
+        String ip = "192.168.11.2";
 
         // Pre-check TCP để fail nhanh khi máy offline (2s)
         if (!portOpen(ip, 4370, 2000)) {
@@ -165,6 +165,11 @@ public class AdminService {
 
         // Lưu user vào DB
         adminRepository.save(user);
+
+        EmployeeInformation info = new EmployeeInformation();
+        info.setUser(user);
+        employeeInfoRepo.save(info);
+
 
         Integer year = LocalDate.now().getYear();
         leaveQuotaService.initQuotaForNewEmployee(user.getEmployeeCode(), year);

@@ -24,15 +24,14 @@ public class EmployeeInformation {
             name = "employee_code",
             referencedColumnName = "employee_code",
             nullable = false,
-            unique = true,
-            foreignKey = @ForeignKey(name = "fk_employee_infomation_user")
+            unique = true
     )
     private User user;
 
     @Column(name = "tax_no", length = 50)
     private String taxNo;
 
-    @Column(name = "social_no", length = 50, nullable = false)
+    @Column(name = "social_no", length = 50, nullable = true)
     private String socialNo;
 
     @Column(name = "bank_number", length = 50)

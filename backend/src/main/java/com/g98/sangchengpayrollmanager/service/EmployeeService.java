@@ -52,15 +52,34 @@ public class EmployeeService {
         return EmployeeInfoResponse.fromEntity(info);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public EmployeeProfileResponse getProfile(String employeeCode) {
-        EmployeeInformation info = repo.findByEmployeeCodeFetchAll(employeeCode)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên có mã: " + employeeCode));
 
-        Contract contract = contractRepository.findFirstByUserEmployeeCodeOrderByStartDateDesc(employeeCode).orElse(null);
+        // 1️⃣ Tìm User trước (bắt buộc phải có)
+        User user = userRepository.findByEmployeeCode(employeeCode)
+                .orElseThrow(() ->
+                        new RuntimeException("Không tìm thấy user với mã: " + employeeCode)
+                );
 
+        // 2️⃣ Tìm EmployeeInformation, nếu chưa có thì auto-create
+        EmployeeInformation info = repo
+                .findByEmployeeCodeFetchAll(employeeCode)
+                .orElseGet(() -> {
+                    EmployeeInformation e = new EmployeeInformation();
+                    e.setUser(user);
+                    // các field khác để null → bổ sung sau
+                    return repo.save(e);
+                });
+
+        // 3️⃣ Contract là OPTIONAL
+        Contract contract = contractRepository
+                .findFirstByUserEmployeeCodeOrderByStartDateDesc(employeeCode)
+                .orElse(null);
+
+        // 4️⃣ Mapping an toàn
         return mapToProfile(info, contract);
     }
+
 
     @Transactional
     public EmployeeProfileResponse updateProfile(String employeeCode, String role, EmployeeProfileUpdateRequest request) {
