@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import {useLanguage} from "@/lib/language-context";
 import NotificationPanel from "../common/notification/panel";
-import {getDashboardTitle, getDashboardTitleByRole} from "../utils/dashboard-title-mapping";
+import {getDashboardTitle, getDashboardTitleByRole, getUserMode} from "../utils/dashboard-title-mapping";
 
 const iceland = localFont({
     src: "../../../../public/fonts/Iceland-Regular.ttf",
@@ -227,8 +227,8 @@ export default function Navbar() {
         if (isEmployeeView) {
             // Đang ở view nhân viên, chuyển về view gốc theo role
             if (userRole) {
+                localStorage.setItem("scpm.user.mode", userRole);
                 const title = getDashboardTitleByRole(userRole);
-                localStorage.setItem("scpm.dashboard.title", title);
                 setDashboardTitle(title);
                 
                 // Redirect dựa trên role
@@ -240,7 +240,7 @@ export default function Navbar() {
             }
         } else if (isManagerOrHR) {
             // Đang ở view quản lý/HR, chuyển sang view nhân viên
-            localStorage.setItem("scpm.dashboard.title", "Employee Dashboard");
+            localStorage.setItem("scpm.user.mode", "EMPLOYEE");
             setDashboardTitle("Employee Dashboard");
             router.push("/employee");
         }

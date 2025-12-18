@@ -10,11 +10,11 @@ export function getDashboardTitleByRole(role: string): string {
     return ROLE_TITLES[role] || "Dashboard";
 }
 
-export function getDashboardTitle(): string {
-    // Lấy từ localStorage, nếu không có thì dựa vào role
-    const savedTitle = localStorage.getItem("scpm.dashboard.title");
-    if (savedTitle) {
-        return savedTitle;
+export function getUserMode(): string {
+    // Lấy mode từ localStorage, nếu không có thì dựa vào role trong sessionStorage
+    const savedMode = localStorage.getItem("scpm.user.mode");
+    if (savedMode) {
+        return savedMode;
     }
     
     // Fallback: xác định dựa vào role trong sessionStorage
@@ -22,12 +22,16 @@ export function getDashboardTitle(): string {
         const userStr = window.sessionStorage.getItem("scpm.auth.user");
         if (userStr) {
             const parsed = JSON.parse(userStr);
-            const role = parsed?.role;
-            return getDashboardTitleByRole(role);
+            return parsed?.role || "EMPLOYEE";
         }
     } catch (error) {
         console.error("Error getting role from session:", error);
     }
     
-    return "Dashboard";
+    return "EMPLOYEE";
+}
+
+export function getDashboardTitle(): string {
+    const mode = getUserMode();
+    return getDashboardTitleByRole(mode);
 }

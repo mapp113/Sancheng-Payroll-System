@@ -44,11 +44,10 @@ export default function LoginPage() {
                     authenticatedUser.token
                 )
                 
-                // lưu dashboard title vào localStorage theo role
-                const dashboardTitle = getDashboardTitleByRole(authenticatedUser.role)
+                // lưu user mode (role) vào localStorage
                 window.localStorage.setItem(
-                    "scpm.dashboard.title",
-                    dashboardTitle
+                    "scpm.user.mode",
+                    authenticatedUser.role
                 )
             }
 
