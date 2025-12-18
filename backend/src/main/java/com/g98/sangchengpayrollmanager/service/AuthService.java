@@ -48,6 +48,7 @@ public class AuthService {
         return LoginResponse.builder()
                 .token(token)
                 .message("Login successful")
+                .employeeCode(user.getEmployeeCode())
                 .build();
     }
 
@@ -80,5 +81,3 @@ public class AuthService {
         userRepository.save(user);
     }
 }
-
-
