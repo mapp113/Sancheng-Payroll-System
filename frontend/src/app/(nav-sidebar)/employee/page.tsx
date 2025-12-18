@@ -9,7 +9,7 @@ type FirstCheckInResponse = {
 };
 import { getUserData } from "@/app/_components/utils/getUserData";
 import AttendanceTable from "@/app/_components/employee/attendance-table";
-import type { EmployeeInfomation, AttendanceSummary } from "@/app/_components/manager-timesheet-detail/types";
+import type { EmployeeInfomation, AttendanceSummary, AttendanceDaily } from "@/app/_components/manager-timesheet-detail/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 type JwtPayload = {
@@ -48,6 +48,8 @@ export default function EmployeesDashboardPage() {
     const [firstCheckIn, setFirstCheckIn] = useState<string | null>(null);
     const [loadingCheckIn, setLoadingCheckIn] = useState(false);
     const [errorCheckIn, setErrorCheckIn] = useState<string | null>(null);
+    const [showDetailPopup, setShowDetailPopup] = useState(false);
+    const [selectedDayData, setSelectedDayData] = useState<AttendanceDaily | null>(null);
 
 
     // Get employee code from session
@@ -195,6 +197,11 @@ export default function EmployeesDashboardPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [employee?.employee_code]);
 
+    const handleDayClick = (data: AttendanceDaily) => {
+        setSelectedDayData(data);
+        setShowDetailPopup(true);
+    };
+
     const handleChoose = () => {
         if (!employee?.employee_code) return;
 
@@ -338,11 +345,184 @@ export default function EmployeesDashboardPage() {
                             <AttendanceTable
                                 employeeCode={employeeCode}
                                 month={currentMonth}
+                                onDayClick={handleDayClick}
                             />
                         )}
                     </section>
                 </section>
             </div>
+
+            {/* POPUP CHI TIẾT NGÀY */}
+            {showDetailPopup && selectedDayData && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-4xl rounded-2xl bg-white shadow-xl overflow-hidden">
+                        <div className="space-y-6 p-6">
+                            {/* Header */}
+                            <div className="flex items-center justify-between pb-4 border-b border-[#CCE1F0]">
+                                <h2 className="text-xl md:text-2xl font-bold text-[#1D3E6A]">Chi tiết chấm công</h2>
+                                <button
+                                    onClick={() => {
+                                        setShowDetailPopup(false);
+                                        setSelectedDayData(null);
+                                    }}
+                                    className="rounded-full p-2 text-[#56749A] hover:bg-[#E6F7FF] transition cursor-pointer"
+                                >
+                                    <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            {/* Main Content - Responsive Grid */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto max-h-[50vh] lg:max-h-[60vh]">
+                                {/* Left Column */}
+                                <div className="space-y-6">
+                                    {/* Employee Info */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-[#F4FBFF] rounded-xl border border-[#CCE1F0]">
+                                        <div>
+                                            <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Mã nhân viên</label>
+                                            <p className="text-sm font-bold text-[#1D3E6A] mt-1">{employeeInfo?.employeeCode || "--"}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Tên nhân viên</label>
+                                            <p className="text-sm font-bold text-[#1D3E6A] mt-1">{employeeInfo?.fullName || "--"}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Vị trí</label>
+                                            <p className="text-sm font-bold text-[#1D3E6A] mt-1">{employeeInfo?.positionName || "--"}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Ngày</label>
+                                            <p className="text-sm font-bold text-[#1D3E6A] mt-1">{selectedDayData.date}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Attendance Data */}
+                                    <div className="space-y-4">
+                                        <h3 className="text-base md:text-lg font-bold text-[#1D3E6A]">Thông tin chấm công</h3>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Loại ngày</label>
+                                                <p className="text-sm font-bold text-[#1D3E6A]">{selectedDayData.dayTypeName}</p>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Loại nghỉ phép</label>
+                                                <p className="text-sm font-bold text-[#1D3E6A]">{selectedDayData.leaveTypeCode || "--"}</p>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Giờ vào</label>
+                                                <p className="text-sm font-bold text-[#1D3E6A]">
+                                                    {selectedDayData.checkInTime ? selectedDayData.checkInTime.split('T')[1]?.substring(0, 5) : '--'}
+                                                </p>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Giờ ra</label>
+                                                <p className="text-sm font-bold text-[#1D3E6A]">
+                                                    {selectedDayData.checkOutTime ? selectedDayData.checkOutTime.split('T')[1]?.substring(0, 5) : '--'}
+                                                </p>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Giờ làm việc</label>
+                                                <p className="text-sm font-bold text-[#1D3E6A]">{selectedDayData.workHours} giờ</p>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Giờ tăng ca</label>
+                                                <p className="text-sm font-bold text-[#1D3E6A]">{selectedDayData.otHour} giờ</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Right Column - Boolean Flags */}
+                                <div className="space-y-4">
+                                    <h3 className="text-base md:text-lg font-bold text-[#1D3E6A]">Trạng thái</h3>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedDayData.isLateCounted}
+                                                disabled
+                                                className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE] cursor-not-allowed"
+                                            />
+                                            <label className="text-sm font-semibold text-[#1D3E6A]">Tính đi muộn</label>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedDayData.isEarlyLeaveCounted}
+                                                disabled
+                                                className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE] cursor-not-allowed"
+                                            />
+                                            <label className="text-sm font-semibold text-[#1D3E6A]">Tính về sớm</label>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedDayData.isCountPayableDay}
+                                                disabled
+                                                className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE] cursor-not-allowed"
+                                            />
+                                            <label className="text-sm font-semibold text-[#1D3E6A]">Tính ngày công</label>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedDayData.isAbsent}
+                                                disabled
+                                                className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE] cursor-not-allowed"
+                                            />
+                                            <label className="text-sm font-semibold text-[#1D3E6A]">Vắng mặt</label>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedDayData.isDayMeal}
+                                                disabled
+                                                className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE] cursor-not-allowed"
+                                            />
+                                            <label className="text-sm font-semibold text-[#1D3E6A]">Tính cơm</label>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedDayData.isTrialDay}
+                                                disabled
+                                                className="w-5 h-5 rounded border-[#CCE1F0] text-[#4AB4DE] focus:ring-[#4AB4DE] cursor-not-allowed"
+                                            />
+                                            <label className="text-sm font-semibold text-[#1D3E6A]">Ngày thử việc</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-[#CCE1F0]">
+                                <button
+                                    onClick={() => {
+                                        setShowDetailPopup(false);
+                                        setSelectedDayData(null);
+                                    }}
+                                    className="rounded-full border border-[#4AB4DE] bg-white px-6 py-2 text-xs md:text-sm font-semibold uppercase tracking-[0.3em] text-[#1D3E6A] transition hover:bg-[#E6F7FF] cursor-pointer"
+                                >
+                                    Đóng
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* POPUP CHỌN THÁNG */}
             {showCalendar && (

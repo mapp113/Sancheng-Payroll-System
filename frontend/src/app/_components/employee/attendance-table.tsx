@@ -195,10 +195,10 @@ export default function AttendanceTable({ employeeCode, month, onDayClick }: Att
         <thead className="bg-[#EAF5FF] text-xs uppercase tracking-widest text-[#345EA8]">
           <tr>
             <th className="px-4 py-3 text-left" style={{ width: '15%' }}>Ngày</th>
-            <th className="px-4 py-3 text-left" style={{ width: '15%' }}>Check in</th>
-            <th className="px-4 py-3 text-left" style={{ width: '15%' }}>Check out</th>
-            <th className="px-4 py-3 text-left" style={{ width: '20%' }}>Giờ làm việc</th>
-            <th className="px-4 py-3 text-left" style={{ width: '15%' }}>Tăng ca</th>
+            <th className="px-4 py-3 text-center" style={{ width: '15%' }}>Check in</th>
+            <th className="px-4 py-3 text-center" style={{ width: '15%' }}>Check out</th>
+            <th className="px-4 py-3 text-center" style={{ width: '20%' }}>Giờ làm việc</th>
+            <th className="px-4 py-3 text-center" style={{ width: '15%' }}>Tăng ca</th>
             <th className="px-4 py-3 text-left" style={{ width: '20%' }}></th>
           </tr>
         </thead>
@@ -225,27 +225,27 @@ export default function AttendanceTable({ employeeCode, month, onDayClick }: Att
                     <p className="font-medium">{entry.day}</p>
                     <p className="text-xs text-[#1F2A44]/60">{entry.date}</p>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 text-center">
                     {isLeave ? (
                       <span>--</span>
                     ) : (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center gap-2">
                         <Clock4 className="h-4 w-4 text-[#4AB4DE]" />
                         <span>{formatTime(entry.checkIn)}</span>
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 text-center">
                     {isLeave ? (
                       <span>--</span>
                     ) : (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center gap-2">
                         <TimerReset className="h-4 w-4 text-[#4AB4DE]" />
                         <span>{formatTime(entry.checkOut)}</span>
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 text-center">
                     {isLeave ? (
                       <span className="inline-flex items-center rounded-full bg-[#FFEFD6] px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[#B45309]">
                         {entry.note}
@@ -254,7 +254,7 @@ export default function AttendanceTable({ employeeCode, month, onDayClick }: Att
                       formatHours(entry.workHours)
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 text-center">
                     {isLeave ? "--" : formatHours(entry.overtimeHours)}
                   </td>
                   <td className="px-4 py-3 text-right">
