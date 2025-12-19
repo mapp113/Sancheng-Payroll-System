@@ -87,7 +87,7 @@ public class EmployeeService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên có mã: " + employeeCode));
 
         User user = info.getUser();
-        String contractCode ="CT-" + employeeCode;
+        String contractCode = "CT-" + employeeCode;
         Contract contract = contractRepository.findFirstByUserEmployeeCodeOrderByStartDateDesc(employeeCode)
                 .orElseGet(() -> {
                     Contract c = new Contract();
@@ -291,15 +291,11 @@ public class EmployeeService {
         String status = contract != null ? contract.getStatus() : resolveUserStatus(user.getStatus());
         String contractType = contract != null ? contract.getType() : null;
 
-        // ⭐ SỬA LOGIC LẤY CONTRACT URL
         String contractUrl = null;
         if (contract != null) {
-            // Ưu tiên: nếu có PDF trong database → tạo view URL
             if (contract.hasPdfInDatabase()) {
                 contractUrl = "/api/v1/hr/users/" + user.getEmployeeCode() + "/contract/view";
-            }
-            // Fallback: nếu chỉ có path (data cũ) → giữ nguyên path
-            else if (contract.getPdfPath() != null && !contract.getPdfPath().isEmpty()) {
+            } else if (contract.getPdfPath() != null && !contract.getPdfPath().isEmpty()) {
                 contractUrl = contract.getPdfPath();
             }
         }
@@ -309,7 +305,8 @@ public class EmployeeService {
         return new EmployeeProfileResponse(
                 user.getEmployeeCode(),
                 user.getFullName(),
-                position != null ? position.getName() : null,
+                position != null ? position.getId() : null,        // ⭐ Thêm positionId
+                position != null ? position.getName() : null,      // Position name
                 joinDate,
                 user.getEmail(),
                 contractType,

@@ -1,9 +1,6 @@
 package com.g98.sangchengpayrollmanager.controller;
 
-import com.g98.sangchengpayrollmanager.model.dto.ContractPdfDTO;
-import com.g98.sangchengpayrollmanager.model.dto.ContractTemplateDTO;
-import com.g98.sangchengpayrollmanager.model.dto.ContractUploadResponse;
-import com.g98.sangchengpayrollmanager.model.dto.UserDTO;
+import com.g98.sangchengpayrollmanager.model.dto.*;
 import com.g98.sangchengpayrollmanager.model.dto.api.response.ApiResponse;
 import com.g98.sangchengpayrollmanager.model.dto.employee.EmployeeProfileResponse;
 import com.g98.sangchengpayrollmanager.model.dto.employee.EmployeeProfileUpdateRequest;
@@ -13,6 +10,8 @@ import com.g98.sangchengpayrollmanager.model.dto.payroll.PayComponentTypeRespons
 import com.g98.sangchengpayrollmanager.model.dto.payroll.SalaryInformationCreateRequest;
 import com.g98.sangchengpayrollmanager.model.dto.payroll.SalaryInformationResponse;
 import com.g98.sangchengpayrollmanager.model.dto.payroll.request.PayComponentEndDateUpdateRequest;
+import com.g98.sangchengpayrollmanager.model.entity.Position;
+import com.g98.sangchengpayrollmanager.repository.PositionRepository;
 import com.g98.sangchengpayrollmanager.service.AdminService;
 import com.g98.sangchengpayrollmanager.service.EmployeeService;
 import com.g98.sangchengpayrollmanager.service.PayrollInfoService;
@@ -36,6 +35,7 @@ public class HrController {
     private final EmployeeService employeeService;
     private final JwtService jwtService;
     private final PayrollInfoService payrollInfoService;
+    private final PositionRepository positionRepository;
 
 
     @GetMapping("/users")
@@ -238,6 +238,20 @@ public class HrController {
                 .status(200)
                 .message("Cập nhật ngày kết thúc phụ cấp thành công")
                 .data(updatedPayComponent)
+                .build();
+    }
+
+    @GetMapping("/positions")
+    public ApiResponse<List<PositionDTO>> getAllPositions() {
+        List<Position> positions = positionRepository.findAll();
+        List<PositionDTO> positionDTOs = positions.stream()
+                .map(p -> new PositionDTO(p.getId(), p.getName()))
+                .toList();
+
+        return ApiResponse.<List<PositionDTO>>builder()
+                .status(200)
+                .message("Lấy danh sách chức vụ thành công")
+                .data(positionDTOs)
                 .build();
     }
 

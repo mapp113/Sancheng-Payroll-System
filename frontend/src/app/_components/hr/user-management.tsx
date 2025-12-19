@@ -5,6 +5,7 @@ import {ChangeEvent, useEffect, useMemo, useState} from "react";
 import {useRouter} from "next/navigation";
 import Toast from "@/app/_components/common/notification/toast";
 
+
 type UserItem = {
     userId: string;
     employeeCode: string;
@@ -22,6 +23,16 @@ type RawUserItem = UserItem & {
     userID?: string;
 };
 
+type Position = {
+    id: number;
+    name: string;
+};
+
+const CONTRACT_TYPE_OPTIONS = [
+    {value: "FULLTIME", label: "Chính thức"},
+    {value: "PARTTIME", label: "Thử việc"},
+];
+
 const normalizeUser = (user: RawUserItem): UserItem => ({
     ...user,
     userId: user.userId ?? user.userID ?? "",
@@ -32,6 +43,7 @@ const API_BASE = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 type EmployeeProfile = {
     id: string;
     name: string;
+    positionId: string;
     position: string;
     joinDate: string;
     personalEmail: string;
@@ -50,6 +62,7 @@ type EmployeeProfile = {
 type EmployeeProfileResponse = {
     employeeCode?: string;
     fullName?: string;
+    positionId?: number;
     position?: string;
     joinDate?: string;
     personalEmail?: string;
@@ -72,9 +85,15 @@ type UserDetailResponse = {
     position?: string;
 };
 
+type Toast = {
+    message: string;
+    type: "success" | "error" | "warning";
+};
+
 const emptyProfile: EmployeeProfile = {
     id: "",
     name: "",
+    positionId: "",
     position: "",
     joinDate: "",
     personalEmail: "",
@@ -94,6 +113,7 @@ function mapProfileResponse(data: EmployeeProfileResponse): EmployeeProfile {
     return {
         id: data.employeeCode ?? "",
         name: data.fullName ?? "",
+        positionId: data.positionId?.toString() ?? "",
         position: data.position ?? "",
         joinDate: data.joinDate ?? "",
         personalEmail: data.personalEmail ?? "",
@@ -110,7 +130,6 @@ function mapProfileResponse(data: EmployeeProfileResponse): EmployeeProfile {
     };
 }
 
-// Helper function to decode JWT token
 function parseJwt(token: string) {
     try {
         const base64Url = token.split('.')[1];
@@ -128,6 +147,25 @@ function parseJwt(token: string) {
     }
 }
 
+function ToastComponent({message, type, onClose}: Toast & { onClose: () => void }) {
+    useEffect(() => {
+        const timer = setTimeout(onClose, 3000);
+        return () => clearTimeout(timer);
+    }, [onClose]);
+
+    const bgColor = type === "success" ? "bg-green-500" : type === "error" ? "bg-red-500" : "bg-yellow-500";
+
+    return (
+        <div
+            className={`fixed top-4 right-4 z-50 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3`}>
+            <span>{message}</span>
+            <button onClick={onClose} className="hover:opacity-80">
+                <X className="h-4 w-4"/>
+            </button>
+        </div>
+    );
+}
+
 export default function UserManagement() {
     const router = useRouter();
 
@@ -135,6 +173,9 @@ export default function UserManagement() {
     const [users, setUsers] = useState<UserItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState("");
+
+    const [positions, setPositions] = useState<Position[]>([]);
+    const [loadingPositions, setLoadingPositions] = useState(false);
 
     const [profileModalOpen, setProfileModalOpen] = useState(false);
     const [selectedEmployeeCode, setSelectedEmployeeCode] = useState<string | null>(null);
@@ -145,13 +186,10 @@ export default function UserManagement() {
     const [uploadingContract, setUploadingContract] = useState(false);
     const [downloadingTemplate, setDownloadingTemplate] = useState(false);
 
-
-    // ⭐ NEW: State to track current user info
     const [currentUserRole, setCurrentUserRole] = useState<string>("");
     const [currentUserEmployeeCode, setCurrentUserEmployeeCode] = useState<string>("");
-    const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "warning" } | null>(null);
+    const [toast, setToast] = useState<Toast | null>(null);
 
-    // ⭐ NEW: Extract token info on mount
     useEffect(() => {
         const token = localStorage.getItem("access_token");
         if (token) {
@@ -188,9 +226,31 @@ export default function UserManagement() {
         fetchUsers();
     }, []);
 
+    useEffect(() => {
+        const fetchPositions = async () => {
+            try {
+                setLoadingPositions(true);
+                const res = await fetch(`${API_BASE}/api/v1/hr/positions`, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
+                    },
+                });
+                const json = await res.json();
+                setPositions(json.data ?? []);
+            } catch (error) {
+                console.error("Lỗi khi tải danh sách chức vụ:", error);
+                setToast({message: "Không thể tải danh sách chức vụ", type: "error"});
+            } finally {
+                setLoadingPositions(false);
+            }
+        };
+
+        fetchPositions();
+    }, []);
+
     const handleDownloadTemplate = async () => {
         if (!selectedEmployeeCode) {
-            alert("Vui lòng chọn nhân viên trước khi tải hợp đồng mẫu");
+            setToast({message: "Vui lòng chọn nhân viên trước khi tải hợp đồng mẫu", type: "warning"});
             return;
         }
 
@@ -218,9 +278,11 @@ export default function UserManagement() {
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
+
+            setToast({message: "Tải hợp đồng mẫu thành công", type: "success"});
         } catch (error) {
             console.error("Tải hợp đồng mẫu thất bại", error);
-            alert("Không thể tải hợp đồng mẫu. Vui lòng thử lại.");
+            setToast({message: "Không thể tải hợp đồng mẫu. Vui lòng thử lại.", type: "error"});
         } finally {
             setDownloadingTemplate(false);
         }
@@ -264,19 +326,12 @@ export default function UserManagement() {
         setProfileLoading(true);
         setProfileError(null);
         try {
-            // const res = await fetch(
-            //     `${API_BASE}/api/v1/hr/users/${employeeCode}/profile`,
-            //     {
             const token = localStorage.getItem("access_token") ?? "";
             const [profileRes, userRes] = await Promise.all([
                 fetch(`${API_BASE}/api/v1/hr/users/${employeeCode}/profile`, {
                     headers: {
-                        // Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
                         Authorization: `Bearer ${token}`,
                     },
-                    //     }
-                    // );
-                    // if (!res.ok) {
                 }),
                 fetch(`${API_BASE}/api/v1/hr/users/${employeeCode}`, {
                     headers: {
@@ -288,7 +343,7 @@ export default function UserManagement() {
             if (!profileRes.ok) {
                 throw new Error("Không thể tải thông tin hồ sơ");
             }
-            //    const data = (await res.json()) as EmployeeProfileResponse;
+
             const [profileData, userData] = await Promise.all([
                 profileRes.json() as Promise<EmployeeProfileResponse>,
                 userRes.ok
@@ -296,24 +351,18 @@ export default function UserManagement() {
                     : Promise.resolve({} as UserDetailResponse),
             ]);
 
-
-            // ⭐ MAP VÀ THÊM API_BASE VÀO CONTRACT URL
-            //  const mappedProfile = mapProfileResponse(data);
             const mappedProfile = mapProfileResponse(profileData);
 
-            // Nếu contractUrl là relative path, thêm API_BASE
             if (mappedProfile.contractUrl && !mappedProfile.contractUrl.startsWith('http')) {
                 mappedProfile.contractUrl = `${API_BASE}${mappedProfile.contractUrl}`;
             }
 
-            //          setSelectedProfile(mappedProfile);
             setSelectedProfile((prev) => ({
                 ...prev,
                 ...mappedProfile,
                 name: userData.fullName ?? mappedProfile.name,
                 personalEmail: userData.email ?? mappedProfile.personalEmail,
                 phone: userData.phoneNo ?? mappedProfile.phone,
-                position: userData.position ?? mappedProfile.position,
             }));
 
         } catch (error) {
@@ -336,12 +385,14 @@ export default function UserManagement() {
         setSelectedEmployeeCode(null);
         setSelectedProfile(emptyProfile);
         setProfileError(null);
+        setContractUploadError(null);
     };
 
     const handleProfileChange =
-        (field: keyof EmployeeProfile) => (event: ChangeEvent<HTMLInputElement>) => {
-            setSelectedProfile((prev) => ({...prev, [field]: event.target.value}));
-        };
+        (field: keyof EmployeeProfile) =>
+            (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+                setSelectedProfile((prev) => ({...prev, [field]: event.target.value}));
+            };
 
     const saveProfile = async () => {
         try {
@@ -358,8 +409,7 @@ export default function UserManagement() {
                 address: selectedProfile.address || undefined,
                 joinDate: selectedProfile.joinDate || undefined,
                 visaExpiry: selectedProfile.visaExpiry || undefined,
-                contractUrl: selectedProfile.contractUrl || undefined,
-                position: selectedProfile.position || undefined,
+                positionId: selectedProfile.positionId ? parseInt(selectedProfile.positionId) : undefined,
                 citizenId: selectedProfile.citizenId || undefined,
                 dependentsNo: selectedProfile.dependentsNo || undefined,
             };
@@ -385,16 +435,20 @@ export default function UserManagement() {
             );
 
             if (!response.ok) {
-                throw new Error("Cập nhật hồ sơ thất bại");
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Cập nhật hồ sơ thất bại");
             }
 
             const data = (await response.json()) as EmployeeProfileResponse;
             setSelectedProfile(mapProfileResponse(data));
+            setToast({message: "Cập nhật hồ sơ thành công", type: "success"});
             closeProfileModal();
             await reloadUsers();
         } catch (error) {
             console.error(error);
-            setProfileError("Cập nhật hồ sơ thất bại");
+            const errorMessage = error instanceof Error ? error.message : "Cập nhật hồ sơ thất bại";
+            setProfileError(errorMessage);
+            setToast({message: errorMessage, type: "error"});
         } finally {
             setProfileLoading(false);
         }
@@ -441,28 +495,24 @@ export default function UserManagement() {
 
             const json = await res.json();
 
-            // ⭐ THÊM API_BASE VÀO URL
             const viewUrl = json.data?.viewUrl || json.data?.downloadUrl;
 
             if (viewUrl) {
-                // Tạo URL đầy đủ với API_BASE
                 const fullViewUrl = `${API_BASE}${viewUrl}`;
                 setSelectedProfile((prev) => ({...prev, contractUrl: fullViewUrl}));
-
                 setToast({message: `Tải lên thành công: ${json.data?.fileName || file.name}`, type: "success"});
             }
         } catch (error) {
             console.error(error);
-            setContractUploadError(
-                error instanceof Error ? error.message : "Tải lên hợp đồng thất bại"
-            );
+            const errorMessage = error instanceof Error ? error.message : "Tải lên hợp đồng thất bại";
+            setContractUploadError(errorMessage);
+            setToast({message: errorMessage, type: "error"});
         } finally {
             setUploadingContract(false);
             event.target.value = "";
         }
     };
 
-    // ⭐ NEW: Check if current user is HR viewing their own profile
     const isEditingOwnProfile = useMemo(() => {
         if (!currentUserRole || !currentUserEmployeeCode || !selectedEmployeeCode) {
             return false;
@@ -504,7 +554,6 @@ export default function UserManagement() {
                                 <option value="HR">HR</option>
                                 <option value="Manager">Manager</option>
                                 <option value="Employee">Employee</option>
-
                             </select>
                         </div>
                     </div>
@@ -526,19 +575,13 @@ export default function UserManagement() {
                             <tbody className="divide-y divide-[#E2E8F0]">
                             {loading ? (
                                 <tr>
-                                    <td
-                                        colSpan={7}
-                                        className="px-4 py-6 text-center text-sm text-slate-500"
-                                    >
+                                    <td colSpan={7} className="px-4 py-6 text-center text-sm text-slate-500">
                                         Đang tải...
                                     </td>
                                 </tr>
                             ) : (
                                 filteredUsers.map((user) => (
-                                    <tr
-                                        key={`${user.employeeCode}-${user.userId}`}
-                                        className="hover:bg-[#F1F5F9]"
-                                    >
+                                    <tr key={`${user.employeeCode}-${user.userId}`} className="hover:bg-[#F1F5F9]">
                                         <td className="whitespace-nowrap px-4 py-3 font-medium">
                                             {user.userId}
                                         </td>
@@ -555,33 +598,24 @@ export default function UserManagement() {
                                             {user.roleName}
                                         </td>
                                         <td className="whitespace-nowrap px-4 py-3">
-                                                <span
-                                                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                                                        user.status === 1 ||
-                                                        user.status === "Hoạt động"
-                                                            ? "bg-[#DCFCE7] text-[#15803D]"
-                                                            : "bg-[#FEE2E2] text-[#B91C1C]"
-                                                    }`}
-                                                >
-                                                    {user.status === 1 ||
-                                                    user.status === "Hoạt động"
-                                                        ? "Hoạt động"
-                                                        : "Tạm khóa"}
-                                                </span>
+                                            <span
+                                                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                                    user.status === 1 || user.status === "Hoạt động"
+                                                        ? "bg-[#DCFCE7] text-[#15803D]"
+                                                        : "bg-[#FEE2E2] text-[#B91C1C]"
+                                                }`}
+                                            >
+                                                {user.status === 1 || user.status === "Hoạt động" ? "Hoạt động" : "Tạm khóa"}
+                                            </span>
                                         </td>
                                         <td className="whitespace-nowrap px-4 py-3 text-[#557099]">
                                             {user.phoneNo}
                                         </td>
-
                                         <td className="whitespace-nowrap px-4 py-3 text-right">
                                             <button
                                                 onClick={() => {
                                                     if (!user.employeeCode) return;
-                                                    router.push(
-                                                        `/manager/contract/salary-info/${encodeURIComponent(
-                                                            user.employeeCode,
-                                                        )}`,
-                                                    );
+                                                    router.push(`/manager/contract/salary-info/${encodeURIComponent(user.employeeCode)}`);
                                                 }}
                                                 className="rounded-full border border-[#4AB4DE] px-4 py-1 text-xs font-medium text-[#4AB4DE] hover:bg-[#E0F2FE]"
                                             >
@@ -597,7 +631,6 @@ export default function UserManagement() {
                 </section>
             </div>
 
-            {/* ===== PROFILE MODAL (UPDATED) ===== */}
             {profileModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
                     <div className="max-w-lg w-full bg-white p-6 shadow-xl rounded-lg max-h-[90vh] overflow-y-auto">
@@ -607,10 +640,8 @@ export default function UserManagement() {
                                     {isEditingOwnProfile ? "Xem hồ sơ" : "Chỉnh sửa hồ sơ"}
                                 </h3>
                                 <p className="text-sm text-slate-500">
-                                    Hồ sơ được tải và cập nhật theo mã nhân viên:{" "}
-                                    {selectedEmployeeCode ?? "-"}
+                                    Hồ sơ được tải và cập nhật theo mã nhân viên: {selectedEmployeeCode ?? "-"}
                                 </p>
-                                {/* ⭐ NEW: Warning message for HR viewing own profile */}
                                 {isEditingOwnProfile && (
                                     <p className="mt-1 text-sm text-amber-600">
                                         Bạn không thể chỉnh sửa hồ sơ của chính mình
@@ -654,12 +685,19 @@ export default function UserManagement() {
 
                             <label className="flex flex-col gap-1 text-sm">
                                 Chức vụ
-                                <input
+                                <select
                                     className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
-                                    value={selectedProfile.position}
-                                    onChange={handleProfileChange("position")}
-                                    disabled={profileLoading || isEditingOwnProfile}
-                                />
+                                    value={selectedProfile.positionId}
+                                    onChange={handleProfileChange("positionId")}
+                                    disabled={profileLoading || loadingPositions || isEditingOwnProfile}
+                                >
+                                    <option value="">-- Chọn chức vụ --</option>
+                                    {positions.map((pos) => (
+                                        <option key={pos.id} value={pos.id}>
+                                            {pos.name}
+                                        </option>
+                                    ))}
+                                </select>
                             </label>
 
                             <label className="flex flex-col gap-1 text-sm">
@@ -706,12 +744,19 @@ export default function UserManagement() {
 
                             <label className="flex flex-col gap-1 text-sm">
                                 Loại hợp đồng
-                                <input
+                                <select
                                     className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
                                     value={selectedProfile.contractType}
                                     onChange={handleProfileChange("contractType")}
                                     disabled={profileLoading || isEditingOwnProfile}
-                                />
+                                >
+                                    <option value="">Chọn loại hợp đồng</option>
+                                    {CONTRACT_TYPE_OPTIONS.map((option) => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
                             </label>
 
                             <label className="flex flex-col gap-1 text-sm">
