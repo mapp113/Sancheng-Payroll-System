@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -40,16 +41,16 @@ public class LeaveRequestController {
     }
 
     // Submit request của employee
-    @PostMapping(value = "/submit", consumes = {"multipart/form-data"})
+    @PostMapping(value = "/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<LeaveRequestResponse> submitLeaveRequest(@ModelAttribute  LeaveRequestCreateDTO requestDTO) {
 
         validator.validateLeaveRequest(requestDTO);
 
-        Integer id = leaveRequestService.submitLeaveRequest(requestDTO).getId();
+        LeaveRequestResponse response = leaveRequestService.submitLeaveRequest(requestDTO);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest().path("/{id}")
-                .buildAndExpand(id).toUri();
-        return ResponseEntity.created(location).build();
+                .buildAndExpand(response.getId()).toUri();
+        return ResponseEntity.created(location).body(response);
     }
 
     @GetMapping("/remaining-by-type")
@@ -93,6 +94,7 @@ public class LeaveRequestController {
         Page<LeaveRequestResponse> result = leaveRequestService.getMyLeaveRequests(pageable);
         return ResponseEntity.ok(result);
     }
+
 
 
     // xem chi tiết yêu cầu ( của mình )
@@ -175,6 +177,11 @@ public class LeaveRequestController {
              @RequestBody @Validated LeaveandOTRequestUpdateDTO updateDTO) {
         leaveRequestService.rejectLeaveRequest(id, updateDTO.getNote());
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/attachments/{fileName}")
+    public ResponseEntity<org.springframework.core.io.Resource> viewAttachment(@PathVariable String fileName) throws java.io.IOException {
+        return leaveRequestService.viewLeaveAttachment(fileName);
     }
 
 

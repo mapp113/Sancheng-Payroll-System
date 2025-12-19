@@ -68,4 +68,5 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Inte
                                                       String status
     );
 
+    Optional<LeaveRequest> findByAttachmentPath(String attachmentPath);
 }

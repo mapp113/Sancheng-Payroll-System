@@ -9,16 +9,22 @@ import com.g98.sangchengpayrollmanager.model.entity.User;
 import com.g98.sangchengpayrollmanager.model.enums.DurationType;
 import com.g98.sangchengpayrollmanager.model.enums.LeaveandOTStatus;
 import com.g98.sangchengpayrollmanager.repository.*;
+import com.g98.sangchengpayrollmanager.service.FileStorageService;
 import com.g98.sangchengpayrollmanager.service.LeaveRequestService;
 import com.g98.sangchengpayrollmanager.service.NotificationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,6 +41,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     private static final String ANNUAL_LEAVE_CODE = "annual";
     private final SpecialDaysRepository specialDaysRepository;
     private final NotificationService notificationService;
+    private final FileStorageService fileStorageService;
 
     @Override
     public LeaveRequestResponse submitLeaveRequest(LeaveRequestCreateDTO leaveRequestDTO) {
@@ -108,6 +115,19 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
 
         entity.setToDate(toDate);
+
+        try {
+            String attachmentPath  = fileStorageService.saveLeaveAttachment(
+                    user.getEmployeeCode(),
+                    LocalDateTime.now(),
+                    leaveRequestDTO.getAttachment()
+            );
+            entity.setAttachmentPath(attachmentPath); // cần field trong entity
+        } catch (Exception e) {
+            throw new RuntimeException("Không thể lưu ảnh đính kèm: " + e.getMessage(), e);
+        }
+
+
         LeaveRequest savedLeaveRequest = LeaveRequestRepository.save(entity);
 
         List<User> managers  = userRepository.findAllManagers();
@@ -226,6 +246,42 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
     // Xem chi tiết yêu câầu của chính người gửi
 
+
+
+    @Override
+    public ResponseEntity<Resource> viewLeaveAttachment(String fileName) throws java.io.IOException {
+
+        // 1) tìm LeaveRequest theo attachmentPath (lưu fileName)
+        LeaveRequest leave = LeaveRequestRepository.findByAttachmentPath(fileName).orElse(null);
+        if (leave == null) return ResponseEntity.notFound().build();
+
+        // 2) check quyền (HR/Manager xem được; employee chỉ xem của mình)
+        String username = getCurrentUsername();
+        User user = userRepository.findByUsernameWithRole(username)
+                .orElseThrow(() -> new RuntimeException("Người không tồn tại: " + username));
+
+        boolean isHrOrManager = user.getRole().getName().equalsIgnoreCase("HR")
+                || user.getRole().getName().equalsIgnoreCase("MANAGER");
+
+        boolean isOwner = leave.getUser().getEmployeeCode().equals(user.getEmployeeCode());
+
+        if (!isHrOrManager && !isOwner) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        // 3) build path & stream file
+        Path filePath = fileStorageService.resolveLeaveAttachmentPathByFileName(fileName);
+        if (filePath == null || !Files.exists(filePath)) return ResponseEntity.notFound().build();
+
+        Resource resource = new UrlResource(filePath.toUri());
+        String contentType = fileStorageService.detectImageContentTypeByFileName(fileName);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
+                .cacheControl(CacheControl.noCache())
+                .body(resource);
+    }
 
     @Override
     public Page<LeaveRequestResponse> findByStatus(LeaveandOTStatus status, Pageable pageable) {
