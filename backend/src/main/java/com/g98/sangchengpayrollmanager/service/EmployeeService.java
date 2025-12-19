@@ -6,14 +6,8 @@ import com.g98.sangchengpayrollmanager.model.dto.ContractUploadResponse;
 import com.g98.sangchengpayrollmanager.model.dto.employee.EmployeeInfoResponse;
 import com.g98.sangchengpayrollmanager.model.dto.employee.EmployeeProfileResponse;
 import com.g98.sangchengpayrollmanager.model.dto.employee.EmployeeProfileUpdateRequest;
-import com.g98.sangchengpayrollmanager.model.entity.Contract;
-import com.g98.sangchengpayrollmanager.model.entity.EmployeeInformation;
-import com.g98.sangchengpayrollmanager.model.entity.Position;
-import com.g98.sangchengpayrollmanager.model.entity.User;
-import com.g98.sangchengpayrollmanager.repository.ContractRepository;
-import com.g98.sangchengpayrollmanager.repository.EmployeeInformationRepository;
-import com.g98.sangchengpayrollmanager.repository.PositionRepository;
-import com.g98.sangchengpayrollmanager.repository.UserRepository;
+import com.g98.sangchengpayrollmanager.model.entity.*;
+import com.g98.sangchengpayrollmanager.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
@@ -45,6 +39,8 @@ public class EmployeeService {
     private final ContractRepository contractRepository;
     private final PositionRepository positionRepository;
     private final UserRepository userRepository;
+    private final SalaryInformationRepository salaryInformationRepository;
+
 
     public EmployeeInfoResponse getByEmployeeCode(String employeeCode) {
         EmployeeInformation info = repo.findByEmployeeCodeFetchAll(employeeCode)
@@ -78,6 +74,24 @@ public class EmployeeService {
 
         // 4️⃣ Mapping an toàn
         return mapToProfile(info, contract);
+    }
+
+    private void createInitialSalaryInformationIfNeeded(User user, Integer baseSalary) {
+        boolean hasSalaryInformation = salaryInformationRepository.existsByUserEmployeeCode(user.getEmployeeCode());
+        if (hasSalaryInformation) {
+            return;
+        }
+
+        SalaryInformation salaryInformation = SalaryInformation.builder()
+                .user(user)
+                .baseSalary(baseSalary)
+                .baseHourlyRate(0)
+                .effectiveFrom(LocalDate.now())
+                .date(LocalDate.now())
+                .status("ACTIVE")
+                .build();
+
+        salaryInformationRepository.save(salaryInformation);
     }
 
 
@@ -158,6 +172,10 @@ public class EmployeeService {
         if (contract != null) {
             if (request.getContractType() != null) {
                 contract.setType(request.getContractType());
+            }
+            if (request.getBaseSalary() != null) {
+                createInitialSalaryInformationIfNeeded(user, request.getBaseSalary());
+                contract.setBaseSalary(request.getBaseSalary());
             }
             updateStatus(user, contract, request.getStatus());
 
@@ -310,6 +328,7 @@ public class EmployeeService {
                 joinDate,
                 user.getEmail(),
                 contractType,
+                contract != null ? contract.getBaseSalary() : null,
                 user.getPhoneNo(),
                 user.getDob(),
                 status,

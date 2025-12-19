@@ -630,14 +630,14 @@ export default function DetailEmployeePage() {
                                 {employee.phone || "—"}
                             </InfoField>
 
-                            <InfoField
-                                label="Tình trạng"
-                                icon={
-                                    <Shield className="h-4 w-4 text-[#4AB4DE]"/>
-                                }
-                            >
-                                {employee.status || "—"}
-                            </InfoField>
+                            {/*<InfoField*/}
+                            {/*    label="Tình trạng"*/}
+                            {/*    icon={*/}
+                            {/*        <Shield className="h-4 w-4 text-[#4AB4DE]"/>*/}
+                            {/*    }*/}
+                            {/*>*/}
+                            {/*    {employee.status || "—"}*/}
+                            {/*</InfoField>*/}
 
                             <InfoField
                                 label="CCCD"

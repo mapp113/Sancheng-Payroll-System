@@ -40,6 +40,10 @@ const normalizeUser = (user: RawUserItem): UserItem => ({
 
 const API_BASE = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 
+const sanitizeDigits = (value: string) => value.replace(/[^0-9]/g, "");
+const sanitizeEmailInput = (value: string) => value.replace(/[^a-zA-Z0-9@._+-]/g, "");
+const isValidEmail = (value: string) =>
+    /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/i.test(value);
 type EmployeeProfile = {
     id: string;
     name: string;
@@ -48,6 +52,7 @@ type EmployeeProfile = {
     joinDate: string;
     personalEmail: string;
     contractType: string;
+    baseSalary: string;
     phone: string;
     dob: string;
     status: string;
@@ -67,6 +72,7 @@ type EmployeeProfileResponse = {
     joinDate?: string;
     personalEmail?: string;
     contractType?: string;
+    baseSalary: string;
     phone?: string;
     dob?: string;
     status?: string;
@@ -98,6 +104,7 @@ const emptyProfile: EmployeeProfile = {
     joinDate: "",
     personalEmail: "",
     contractType: "",
+    baseSalary: "",
     phone: "",
     dob: "",
     status: "",
@@ -118,6 +125,7 @@ function mapProfileResponse(data: EmployeeProfileResponse): EmployeeProfile {
         joinDate: data.joinDate ?? "",
         personalEmail: data.personalEmail ?? "",
         contractType: data.contractType ?? "",
+        baseSalary: data.baseSalary?.toString() ?? "",
         phone: data.phone ?? "",
         dob: data.dob ?? "",
         status: data.status ?? "",
@@ -391,25 +399,104 @@ export default function UserManagement() {
     const handleProfileChange =
         (field: keyof EmployeeProfile) =>
             (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-                setSelectedProfile((prev) => ({...prev, [field]: event.target.value}));
+
+                let value = event.target.value;
+
+                if (field === "phone") {
+                    value = sanitizeDigits(value).slice(0, 10);
+                }
+
+                if (field === "citizenId") {
+                    value = sanitizeDigits(value);
+                }
+
+                if (field === "personalEmail") {
+                    value = sanitizeEmailInput(value);
+                }
+
+                setSelectedProfile((prev) => ({...prev, [field]: value}));
+                setProfileError(null);
+
             };
 
     const saveProfile = async () => {
         try {
+            setProfileError(null);
             setProfileLoading(true);
+
+            if (
+                selectedProfile.personalEmail &&
+                !isValidEmail(selectedProfile.personalEmail)
+            ) {
+                const message = "Email không đúng định dạng";
+                setProfileError(message);
+                setToast({message, type: "error"});
+                return;
+            }
+
+            if (
+                selectedProfile.phone &&
+                !/^0\d{9}$/.test(selectedProfile.phone)
+            ) {
+                const message = "Số điện thoại phải bắt đầu bằng 0 và có 10 số";
+                setProfileError(message);
+                setToast({message, type: "error"});
+                return;
+            }
+
+            if (selectedProfile.citizenId && !/^\d+$/.test(selectedProfile.citizenId)) {
+                const message = "CCCD chỉ được nhập số";
+                setProfileError(message);
+                setToast({message, type: "error"});
+                return;
+            }
+
+
+            const today = new Date();
+            const dobDate = selectedProfile.dob ? new Date(selectedProfile.dob) : null;
+            const joinDate = selectedProfile.joinDate ? new Date(selectedProfile.joinDate) : null;
+            const visaExpiry = selectedProfile.visaExpiry ? new Date(selectedProfile.visaExpiry) : null;
+
+            if (dobDate && dobDate > today) {
+                setProfileError("Ngày sinh không được nằm trong tương lai");
+                setProfileLoading(false);
+                return;
+            }
+
+            if (dobDate && joinDate && joinDate < dobDate) {
+                setProfileError("Ngày bắt đầu làm việc phải sau ngày sinh");
+                setProfileLoading(false);
+                return;
+            }
+
+            if (joinDate && visaExpiry && joinDate >= visaExpiry) {
+                setProfileError("Ngày bắt đầu phải nhỏ hơn ngày kết thúc hợp đồng");
+                setProfileLoading(false);
+                return;
+            }
+
+
+            const parsedBaseSalary = Number(selectedProfile.baseSalary);
+            const baseSalaryValue =
+                selectedProfile.baseSalary && !isNaN(parsedBaseSalary)
+                    ? parsedBaseSalary
+                    : undefined;
 
             const payload = {
                 fullName: selectedProfile.name || undefined,
                 personalEmail: selectedProfile.personalEmail || undefined,
                 dob: selectedProfile.dob || undefined,
                 contractType: selectedProfile.contractType || undefined,
+                baseSalary: baseSalaryValue, // ✅ FIX: thêm baseSalary
                 phone: selectedProfile.phone || undefined,
                 taxCode: selectedProfile.taxCode || undefined,
                 status: selectedProfile.status || undefined,
                 address: selectedProfile.address || undefined,
                 joinDate: selectedProfile.joinDate || undefined,
                 visaExpiry: selectedProfile.visaExpiry || undefined,
-                positionId: selectedProfile.positionId ? parseInt(selectedProfile.positionId) : undefined,
+                positionId: selectedProfile.positionId
+                    ? parseInt(selectedProfile.positionId, 10)
+                    : undefined,
                 citizenId: selectedProfile.citizenId || undefined,
                 dependentsNo: selectedProfile.dependentsNo || undefined,
             };
@@ -435,24 +522,32 @@ export default function UserManagement() {
             );
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || "Cập nhật hồ sơ thất bại");
+                let message = "Cập nhật hồ sơ thất bại";
+                try {
+                    const errorData = await response.json();
+                    message = errorData?.message || message;
+                } catch (_) {
+                }
+                throw new Error(message);
             }
 
             const data = (await response.json()) as EmployeeProfileResponse;
+
             setSelectedProfile(mapProfileResponse(data));
             setToast({message: "Cập nhật hồ sơ thành công", type: "success"});
             closeProfileModal();
             await reloadUsers();
         } catch (error) {
             console.error(error);
-            const errorMessage = error instanceof Error ? error.message : "Cập nhật hồ sơ thất bại";
+            const errorMessage =
+                error instanceof Error ? error.message : "Cập nhật hồ sơ thất bại";
             setProfileError(errorMessage);
             setToast({message: errorMessage, type: "error"});
         } finally {
             setProfileLoading(false);
         }
     };
+
 
     const handleContractUpload = async (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -758,6 +853,20 @@ export default function UserManagement() {
                                     ))}
                                 </select>
                             </label>
+
+                            <label className="flex flex-col gap-1 text-sm">
+                                Lương hợp đồng
+                                <input
+                                    type="number"
+                                    min={0}
+                                    step="0.01"
+                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
+                                    value={selectedProfile.baseSalary}
+                                    onChange={handleProfileChange("baseSalary")}
+                                    disabled={profileLoading || isEditingOwnProfile}
+                                />
+                            </label>
+
 
                             <label className="flex flex-col gap-1 text-sm">
                                 CCCD

@@ -20,4 +20,7 @@ public interface SalaryInformationRepository extends JpaRepository<SalaryInforma
     List<SalaryInformation> findActiveByEmployeeCode(@Param("employeeCode") String employeeCode, @Param("monthStart") LocalDate monthStart, @Param("monthEnd") LocalDate monthEnd);
 
     List<SalaryInformation> findByUserEmployeeCodeOrderByEffectiveFromDesc(String employeeCode);
+
+    boolean existsByUserEmployeeCode(String employeeCode);
+
 }

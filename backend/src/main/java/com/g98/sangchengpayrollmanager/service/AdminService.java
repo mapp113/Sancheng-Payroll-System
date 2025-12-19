@@ -119,14 +119,6 @@ public class AdminService {
         Role role = roleRepository.findById(req.getRoleId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy role id = " + req.getRoleId()));
 
-        LocalDate dob = LocalDate.of(2000, 1, 1);
-        if (req.getDob() != null && !req.getDob().isBlank()) {
-            try {
-                dob = LocalDate.parse(req.getDob().trim());
-            } catch (DateTimeParseException e) {
-                return ApiResponse.builder().status(400).message("Định dạng ngày sinh không hợp lệ (yyyy-MM-dd)").build();
-            }
-        }
 
         User user = User.builder()
                 .employeeCode(req.getEmployeeCode())
@@ -135,7 +127,6 @@ public class AdminService {
                 .username(username)
                 .password(passwordEncoder.encode(req.getPassword()))
                 .email(email)
-                .dob(dob)
                 .phoneNo(phoneNo)
                 .role(role)
                 .status(req.getStatus() != null ? req.getStatus() : 1)

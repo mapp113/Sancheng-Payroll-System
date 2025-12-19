@@ -20,6 +20,7 @@ public class EmployeeProfileResponse {
     private LocalDate joinDate;
     private String personalEmail;
     private String contractType;
+    private Integer baseSalary;
     private String phone;
     private LocalDate dob;
     private String status;

@@ -15,6 +15,7 @@ public class EmployeeProfileUpdateRequest {
     private LocalDate dob;
 
     private String contractType;
+    private Integer baseSalary;
     private String phone;
     private String taxCode;
     private String status;

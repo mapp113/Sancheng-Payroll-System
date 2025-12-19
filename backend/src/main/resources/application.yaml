@@ -37,7 +37,7 @@ spring:
 
 jwt:
   secret: cd1a3133c39ce3eadab3bc8089ec59f7242afa3ffcc890ece7c4f66a15ada29b
-  expiration: 3600000
+  expiration: 360000000
 
 zkteco:
   enabled: true

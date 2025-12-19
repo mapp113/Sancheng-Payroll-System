@@ -22,9 +22,6 @@ public class CreateAccountRequest {
 
     private String email;
 
-    // yyyy-MM-dd
-    private String dob; // cho FE gửi string, mình parse sau
-
     private String phoneNo;
 
     private Long roleId; // map sang bảng hrm.role
