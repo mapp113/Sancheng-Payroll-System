@@ -87,7 +87,15 @@ public class EmployeeService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên có mã: " + employeeCode));
 
         User user = info.getUser();
-        Contract contract = contractRepository.findFirstByUserEmployeeCodeOrderByStartDateDesc(employeeCode).orElse(null);
+        String contractCode ="CT-" + employeeCode;
+        Contract contract = contractRepository.findFirstByUserEmployeeCodeOrderByStartDateDesc(employeeCode)
+                .orElseGet(() -> {
+                    Contract c = new Contract();
+                    c.setContractCode(contractCode);
+                    c.setUser(user);
+                    // các field khác để null → bổ sung sau
+                    return contractRepository.save(c);
+                });
 
         if (isEmployee(role)) {
             validateEmployeeFields(request);
@@ -100,9 +108,6 @@ public class EmployeeService {
 
         userRepository.save(user);
         repo.save(info);
-        if (contract != null) {
-            contractRepository.save(contract);
-        }
 
         return mapToProfile(info, contract);
     }

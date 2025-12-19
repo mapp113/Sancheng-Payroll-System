@@ -166,9 +166,9 @@ public class AdminService {
         // Lưu user vào DB
         adminRepository.save(user);
 
-        EmployeeInformation info = new EmployeeInformation();
-        info.setUser(user);
-        employeeInfoRepo.save(info);
+//        EmployeeInformation info = new EmployeeInformation();
+//        info.setUser(user);
+//        employeeInfoRepo.save(info);
 
 
         Integer year = LocalDate.now().getYear();
