@@ -20,6 +20,7 @@ public class EmployeeProfileUpdateRequest {
     private String taxCode;
     private String status;
     private String citizenId;
+    private String bankNumber;
     private String address;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
@@ -29,6 +30,7 @@ public class EmployeeProfileUpdateRequest {
     private LocalDate visaExpiry;
 
     private String contractUrl;
+
 
     private String dependentsNo;
 }

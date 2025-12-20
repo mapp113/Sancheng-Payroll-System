@@ -25,6 +25,7 @@ public class EmployeeProfileResponse {
     private LocalDate dob;
     private String status;
     private String citizenId;
+    private String bankNumber;
     private String address;
     private LocalDate visaExpiry;
     private String contractUrl;
