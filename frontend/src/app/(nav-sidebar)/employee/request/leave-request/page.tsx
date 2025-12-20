@@ -59,14 +59,16 @@ function LeavesPageContent() {
     fetchLeaveTypeOptions();
   }, []);
 
-  // Fetch leave balance when component mounts
+  // Fetch leave balance when component mounts or leave type changes
   useEffect(() => {
     async function fetchLeaveBalance() {
+      if (!formData.leaveType) return;
+      
       setLoadingBalance(true);
       try {
         const token = sessionStorage.getItem("scpm.auth.token");
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/api/leave/remainingLeave`,
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/api/leave/remaining-by-type?leaveTypeCode=${formData.leaveType}`,
           {
             headers: {
               "Authorization": `Bearer ${token}`,
@@ -94,7 +96,7 @@ function LeavesPageContent() {
     }
 
     fetchLeaveBalance();
-  }, []);
+  }, [formData.leaveType]);
 
   const handleSelectChange = (id: string, value: string | boolean) => {
     setFormData((prev) => ({
@@ -271,7 +273,8 @@ function LeavesPageContent() {
              file:mr-4 file:rounded-full file:border-0
              file:bg-[#4AB4DE] file:px-4 file:py-2
              file:text-sm file:font-semibold file:text-white
-             file:transition file:hover:bg-[#3ba1ca]"
+             file:transition file:hover:bg-[#3ba1ca]
+             file:cursor-pointer"
             onChange={handleFileChange}
           />
         </div>

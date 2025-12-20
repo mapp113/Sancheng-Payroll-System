@@ -18,6 +18,31 @@ function LeavesDetailContent() {
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
+  const handleViewFile = async () => {
+    if (!leaveData?.file) return;
+    
+    try {
+      const token = sessionStorage.getItem("scpm.auth.token");
+      const fileName = leaveData.file.split('/').pop();
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/leave/attachments/${fileName}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Không thể tải file");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(url), 100);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "Đã xảy ra lỗi khi tải file");
+    }
+  };
+
   useEffect(() => {
     if (!id) {
       setError("Không tìm thấy ID");
@@ -215,9 +240,12 @@ function LeavesDetailContent() {
                 </div>
                 <div className="w-2/3 flex items-center gap-2">
                   <File className="h-5 w-5 text-[#4AB4DE]" />
-                  <a href={leaveData.file} target="_blank" rel="noopener noreferrer" className="text-[#4AB4DE] underline transition hover:text-[#3ba1ca]">
-                    Xem file
-                  </a>
+                  <button
+                    onClick={handleViewFile}
+                    className="text-[#4AB4DE] underline transition hover:text-[#3ba1ca] cursor-pointer"
+                  >
+                    {leaveData.file.split('/').pop()}
+                  </button>
                 </div>
               </div>
             )}

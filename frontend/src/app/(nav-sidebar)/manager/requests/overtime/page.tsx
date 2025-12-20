@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import OvertimeBalancePopup from "@/app/_components/manager/requests/overtime/overtime-balance-popup";
 import { OTResponseData } from "@/app/_components/employee/request/types";
 import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { vietnameseToLeaveStatusCode } from "@/app/_components/utils/statusMapping";
 
 function OvertimeContent() {
   const router = useRouter();
@@ -63,7 +64,9 @@ function OvertimeContent() {
         }
 
         if (keyword) {
-          queryParams.append("keyword", keyword);
+          // Chỉ convert sang status code khi gọi API
+          const apiKeyword = vietnameseToLeaveStatusCode(keyword);
+          queryParams.append("keyword", apiKeyword);
         }
 
         const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/overtime/all?${queryParams}`, {
@@ -88,11 +91,11 @@ function OvertimeContent() {
     fetchOTRequests();
   }, [selectedMonth, indexPage, keyword]);
 
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      setKeyword(searchInput);
-      setIndexPage(0);
-    }
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value);
+    // Giữ nguyên giá trị user nhập vào, chỉ convert khi gọi API
+    setKeyword(value);
+    setIndexPage(0);
   };
 
   const getStatusText = (status: string) => {
@@ -158,8 +161,7 @@ function OvertimeContent() {
                       placeholder="Tìm kiếm"
                       className="w-full rounded-full border border-[#E2E8F0] py-2 pl-9 pr-3 text-sm focus:border-[#4AB4DE] focus:outline-none"
                       value={searchInput}
-                      onChange={(e) => setSearchInput(e.target.value)}
-                      onKeyDown={handleSearchKeyDown}
+                      onChange={(e) => handleSearchChange(e.target.value)}
                     />
                   </label>
                 </div>
@@ -181,7 +183,7 @@ function OvertimeContent() {
                 <table className="min-w-full divide-y divide-[#E2E8F0] text-sm">
                   <thead className="bg-[#F8FAFC] text-left sticky top-0">
                     <tr>
-                      <th className="px-4 py-3 font-medium">Họ và tên</th>
+                      <th className="px-4 py-3 font-medium">Nhân viên</th>
                       <th className="px-4 py-3 font-medium text-center">Thời gian gửi yêu cầu</th>
                       <th className="px-4 py-3 font-medium text-center">Thời gian Overtime</th>
                       <th className="px-4 py-3 font-medium text-center">Trạng thái</th>

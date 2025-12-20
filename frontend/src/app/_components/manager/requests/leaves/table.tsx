@@ -3,30 +3,38 @@
 import { useContext, useEffect } from "react";
 import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { ParamsContext, DataContext } from "./context";
+import { vietnameseToLeaveStatusCode } from "../../../utils/statusMapping";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 
 interface ManagerLeavesTableProps {
   searchInput: string;
   setSearchInput: (value: string) => void;
-  handleSearchKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
-export function ManagerLeavesTable({ searchInput, setSearchInput, handleSearchKeyDown }: ManagerLeavesTableProps) {
+export function ManagerLeavesTable({ searchInput, setSearchInput }: ManagerLeavesTableProps) {
   const { params, setParams } = useContext(ParamsContext)!;
   const { leaves, setLeaves, loading, setLoading } = useContext(DataContext)!;
+
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value);
+    // Giữ nguyên giá trị user nhập vào, chỉ convert khi gọi API
+    setParams((prev) => ({ ...prev, keyword: value, indexPage: 0 }));
+  };
 
   useEffect(() => {
     async function fetchLeaves() {
       setLoading(true);
       try {
         const token = localStorage.getItem("access_token");
+        // Chỉ convert sang status code khi gọi API
+        const apiKeyword = vietnameseToLeaveStatusCode(params.keyword || "");
         const queryParams = new URLSearchParams({
           month: params.date.split("-")[1],
           year: params.date.split("-")[0],
           indexPage: params.indexPage.toString(),
           maxItems: params.maxItems.toString(),
-          keyword: params.keyword || "",
+          keyword: apiKeyword,
         });
 
         const response = await fetch(`${API_BASE_URL}/api/leave/all?${queryParams}`, {
@@ -101,8 +109,7 @@ export function ManagerLeavesTable({ searchInput, setSearchInput, handleSearchKe
               placeholder="Tìm kiếm"
               className="w-full rounded-full border border-[#E2E8F0] py-2 pl-9 pr-3 text-sm focus:border-[#4AB4DE] focus:outline-none"
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
+              onChange={(e) => handleSearchChange(e.target.value)}
             />
           </label>
         </div>
@@ -121,7 +128,7 @@ export function ManagerLeavesTable({ searchInput, setSearchInput, handleSearchKe
         <table className="min-w-full divide-y divide-[#E2E8F0] text-sm">
           <thead className="bg-[#F8FAFC] text-left sticky top-0">
             <tr>
-              <th className="px-4 py-3 font-medium">Họ và tên</th>
+              <th className="px-4 py-3 font-medium">Nhân viên</th>
               <th className="px-4 py-3 font-medium text-center">Thời gian gửi yêu cầu</th>
               <th className="px-4 py-3 font-medium text-center">Thời gian bắt đầu</th>
               <th className="px-4 py-3 font-medium text-center">Thời gian nghỉ</th>

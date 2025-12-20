@@ -26,12 +26,6 @@ function ManagerLeavesContent() {
   );
   const [showQuotaPopup, setShowQuotaPopup] = useState(false);
 
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      setParams((prev) => ({ ...prev, keyword: searchInput, indexPage: 0 }));
-    }
-  };
-
   useEffect(() => {
       if (getUserMeta("role") !== "MANAGER" && getUserMeta("role") !== "HR") {
         window.location.href = "/login";
@@ -68,7 +62,7 @@ function ManagerLeavesContent() {
           <div className="flex flex-1 flex-col gap-4 xl:flex-row xl:overflow-hidden">
             <section className="flex-1 overflow-hidden rounded-2xl bg-white p-4 shadow-sm flex flex-col">
               <div className="flex-1 overflow-hidden">
-                <ManagerLeavesTable searchInput={searchInput} setSearchInput={setSearchInput} handleSearchKeyDown={handleSearchKeyDown} />
+                <ManagerLeavesTable searchInput={searchInput} setSearchInput={setSearchInput} />
               </div>
             </section>
           </div>
