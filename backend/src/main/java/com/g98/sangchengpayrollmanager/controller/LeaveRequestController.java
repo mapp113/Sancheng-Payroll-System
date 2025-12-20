@@ -22,6 +22,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 
@@ -180,7 +181,9 @@ public class LeaveRequestController {
     }
 
     @GetMapping("/attachments/{fileName:.+}")
-    public ResponseEntity<org.springframework.core.io.Resource> viewAttachment(@PathVariable String fileName) throws java.io.IOException {
+    public ResponseEntity<org.springframework.core.io.Resource> viewAttachment(
+            @PathVariable String fileName
+    ) throws IOException {
         return leaveRequestService.viewLeaveAttachment(fileName);
     }
 

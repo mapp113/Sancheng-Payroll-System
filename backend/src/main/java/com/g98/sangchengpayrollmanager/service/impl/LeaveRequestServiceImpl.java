@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -35,7 +36,7 @@ import java.util.List;
 public class LeaveRequestServiceImpl implements LeaveRequestService {
 
     private final UserRepository userRepository;
-    private final LeaveRequestRepository LeaveRequestRepository;
+    private final LeaveRequestRepository leaveRequestRepository;
     private final LeaveTypeRepository leaveTypeRepository;
     private final LeaveQuotaRepository leaveQuotaRepository;
     private static final String ANNUAL_LEAVE_CODE = "annual";
@@ -81,7 +82,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
             throw new IllegalArgumentException("Nghỉ nửa ngày chỉ được chọn 1 ngày");
         }
 
-        boolean overlap = LeaveRequestRepository.existsOverlappingLeave(
+        boolean overlap = leaveRequestRepository.existsOverlappingLeave(
                 user.getEmployeeCode(), fromDate, toDate
         );
         if (overlap) {
@@ -128,7 +129,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         }
 
 
-        LeaveRequest savedLeaveRequest = LeaveRequestRepository.save(entity);
+        LeaveRequest savedLeaveRequest = leaveRequestRepository.save(entity);
 
         List<User> managers  = userRepository.findAllManagers();
 
@@ -208,7 +209,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         User user  = userRepository.findByUsernameWithRole(username)
                 .orElseThrow(() -> new RuntimeException("người không tồn tại: " + username));
 
-        LeaveRequest leaveRequest = LeaveRequestRepository.findById(id)
+        LeaveRequest leaveRequest = leaveRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Yêu cầu không tồn tại: " + id));
 
         if(!leaveRequest.getUser().getEmployeeCode().equals(user.getEmployeeCode())) {
@@ -218,14 +219,14 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         if (!LeaveandOTStatus.PENDING.name().equals(leaveRequest.getStatus())) {
             throw new IllegalArgumentException(" Chỉ được xóa đơn ở trạng thái PENDING");
         }
-        LeaveRequestRepository.delete(leaveRequest);
+        leaveRequestRepository.delete(leaveRequest);
     }
 
 
     // Lấy cho Manager xem
     @Override
     public Page<LeaveRequestResponse> getAllLeaveRequests(Integer month, Integer year, Pageable pageable) {
-        Page<LeaveRequest> page = LeaveRequestRepository
+        Page<LeaveRequest> page = leaveRequestRepository
                 .filterByMonthYear(month, year, pageable);
         return page.map(this::mapToResponse);
     }
@@ -239,7 +240,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         User user = userRepository.findByUsernameWithRole(username)
                 .orElseThrow(() -> new RuntimeException("người ko tồn tại: " + username));
 
-        return LeaveRequestRepository
+        return leaveRequestRepository
                 .findByUser_EmployeeCode(user.getEmployeeCode(), pageable)
                 .map(this::mapToResponse);
     }
@@ -249,13 +250,13 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
 
     @Override
-    public ResponseEntity<Resource> viewLeaveAttachment(String fileName) throws java.io.IOException {
+    public ResponseEntity<Resource> viewLeaveAttachment(String fileName) throws IOException {
 
-        // 1) tìm LeaveRequest theo attachmentPath (lưu fileName)
-        LeaveRequest leave = LeaveRequestRepository.findByAttachmentPath(fileName).orElse(null);
+        String attachmentPath = "/file-storage/leave-attachments/" + fileName;
+
+        LeaveRequest leave = leaveRequestRepository.findByAttachmentPath(attachmentPath).orElse(null);
         if (leave == null) return ResponseEntity.notFound().build();
 
-        // 2) check quyền (HR/Manager xem được; employee chỉ xem của mình)
         String username = getCurrentUsername();
         User user = userRepository.findByUsernameWithRole(username)
                 .orElseThrow(() -> new RuntimeException("Người không tồn tại: " + username));
@@ -269,11 +270,16 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        // 3) build path & stream file
         Path filePath = fileStorageService.resolveLeaveAttachmentPathByFileName(fileName);
-        if (filePath == null || !Files.exists(filePath)) return ResponseEntity.notFound().build();
+        if (filePath == null || !Files.exists(filePath) || !Files.isRegularFile(filePath)) {
+            return ResponseEntity.notFound().build();
+        }
 
         Resource resource = new UrlResource(filePath.toUri());
+        if (!resource.exists() || !resource.isReadable()) {
+            return ResponseEntity.notFound().build();
+        }
+
         String contentType = fileStorageService.detectImageContentTypeByFileName(fileName);
 
         return ResponseEntity.ok()
@@ -283,9 +289,10 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                 .body(resource);
     }
 
+
     @Override
     public Page<LeaveRequestResponse> findByStatus(LeaveandOTStatus status, Pageable pageable) {
-        return LeaveRequestRepository
+        return leaveRequestRepository
                 .findByStatus(status, pageable)
                 .map(this::mapToResponse);
 
@@ -299,7 +306,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         keyword = keyword.toUpperCase();
 
         Page<LeaveRequest> pageResult =
-                LeaveRequestRepository.searchByEmployeeCodeOrName(keyword, pageable);
+                leaveRequestRepository.searchByEmployeeCodeOrName(keyword, pageable);
 
         return pageResult.map(this::mapToResponse);
     }
@@ -313,7 +320,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         User user = userRepository.findByUsernameWithRole(username)
                 .orElseThrow(() -> new RuntimeException("Người không tồn tại: " + username));
 
-        LeaveRequest request = LeaveRequestRepository.findById(id)
+        LeaveRequest request = leaveRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn nghỉ"));
 
         boolean isManager = user.getRole().getName().equalsIgnoreCase("MANAGER")
@@ -346,7 +353,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
             throw new RuntimeException("Chỉ Manager mới được phê duyệt đơn nghỉ.");
         }
 
-        LeaveRequest leaveRequest = LeaveRequestRepository.findById(id)
+        LeaveRequest leaveRequest = leaveRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Yêu cầu nghỉ ko tồn tại"));
 
 
@@ -396,7 +403,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         leaveRequest.setStatus(LeaveandOTStatus.APPROVED.name());
         leaveRequest.setNote(note);
         leaveRequest.setApprovedDate(LocalDateTime.now());
-        LeaveRequest savedLeaveRequest = LeaveRequestRepository.save(leaveRequest);
+        LeaveRequest savedLeaveRequest = leaveRequestRepository.save(leaveRequest);
 
         User employee = leaveRequest.getUser();
 
@@ -427,7 +434,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
             throw new RuntimeException("Chỉ Manager mới được từ chối đơn nghỉ.");
         }
 
-        LeaveRequest leaveRequest = LeaveRequestRepository.findById(id)
+        LeaveRequest leaveRequest = leaveRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Yêu cầu nghỉ ko tồn tại"));
 
 
@@ -438,7 +445,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         leaveRequest.setStatus(LeaveandOTStatus.REJECTED.name());
         leaveRequest.setNote(note);
         leaveRequest.setApprovedDate(LocalDateTime.now());
-        LeaveRequest savedLeaveRequest = LeaveRequestRepository.save(leaveRequest);
+        LeaveRequest savedLeaveRequest = leaveRequestRepository.save(leaveRequest);
 
         User employee = leaveRequest.getUser();
 
