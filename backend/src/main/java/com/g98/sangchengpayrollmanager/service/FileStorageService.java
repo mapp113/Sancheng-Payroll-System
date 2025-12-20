@@ -39,8 +39,7 @@ public class FileStorageService {
 
         // 1) Resolve project root
         Path backendDir = Paths.get("").toAbsolutePath();
-        Path projectRoot = Files.isDirectory(backendDir.resolve("server")) ? backendDir : backendDir.getParent();
-
+        Path projectRoot = backendDir.getParent();
         if (projectRoot == null) {
             throw new IllegalStateException("Cannot resolve project root from backend directory: " + backendDir);
         }
@@ -84,12 +83,10 @@ public class FileStorageService {
         }
 
         Path backendDir = Paths.get("").toAbsolutePath();
-        Path projectRoot = Files.isDirectory(backendDir.resolve("server")) ? backendDir : backendDir.getParent();
-
+        Path projectRoot = backendDir.getParent();
         if (projectRoot == null) {
             throw new IllegalStateException("Cannot resolve project root from backend directory: " + backendDir);
         }
-
 
         return projectRoot
                 .resolve("server")
@@ -104,7 +101,6 @@ public class FileStorageService {
         if (name.endsWith(".png")) return "image/png";
         if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";
         if (name.endsWith(".webp")) return "image/webp";
-        if (name.endsWith(".pdf")) return "application/pdf";
         return "application/octet-stream";
     }
 
