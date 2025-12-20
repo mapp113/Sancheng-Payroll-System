@@ -21,7 +21,7 @@ public class ZKTecoClient {
     @Value("${zkteco.enabled:true}")
     private boolean enabled;
 
-    @Value("${zkteco.ip:192.168.11.2}")
+    @Value("${zkteco.ip:192.168.0.2}")
     private String ip;
 
     @Value("${zkteco.port:4370}")

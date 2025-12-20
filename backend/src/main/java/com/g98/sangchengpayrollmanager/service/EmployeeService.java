@@ -162,6 +162,9 @@ public class EmployeeService {
         if (request.getCitizenId() != null) {
             info.setSocialNo(request.getCitizenId());
         }
+        if (request.getBankNumber() != null) {
+            info.setBankNumber(request.getBankNumber());
+        }
         if (request.getAddress() != null) {
             info.setAddress(request.getAddress());
         }
@@ -333,6 +336,7 @@ public class EmployeeService {
                 user.getDob(),
                 status,
                 info.getSocialNo(),
+                info.getBankNumber(),
                 info.getAddress(),
                 visaExpiry,
                 contractUrl,

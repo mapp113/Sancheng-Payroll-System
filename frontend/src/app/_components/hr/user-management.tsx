@@ -4,7 +4,6 @@ import {Search, X} from "lucide-react";
 import {ChangeEvent, useEffect, useMemo, useState} from "react";
 import {useRouter} from "next/navigation";
 import Toast from "@/app/_components/common/notification/toast";
-import {formatSalary, parseSalary, handleSalaryInput} from "../utils/formatSalary";
 
 
 type UserItem = {
@@ -58,6 +57,7 @@ type EmployeeProfile = {
     dob: string;
     status: string;
     citizenId: string;
+    bankNumber: string;
     address: string;
     visaExpiry: string;
     contractUrl: string;
@@ -78,6 +78,7 @@ type EmployeeProfileResponse = {
     dob?: string;
     status?: string;
     citizenId?: string;
+    bankNumber: string;
     address?: string;
     visaExpiry?: string;
     contractUrl?: string;
@@ -110,6 +111,7 @@ const emptyProfile: EmployeeProfile = {
     dob: "",
     status: "",
     citizenId: "",
+    bankNumber: "",
     address: "",
     visaExpiry: "",
     contractUrl: "",
@@ -126,11 +128,12 @@ function mapProfileResponse(data: EmployeeProfileResponse): EmployeeProfile {
         joinDate: data.joinDate ?? "",
         personalEmail: data.personalEmail ?? "",
         contractType: data.contractType ?? "",
-        baseSalary: formatSalary(data.baseSalary?.toString() ?? ""),
+        baseSalary: data.baseSalary?.toString() ?? "",
         phone: data.phone ?? "",
         dob: data.dob ?? "",
         status: data.status ?? "",
         citizenId: data.citizenId ?? "",
+        bankNumber: data.bankNumber ?? "",
         address: data.address ?? "",
         visaExpiry: data.visaExpiry ?? "",
         contractUrl: data.contractUrl ?? "",
@@ -410,13 +413,12 @@ export default function UserManagement() {
                 if (field === "citizenId") {
                     value = sanitizeDigits(value);
                 }
+                if (field === "bankNumber") {
+                    value = sanitizeDigits(value);
+                }
 
                 if (field === "personalEmail") {
                     value = sanitizeEmailInput(value);
-                }
-
-                if (field === "baseSalary") {
-                    value = handleSalaryInput(value);
                 }
 
                 setSelectedProfile((prev) => ({...prev, [field]: value}));
@@ -481,10 +483,9 @@ export default function UserManagement() {
             }
 
 
-            const rawBaseSalary = parseSalary(selectedProfile.baseSalary);
-            const parsedBaseSalary = Number(rawBaseSalary);
+            const parsedBaseSalary = Number(selectedProfile.baseSalary);
             const baseSalaryValue =
-                rawBaseSalary && !isNaN(parsedBaseSalary)
+                selectedProfile.baseSalary && !isNaN(parsedBaseSalary)
                     ? parsedBaseSalary
                     : undefined;
 
@@ -497,6 +498,7 @@ export default function UserManagement() {
                 phone: selectedProfile.phone || undefined,
                 taxCode: selectedProfile.taxCode || undefined,
                 status: selectedProfile.status || undefined,
+                bankNumber: selectedProfile.bankNumber || undefined,
                 address: selectedProfile.address || undefined,
                 joinDate: selectedProfile.joinDate || undefined,
                 visaExpiry: selectedProfile.visaExpiry || undefined,
@@ -734,8 +736,10 @@ export default function UserManagement() {
 
             {profileModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-                    <div className="max-w-lg w-full bg-white p-6 shadow-xl rounded-lg max-h-[90vh] overflow-y-auto">
-                        <div className="mb-4 flex items-start justify-between">
+                    <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-xl">
+                        {/* Header */}
+                        <div
+                            className="sticky top-0 z-10 flex items-start justify-between border-b border-slate-200 bg-white px-6 py-4">
                             <div>
                                 <h3 className="text-xl font-semibold text-[#1F2A44]">
                                     {isEditingOwnProfile ? "Xem hồ sơ" : "Chỉnh sửa hồ sơ"}
@@ -757,384 +761,396 @@ export default function UserManagement() {
                             </button>
                         </div>
 
-                        {profileError && (
-                            <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
-                                {profileError}
-                            </div>
-                        )}
-
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <label className="flex flex-col gap-1 text-sm">
-                                Họ và tên
-                                <input
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
-                                    value={selectedProfile.name}
-                                    onChange={handleProfileChange("name")}
-                                    disabled={profileLoading || isEditingOwnProfile}
-                                />
-                            </label>
-
-                            <label className="flex flex-col gap-1 text-sm">
-                                Email
-                                <input
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
-                                    value={selectedProfile.personalEmail}
-                                    onChange={handleProfileChange("personalEmail")}
-                                    disabled={profileLoading || isEditingOwnProfile}
-                                />
-                            </label>
-
-                            <label className="flex flex-col gap-1 text-sm">
-                                Chức vụ
-                                <select
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
-                                    value={selectedProfile.positionId}
-                                    onChange={handleProfileChange("positionId")}
-                                    disabled={profileLoading || loadingPositions || isEditingOwnProfile}
-                                >
-                                    <option value="">-- Chọn chức vụ --</option>
-                                    {positions.map((pos) => (
-                                        <option key={pos.id} value={pos.id}>
-                                            {pos.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-
-                            <label className="flex flex-col gap-1 text-sm">
-                                Ngày vào làm
-                                <input
-                                    type="date"
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
-                                    value={selectedProfile.joinDate}
-                                    onChange={handleProfileChange("joinDate")}
-                                    disabled={profileLoading || isEditingOwnProfile}
-                                />
-                            </label>
-
-                            <label className="flex flex-col gap-1 text-sm">
-                                Ngày sinh
-                                <input
-                                    type="date"
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
-                                    value={selectedProfile.dob}
-                                    onChange={handleProfileChange("dob")}
-                                    disabled={profileLoading || isEditingOwnProfile}
-                                />
-                            </label>
-
-                            <label className="flex flex-col gap-1 text-sm">
-                                Số điện thoại
-                                <input
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
-                                    value={selectedProfile.phone}
-                                    onChange={handleProfileChange("phone")}
-                                    disabled={profileLoading || isEditingOwnProfile}
-                                />
-                            </label>
-
-                            <label className="flex flex-col gap-1 text-sm">
-                                Địa chỉ
-                                <input
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
-                                    value={selectedProfile.address}
-                                    onChange={handleProfileChange("address")}
-                                    disabled={profileLoading || isEditingOwnProfile}
-                                />
-                            </label>
-
-                            <label className="flex flex-col gap-1 text-sm">
-                                Loại hợp đồng
-                                <select
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
-                                    value={selectedProfile.contractType}
-                                    onChange={handleProfileChange("contractType")}
-                                    disabled={profileLoading || isEditingOwnProfile}
-                                >
-                                    <option value="">Chọn loại hợp đồng</option>
-                                    {CONTRACT_TYPE_OPTIONS.map((option) => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-
-                            <label className="flex flex-col gap-1 text-sm">
-                                Lương hợp đồng
-                                <input
-                                    type="text"
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
-                                    value={selectedProfile.baseSalary}
-                                    onChange={handleProfileChange("baseSalary")}
-                                    disabled={profileLoading || isEditingOwnProfile}
-                                    placeholder="0"
-                                />
-                            </label>
-
-
-                            <label className="flex flex-col gap-1 text-sm">
-                                CCCD
-                                <input
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
-                                    value={selectedProfile.citizenId}
-                                    onChange={handleProfileChange("citizenId")}
-                                    disabled={profileLoading || isEditingOwnProfile}
-                                />
-                            </label>
-
-                            <label className="flex flex-col gap-1 text-sm">
-                                Ngày hết hạn hợp đồng
-                                <input
-                                    type="date"
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
-                                    value={selectedProfile.visaExpiry}
-                                    onChange={handleProfileChange("visaExpiry")}
-                                    disabled={profileLoading || isEditingOwnProfile}
-                                />
-                            </label>
-
-                            <label className="flex flex-col gap-1 text-sm">
-                                Số người phụ thuộc
-                                <input
-                                    type="number"
-                                    min={0}
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
-                                    value={selectedProfile.dependentsNo}
-                                    onChange={handleProfileChange("dependentsNo")}
-                                    disabled={profileLoading || isEditingOwnProfile}
-                                />
-                            </label>
-
-                            <label className="flex flex-col gap-1 text-sm">
-                                Mã số thuế
-                                <input
-                                    className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
-                                    value={selectedProfile.taxCode}
-                                    onChange={handleProfileChange("taxCode")}
-                                    disabled={profileLoading || isEditingOwnProfile}
-                                />
-                            </label>
-
-                            <label className="flex flex-col gap-1 text-sm">
-                                Tải lên hợp đồng (PDF)
-                                <div className="flex flex-col gap-2">
-                                    <input
-                                        type="file"
-                                        accept="application/pdf"
-                                        className="rounded-lg border border-[#E2E8F0] px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-500"
-                                        onChange={handleContractUpload}
-                                        disabled={profileLoading || uploadingContract || isEditingOwnProfile}
-                                    />
-
-                                    <button
-                                        type="button"
-                                        onClick={handleDownloadTemplate}
-                                        disabled={
-                                            profileLoading ||
-                                            downloadingTemplate ||
-                                            !selectedEmployeeCode ||
-                                            isEditingOwnProfile
-                                        }
-                                        className="inline-flex w-fit items-center gap-2 rounded-lg border border-[#4AB4DE] px-4 py-2 text-sm font-medium text-[#4AB4DE] transition enabled:hover:bg-[#E0F2FE] disabled:cursor-not-allowed disabled:opacity-60"
-                                    >
-                                        {downloadingTemplate ? "Đang tải..." : "Tải hợp đồng mẫu"}
-                                    </button>
-
-                                    {/* ⭐ THÊM PHẦN XEM HỢP ĐỒNG */}
-                                    {selectedProfile.contractUrl && (
-                                        <div
-                                            className="flex flex-col gap-2 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-3">
-                                            <div className="flex items-center gap-2">
-                                                <svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    className="h-5 w-5 text-red-500"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    stroke="currentColor"
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                                                    />
-                                                </svg>
-                                                <span className="font-medium text-[#1F2A44]">
-                Hợp đồng đã tải lên
-            </span>
-                                            </div>
-
-                                            <div className="flex flex-wrap gap-2">
-                                                {/* Nút Xem */}
-                                                <button
-                                                    onClick={() => {
-                                                        // ⭐ XỬ LÝ URL ĐÃ CÓ SẴN API_BASE
-                                                        window.open(selectedProfile.contractUrl, '_blank');
-                                                    }}
-                                                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#4AB4DE] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#3c9ec3]"
-                                                >
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        className="h-4 w-4"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        stroke="currentColor"
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth={2}
-                                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                                        />
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth={2}
-                                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                                        />
-                                                    </svg>
-                                                    Xem hợp đồng
-                                                </button>
-
-                                                {/* Nút Download */}
-                                                <button
-                                                    onClick={async () => {
-                                                        try {
-                                                            // ⭐ REPLACE /view THÀNH /download
-                                                            const downloadUrl = selectedProfile.contractUrl.replace('/view', '/download');
-
-                                                            const res = await fetch(downloadUrl, {
-                                                                headers: {
-                                                                    Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
-                                                                },
-                                                            });
-
-                                                            if (!res.ok) {
-                                                                throw new Error("Không thể tải xuống file");
-                                                            }
-
-                                                            const blob = await res.blob();
-                                                            const url = window.URL.createObjectURL(blob);
-                                                            const a = document.createElement('a');
-                                                            a.href = url;
-                                                            a.download = `contract-${selectedEmployeeCode}.pdf`;
-                                                            document.body.appendChild(a);
-                                                            a.click();
-                                                            window.URL.revokeObjectURL(url);
-                                                            document.body.removeChild(a);
-                                                        } catch (error) {
-                                                            console.error("Download failed:", error);
-                                                            setToast({
-                                                                message: "Không thể tải xuống file",
-                                                                type: "error"
-                                                            });
-                                                        }
-                                                    }}
-                                                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#4AB4DE] bg-white px-4 py-2 text-sm font-medium text-[#4AB4DE] transition hover:bg-[#E0F2FE]"
-                                                >
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        className="h-4 w-4"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        stroke="currentColor"
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth={2}
-                                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                                                        />
-                                                    </svg>
-                                                    Tải xuống
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {contractUploadError && (
-                                        <div className="rounded-lg border border-red-200 bg-red-50 p-3">
-                                            <div className="flex items-start gap-2">
-                                                <svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    className="h-5 w-5 text-red-500"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    stroke="currentColor"
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                                    />
-                                                </svg>
-                                                <p className="text-sm text-red-600">{contractUploadError}</p>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {uploadingContract && (
-                                        <div
-                                            className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3">
-                                            <svg
-                                                className="h-5 w-5 animate-spin text-[#4AB4DE]"
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <circle
-                                                    className="opacity-25"
-                                                    cx="12"
-                                                    cy="12"
-                                                    r="10"
-                                                    stroke="currentColor"
-                                                    strokeWidth="4"
-                                                />
-                                                <path
-                                                    className="opacity-75"
-                                                    fill="currentColor"
-                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                                />
-                                            </svg>
-                                            <p className="text-sm text-[#4AB4DE] font-medium">Đang tải lên...</p>
-                                        </div>
-                                    )}
+                        <div className="px-6 py-5">
+                            {profileError && (
+                                <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+                                    {profileError}
                                 </div>
-                            </label>
-                        </div>
+                            )}
 
-                        <div className="mt-6 flex justify-end gap-3">
-                            <button
-                                className="rounded-full px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-100"
-                                onClick={closeProfileModal}
-                                disabled={profileLoading}
-                            >
-                                Đóng
-                            </button>
-                            {/* ⭐ NEW: Hide save button if editing own profile */}
-                            {!isEditingOwnProfile && (
+                            {/* ===== SECTION 1: THÔNG TIN CƠ BẢN ===== */}
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                                <div className="mb-3">
+                                    <h4 className="text-base font-semibold text-[#1F2A44]">Thông tin cơ bản</h4>
+
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                    <label className="flex flex-col gap-1 text-sm">
+                                        <span className="font-medium text-slate-700">Họ và tên</span>
+                                        <input
+                                            className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
+                                            value={selectedProfile.name}
+                                            onChange={handleProfileChange("name")}
+                                            disabled={profileLoading || isEditingOwnProfile}
+                                        />
+                                    </label>
+
+                                    <label className="flex flex-col gap-1 text-sm">
+                                        <span className="font-medium text-slate-700">Email</span>
+                                        <input
+                                            className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
+                                            value={selectedProfile.personalEmail}
+                                            onChange={handleProfileChange("personalEmail")}
+                                            disabled={profileLoading || isEditingOwnProfile}
+                                        />
+                                    </label>
+
+                                    <label className="flex flex-col gap-1 text-sm">
+                                        <span className="font-medium text-slate-700">Chức vụ</span>
+                                        <select
+                                            className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
+                                            value={selectedProfile.positionId}
+                                            onChange={handleProfileChange("positionId")}
+                                            disabled={profileLoading || loadingPositions || isEditingOwnProfile}
+                                        >
+                                            <option value="">-- Chọn chức vụ --</option>
+                                            {positions.map((pos) => (
+                                                <option key={pos.id} value={pos.id}>
+                                                    {pos.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+
+                                    <label className="flex flex-col gap-1 text-sm">
+                                        <span className="font-medium text-slate-700">Ngày sinh</span>
+                                        <input
+                                            type="date"
+                                            className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
+                                            value={selectedProfile.dob}
+                                            onChange={handleProfileChange("dob")}
+                                            disabled={profileLoading || isEditingOwnProfile}
+                                        />
+                                    </label>
+
+                                    <label className="flex flex-col gap-1 text-sm">
+                                        <span className="font-medium text-slate-700">Số điện thoại</span>
+                                        <input
+                                            className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
+                                            value={selectedProfile.phone}
+                                            onChange={handleProfileChange("phone")}
+                                            disabled={profileLoading || isEditingOwnProfile}
+                                        />
+                                    </label>
+
+
+                                    <label className="flex flex-col gap-1 text-sm lg:col-span-1.5">
+                                        <span className="font-medium text-slate-700">Địa chỉ</span>
+                                        <input
+                                            className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
+                                            value={selectedProfile.address}
+                                            onChange={handleProfileChange("address")}
+                                            disabled={profileLoading || isEditingOwnProfile}
+                                        />
+                                    </label>
+
+
+                                    {/*<label className="flex flex-col gap-1 text-sm">*/}
+                                    {/*    <span className="font-medium text-slate-700">Số tài khoản</span>*/}
+                                    {/*    <input*/}
+                                    {/*        className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"*/}
+                                    {/*        value={selectedProfile.bankNumber}*/}
+                                    {/*        onChange={handleProfileChange("bankNumber")}*/}
+                                    {/*        disabled={profileLoading || isEditingOwnProfile}*/}
+                                    {/*    />*/}
+                                    {/*</label>*/}
+                                </div>
+                            </div>
+
+                            {/* Divider */}
+                            <div className="my-5 h-px w-full bg-slate-200"/>
+
+                            {/* ===== SECTION 2: THÔNG TIN KHÁC ===== */}
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                                <div className="mb-3">
+                                    <h4 className="text-base font-semibold text-[#1F2A44]">Thông tin khác </h4>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                    <label className="flex flex-col gap-1 text-sm">
+                                        <span className="font-medium text-slate-700">Ngày vào làm</span>
+                                        <input
+                                            type="date"
+                                            className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
+                                            value={selectedProfile.joinDate}
+                                            onChange={handleProfileChange("joinDate")}
+                                            disabled={profileLoading || isEditingOwnProfile}
+                                        />
+                                    </label>
+
+                                    <label className="flex flex-col gap-1 text-sm">
+                                        <span className="font-medium text-slate-700">Loại hợp đồng</span>
+                                        <select
+                                            className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
+                                            value={selectedProfile.contractType}
+                                            onChange={handleProfileChange("contractType")}
+                                            disabled={profileLoading || isEditingOwnProfile}
+                                        >
+                                            <option value="">Chọn loại hợp đồng</option>
+                                            {CONTRACT_TYPE_OPTIONS.map((option) => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+
+                                    <label className="flex flex-col gap-1 text-sm">
+                                        <span className="font-medium text-slate-700">Lương hợp đồng</span>
+                                        <input
+                                            type="text"
+                                            className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
+                                            value={selectedProfile.baseSalary}
+                                            onChange={handleProfileChange("baseSalary")}
+                                            disabled={profileLoading || isEditingOwnProfile}
+                                            placeholder="0"
+                                        />
+                                    </label>
+
+                                    <label className="flex flex-col gap-1 text-sm">
+                                        <span className="font-medium text-slate-700">Ngày hết hạn hợp đồng</span>
+                                        <input
+                                            type="date"
+                                            className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
+                                            value={selectedProfile.visaExpiry}
+                                            onChange={handleProfileChange("visaExpiry")}
+                                            disabled={profileLoading || isEditingOwnProfile}
+                                        />
+                                    </label>
+                                    <label className="flex flex-col gap-1 text-sm">
+                                        <span className="font-medium text-slate-700">Số tài khoản</span>
+                                        <input
+                                            className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
+                                            value={selectedProfile.bankNumber}
+                                            onChange={handleProfileChange("bankNumber")}
+                                            disabled={profileLoading || isEditingOwnProfile}
+                                        />
+                                    </label>
+                                    <label className="flex flex-col gap-1 text-sm lg:col-span-1">
+                                        <span className="font-medium text-slate-700">Căn cước công dân</span>
+                                        <input
+                                            className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
+                                            value={selectedProfile.citizenId}
+                                            onChange={handleProfileChange("citizenId")}
+                                            disabled={profileLoading || isEditingOwnProfile}
+                                        />
+                                    </label>
+
+                                    <label className="flex flex-col gap-1 text-sm">
+                                        <span className="font-medium text-slate-700">Số người phụ thuộc</span>
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
+                                            value={selectedProfile.dependentsNo}
+                                            onChange={handleProfileChange("dependentsNo")}
+                                            disabled={profileLoading || isEditingOwnProfile}
+                                        />
+                                    </label>
+                                    <label className="flex flex-col gap-1 text-sm">
+                                        <span className="font-medium text-slate-700">Mã số thuế</span>
+                                        <input
+                                            className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
+                                            value={selectedProfile.taxCode}
+                                            onChange={handleProfileChange("taxCode")}
+                                            disabled={profileLoading || isEditingOwnProfile}
+                                        />
+                                    </label>
+
+
+                                    {/* Upload hợp đồng + các trạng thái */}
+                                    <label className="flex flex-col gap-1 text-sm lg:col-span-3">
+                                        <span className="font-medium text-slate-700">Tải lên hợp đồng (PDF)</span>
+
+                                        <div className="mt-1 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                            <div
+                                                className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                                <input
+                                                    type="file"
+                                                    accept="application/pdf"
+                                                    className="w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-500 md:max-w-md"
+                                                    onChange={handleContractUpload}
+                                                    disabled={profileLoading || uploadingContract || isEditingOwnProfile}
+                                                />
+
+                                                <button
+                                                    type="button"
+                                                    onClick={handleDownloadTemplate}
+                                                    disabled={
+                                                        profileLoading ||
+                                                        downloadingTemplate ||
+                                                        !selectedEmployeeCode ||
+                                                        isEditingOwnProfile
+                                                    }
+                                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#4AB4DE] bg-white px-4 py-2 text-sm font-medium text-[#4AB4DE] transition enabled:hover:bg-[#E0F2FE] disabled:cursor-not-allowed disabled:opacity-60"
+                                                >
+                                                    {downloadingTemplate ? "Đang tải..." : "Tải hợp đồng mẫu"}
+                                                </button>
+                                            </div>
+
+                                            {selectedProfile.contractUrl && (
+                                                <div className="mt-4 rounded-2xl">
+                                                    <div
+                                                        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                                        {/*<div className="flex items-center gap-2">*/}
+                                                        {/*    <svg*/}
+                                                        {/*        xmlns="http://www.w3.org/2000/svg"*/}
+                                                        {/*        className="h-5 w-5 text-red-500"*/}
+                                                        {/*        fill="none"*/}
+                                                        {/*        viewBox="0 0 24 24"*/}
+                                                        {/*        stroke="currentColor"*/}
+                                                        {/*    >*/}
+                                                        {/*        <path*/}
+                                                        {/*            strokeLinecap="round"*/}
+                                                        {/*            strokeLinejoin="round"*/}
+                                                        {/*            strokeWidth={2}*/}
+                                                        {/*            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"*/}
+                                                        {/*        />*/}
+                                                        {/*    </svg>*/}
+                                                        {/*    <div>*/}
+                                                        {/*        <p className="font-semibold text-[#1F2A44]">Hợp đồng đã*/}
+                                                        {/*            tải lên</p>*/}
+                                                        {/*        <p className="text-sm text-slate-500">Xem hoặc tải xuống*/}
+                                                        {/*            file PDF</p>*/}
+                                                        {/*    </div>*/}
+                                                        {/*</div>*/}
+
+                                                        <div className="flex flex-wrap gap-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => window.open(selectedProfile.contractUrl, "_blank")}
+                                                                className="inline-flex items-center gap-1.5 rounded-xl bg-[#4AB4DE] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#3c9ec3]"
+                                                            >
+                                                                Xem hợp đồng
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={async () => {
+                                                                    try {
+                                                                        const downloadUrl = selectedProfile.contractUrl.replace(
+                                                                            "/view",
+                                                                            "/download"
+                                                                        );
+
+                                                                        const res = await fetch(downloadUrl, {
+                                                                            headers: {
+                                                                                Authorization: `Bearer ${
+                                                                                    localStorage.getItem("access_token") ?? ""
+                                                                                }`,
+                                                                            },
+                                                                        });
+
+                                                                        if (!res.ok) throw new Error("Không thể tải xuống file");
+
+                                                                        const blob = await res.blob();
+                                                                        const url = window.URL.createObjectURL(blob);
+                                                                        const a = document.createElement("a");
+                                                                        a.href = url;
+                                                                        a.download = `contract-${selectedEmployeeCode}.pdf`;
+                                                                        document.body.appendChild(a);
+                                                                        a.click();
+                                                                        window.URL.revokeObjectURL(url);
+                                                                        document.body.removeChild(a);
+                                                                    } catch (error) {
+                                                                        console.error("Download failed:", error);
+                                                                        setToast({
+                                                                            message: "Không thể tải xuống file",
+                                                                            type: "error"
+                                                                        });
+                                                                    }
+                                                                }}
+                                                                className="inline-flex items-center gap-1.5 rounded-xl border border-[#4AB4DE] bg-white px-4 py-2 text-sm font-medium text-[#4AB4DE] transition hover:bg-[#E0F2FE]"
+                                                            >
+                                                                Tải xuống
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {contractUploadError && (
+                                                <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 p-3">
+                                                    <div className="flex items-start gap-2">
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            className="h-5 w-5 text-red-500"
+                                                            fill="none"
+                                                            viewBox="0 0 24 24"
+                                                            stroke="currentColor"
+                                                        >
+                                                            <path
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                strokeWidth={2}
+                                                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                            />
+                                                        </svg>
+                                                        <p className="text-sm text-red-600">{contractUploadError}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {uploadingContract && (
+                                                <div
+                                                    className="mt-3 flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 p-3">
+                                                    <svg
+                                                        className="h-5 w-5 animate-spin text-[#4AB4DE]"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        fill="none"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <circle
+                                                            className="opacity-25"
+                                                            cx="12"
+                                                            cy="12"
+                                                            r="10"
+                                                            stroke="currentColor"
+                                                            strokeWidth="4"
+                                                        />
+                                                        <path
+                                                            className="opacity-75"
+                                                            fill="currentColor"
+                                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                        />
+                                                    </svg>
+                                                    <p className="text-sm font-medium text-[#4AB4DE]">Đang tải
+                                                        lên...</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="mt-6 flex justify-end gap-3 border-t border-slate-200 pt-4">
                                 <button
-                                    className="inline-flex items-center gap-2 rounded-full bg-[#4AB4DE] px-5 py-2 text-sm font-medium text-white transition hover:bg-[#3c9ec3] disabled:cursor-not-allowed disabled:opacity-70"
-                                    onClick={saveProfile}
+                                    className="rounded-full px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-100"
+                                    onClick={closeProfileModal}
                                     disabled={profileLoading}
                                 >
-                                    {profileLoading ? "Đang lưu..." : "Lưu thay đổi"}
+                                    Đóng
                                 </button>
-                            )}
+
+                                {!isEditingOwnProfile && (
+                                    <button
+                                        className="inline-flex items-center gap-2 rounded-full bg-[#4AB4DE] px-5 py-2 text-sm font-medium text-white transition hover:bg-[#3c9ec3] disabled:cursor-not-allowed disabled:opacity-70"
+                                        onClick={saveProfile}
+                                        disabled={profileLoading}
+                                    >
+                                        {profileLoading ? "Đang lưu..." : "Lưu thay đổi"}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
 
-            {toast && (
-                <Toast
-                    message={toast.message}
-                    type={toast.type}
-                    onClose={() => setToast(null)}
-                />
-            )}
+            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)}/>}
+
         </div>
     );
 }
