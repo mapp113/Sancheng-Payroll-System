@@ -1,8 +1,8 @@
 "use client";
 
-import type { ReactNode, ChangeEvent } from "react";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import type {ReactNode, ChangeEvent} from "react";
+import {useEffect, useState} from "react";
+import {useRouter} from "next/navigation";
 
 import {
     CalendarClock,
@@ -52,6 +52,10 @@ type EmployeeProfileResponse = {
 };
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
+const CONTRACT_TYPE_OPTIONS = [
+    {value: "FULLTIME", label: "Chính thức"},
+    {value: "PARTTIME", label: "Thử việc"},
+];
 const EMPLOYEE_EDITABLE_FIELDS = new Set<keyof EmployeeProfile>([
     "personalEmail",
     "phone",
@@ -80,6 +84,12 @@ function formatDateDisplay(value: string) {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
     return new Intl.DateTimeFormat("vi-VN").format(date);
+}
+
+function getContractTypeLabel(value: string) {
+    if (!value) return "";
+    const option = CONTRACT_TYPE_OPTIONS.find((item) => item.value === value);
+    return option?.label ?? value;
 }
 
 function mapProfileResponse(data: EmployeeProfileResponse): EmployeeProfile {
@@ -191,10 +201,10 @@ export default function DetailEmployeePage() {
 
     const handleChange =
         (field: keyof EmployeeProfile) =>
-            (e: ChangeEvent<HTMLInputElement>) => {
-                setEmployee((prev) => ({ ...prev, [field]: e.target.value }));
+            (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+                setEmployee((prev) => ({...prev, [field]: e.target.value}));
                 // clear error của field đó khi user sửa
-                setValidationErrors((prev) => ({ ...prev, [field]: undefined }));
+                setValidationErrors((prev) => ({...prev, [field]: undefined}));
             };
 
     const canEditField = (field: keyof EmployeeProfile) =>
@@ -403,7 +413,7 @@ export default function DetailEmployeePage() {
     const handlePasswordInput =
         (field: keyof typeof passwordForm) =>
             (e: ChangeEvent<HTMLInputElement>) => {
-                setPasswordForm((prev) => ({ ...prev, [field]: e.target.value }));
+                setPasswordForm((prev) => ({...prev, [field]: e.target.value}));
             };
 
     const handlePasswordSave = () => {
@@ -484,7 +494,7 @@ export default function DetailEmployeePage() {
                         onClick={() => router.back()}
                         className="flex items-center gap-3 text-sm font-semibold text-[#4AB4DE] hover:underline cursor-pointer"
                     >
-                        <ArrowLeft className="h-5 w-5" />
+                        <ArrowLeft className="h-5 w-5"/>
                         <span>QUAY LẠI</span>
                     </button>
 
@@ -496,7 +506,7 @@ export default function DetailEmployeePage() {
                         }}
                         className="inline-flex items-center gap-2 rounded-full bg-[#FFDD7D] px-4 py-2 text-sm font-semibold text-[#1F2A44] shadow-sm transition hover:bg-[#fbd568] hover:shadow-md"
                     >
-                        <Shield className="h-4 w-4" />
+                        <Shield className="h-4 w-4"/>
                         Đổi Mật Khẩu
                     </button>
                 </header>
@@ -541,7 +551,7 @@ export default function DetailEmployeePage() {
                             <InfoField
                                 label="Mã Nhân Viên"
                                 icon={
-                                    <IdCard className="h-4 w-4 text-[#4AB4DE]" />
+                                    <IdCard className="h-4 w-4 text-[#4AB4DE]"/>
                                 }
                             >
                                 {employee.id || "—"}
@@ -550,7 +560,7 @@ export default function DetailEmployeePage() {
                             <InfoField
                                 label="Họ và tên"
                                 icon={
-                                    <UserRound className="h-4 w-4 text-[#4AB4DE]" />
+                                    <UserRound className="h-4 w-4 text-[#4AB4DE]"/>
                                 }
                             >
                                 {employee.name || "—"}
@@ -559,7 +569,7 @@ export default function DetailEmployeePage() {
                             <InfoField
                                 label="Chức vụ"
                                 icon={
-                                    <Shield className="h-4 w-4 text-[#4AB4DE]" />
+                                    <Shield className="h-4 w-4 text-[#4AB4DE]"/>
                                 }
                             >
                                 {employee.position || "—"}
@@ -568,7 +578,7 @@ export default function DetailEmployeePage() {
                             <InfoField
                                 label="Ngày Bắt Đầu"
                                 icon={
-                                    <CalendarClock className="h-4 w-4 text-[#4AB4DE]" />
+                                    <CalendarClock className="h-4 w-4 text-[#4AB4DE]"/>
                                 }
                             >
                                 {formatDateDisplay(employee.joinDate) || "—"}
@@ -577,7 +587,7 @@ export default function DetailEmployeePage() {
                             <InfoField
                                 label="E-Mail"
                                 icon={
-                                    <Mail className="h-4 w-4 text-[#4AB4DE]" />
+                                    <Mail className="h-4 w-4 text-[#4AB4DE]"/>
                                 }
                             >
                                 {employee.personalEmail || "—"}
@@ -586,7 +596,7 @@ export default function DetailEmployeePage() {
                             <InfoField
                                 label="Thời hạn kết thúc"
                                 icon={
-                                    <CalendarClock className="h-4 w-4 text-[#4AB4DE]" />
+                                    <CalendarClock className="h-4 w-4 text-[#4AB4DE]"/>
                                 }
                             >
                                 {formatDateDisplay(employee.visaExpiry) ||
@@ -596,7 +606,7 @@ export default function DetailEmployeePage() {
                             <InfoField
                                 label="Ngày Sinh"
                                 icon={
-                                    <CalendarClock className="h-4 w-4 text-[#4AB4DE]" />
+                                    <CalendarClock className="h-4 w-4 text-[#4AB4DE]"/>
                                 }
                             >
                                 {formatDateDisplay(employee.dob) || "—"}
@@ -605,34 +615,34 @@ export default function DetailEmployeePage() {
                             <InfoField
                                 label="Loại hợp đồng"
                                 icon={
-                                    <Shield className="h-4 w-4 text-[#4AB4DE]" />
+                                    <Shield className="h-4 w-4 text-[#4AB4DE]"/>
                                 }
                             >
-                                {employee.contractType || "—"}
+                                {getContractTypeLabel(employee.contractType) || "—"}
                             </InfoField>
 
                             <InfoField
                                 label="Điện thoại"
                                 icon={
-                                    <Phone className="h-4 w-4 text-[#4AB4DE]" />
+                                    <Phone className="h-4 w-4 text-[#4AB4DE]"/>
                                 }
                             >
                                 {employee.phone || "—"}
                             </InfoField>
 
-                            <InfoField
-                                label="Tình trạng"
-                                icon={
-                                    <Shield className="h-4 w-4 text-[#4AB4DE]" />
-                                }
-                            >
-                                {employee.status || "—"}
-                            </InfoField>
+                            {/*<InfoField*/}
+                            {/*    label="Tình trạng"*/}
+                            {/*    icon={*/}
+                            {/*        <Shield className="h-4 w-4 text-[#4AB4DE]"/>*/}
+                            {/*    }*/}
+                            {/*>*/}
+                            {/*    {employee.status || "—"}*/}
+                            {/*</InfoField>*/}
 
                             <InfoField
                                 label="CCCD"
                                 icon={
-                                    <IdCard className="h-4 w-4 text-[#4AB4DE]" />
+                                    <IdCard className="h-4 w-4 text-[#4AB4DE]"/>
                                 }
                             >
                                 {employee.citizenId || "—"}
@@ -641,7 +651,7 @@ export default function DetailEmployeePage() {
                             <InfoField
                                 label="Mã Số Thuế"
                                 icon={
-                                    <IdCard className="h-4 w-4 text-[#4AB4DE]" />
+                                    <IdCard className="h-4 w-4 text-[#4AB4DE]"/>
                                 }
                             >
                                 {employee.taxCode || "—"}
@@ -650,7 +660,7 @@ export default function DetailEmployeePage() {
                             <InfoField
                                 label="Địa chỉ"
                                 icon={
-                                    <Home className="h-4 w-4 text-[#4AB4DE]" />
+                                    <Home className="h-4 w-4 text-[#4AB4DE]"/>
                                 }
                             >
                                 {employee.address || "—"}
@@ -661,7 +671,7 @@ export default function DetailEmployeePage() {
                                 <InfoField
                                     label="Hợp đồng lao động"
                                     icon={
-                                        <FileDown className="h-4 w-4 text-[#4AB4DE]" />
+                                        <FileDown className="h-4 w-4 text-[#4AB4DE]"/>
                                     }
                                 >
                                     {employee.contractUrl ? (
@@ -677,7 +687,7 @@ export default function DetailEmployeePage() {
                                                 }}
                                                 className="inline-flex items-center gap-2 rounded-full bg-[#4AB4DE] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#3ba1ca] hover:shadow-md"
                                             >
-                                                <Eye className="h-4 w-4" />
+                                                <Eye className="h-4 w-4"/>
                                                 Xem hợp đồng
                                             </button>
 
@@ -689,7 +699,7 @@ export default function DetailEmployeePage() {
                                                 disabled={isDownloading}
                                                 className="inline-flex items-center gap-2 rounded-full border border-[#4AB4DE] bg-white px-4 py-2 text-sm font-semibold text-[#4AB4DE] shadow-sm transition hover:bg-[#E0F2FE] disabled:cursor-not-allowed disabled:opacity-50"
                                             >
-                                                <Download className="h-4 w-4" />
+                                                <Download className="h-4 w-4"/>
                                                 {isDownloading ? "Đang tải..." : "Tải xuống"}
                                             </button>
                                         </div>
@@ -878,7 +888,7 @@ interface InfoFieldProps {
     children: ReactNode;
 }
 
-function InfoField({ label, icon, children }: InfoFieldProps) {
+function InfoField({label, icon, children}: InfoFieldProps) {
     return (
         <div
             className="flex flex-col justify-between gap-1 rounded-2xl border border-[#CCE1F0] bg-[#F8FCFF] p-4 shadow-sm">
@@ -903,13 +913,13 @@ interface EditFieldProps {
 }
 
 function EditField({
-    label,
-    value,
-    onChange,
-    type = "text",
-    disabled,
-    error,
-}: EditFieldProps) {
+                       label,
+                       value,
+                       onChange,
+                       type = "text",
+                       disabled,
+                       error,
+                   }: EditFieldProps) {
     return (
         <label className="space-y-1 text-sm">
             <span className="font-semibold text-[#1F2A44]">{label}</span>

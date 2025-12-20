@@ -6,14 +6,8 @@ import com.g98.sangchengpayrollmanager.model.dto.ContractUploadResponse;
 import com.g98.sangchengpayrollmanager.model.dto.employee.EmployeeInfoResponse;
 import com.g98.sangchengpayrollmanager.model.dto.employee.EmployeeProfileResponse;
 import com.g98.sangchengpayrollmanager.model.dto.employee.EmployeeProfileUpdateRequest;
-import com.g98.sangchengpayrollmanager.model.entity.Contract;
-import com.g98.sangchengpayrollmanager.model.entity.EmployeeInformation;
-import com.g98.sangchengpayrollmanager.model.entity.Position;
-import com.g98.sangchengpayrollmanager.model.entity.User;
-import com.g98.sangchengpayrollmanager.repository.ContractRepository;
-import com.g98.sangchengpayrollmanager.repository.EmployeeInformationRepository;
-import com.g98.sangchengpayrollmanager.repository.PositionRepository;
-import com.g98.sangchengpayrollmanager.repository.UserRepository;
+import com.g98.sangchengpayrollmanager.model.entity.*;
+import com.g98.sangchengpayrollmanager.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
@@ -45,6 +39,8 @@ public class EmployeeService {
     private final ContractRepository contractRepository;
     private final PositionRepository positionRepository;
     private final UserRepository userRepository;
+    private final SalaryInformationRepository salaryInformationRepository;
+
 
     public EmployeeInfoResponse getByEmployeeCode(String employeeCode) {
         EmployeeInformation info = repo.findByEmployeeCodeFetchAll(employeeCode)
@@ -52,15 +48,52 @@ public class EmployeeService {
         return EmployeeInfoResponse.fromEntity(info);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public EmployeeProfileResponse getProfile(String employeeCode) {
-        EmployeeInformation info = repo.findByEmployeeCodeFetchAll(employeeCode)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên có mã: " + employeeCode));
 
-        Contract contract = contractRepository.findFirstByUserEmployeeCodeOrderByStartDateDesc(employeeCode).orElse(null);
+        // 1️⃣ Tìm User trước (bắt buộc phải có)
+        User user = userRepository.findByEmployeeCode(employeeCode)
+                .orElseThrow(() ->
+                        new RuntimeException("Không tìm thấy user với mã: " + employeeCode)
+                );
 
+        // 2️⃣ Tìm EmployeeInformation, nếu chưa có thì auto-create
+        EmployeeInformation info = repo
+                .findByEmployeeCodeFetchAll(employeeCode)
+                .orElseGet(() -> {
+                    EmployeeInformation e = new EmployeeInformation();
+                    e.setUser(user);
+                    // các field khác để null → bổ sung sau
+                    return repo.save(e);
+                });
+
+        // 3️⃣ Contract là OPTIONAL
+        Contract contract = contractRepository
+                .findFirstByUserEmployeeCodeOrderByStartDateDesc(employeeCode)
+                .orElse(null);
+
+        // 4️⃣ Mapping an toàn
         return mapToProfile(info, contract);
     }
+
+    private void createInitialSalaryInformationIfNeeded(User user, Integer baseSalary) {
+        boolean hasSalaryInformation = salaryInformationRepository.existsByUserEmployeeCode(user.getEmployeeCode());
+        if (hasSalaryInformation) {
+            return;
+        }
+
+        SalaryInformation salaryInformation = SalaryInformation.builder()
+                .user(user)
+                .baseSalary(baseSalary)
+                .baseHourlyRate(0)
+                .effectiveFrom(LocalDate.now())
+                .date(LocalDate.now())
+                .status("ACTIVE")
+                .build();
+
+        salaryInformationRepository.save(salaryInformation);
+    }
+
 
     @Transactional
     public EmployeeProfileResponse updateProfile(String employeeCode, String role, EmployeeProfileUpdateRequest request) {
@@ -68,7 +101,15 @@ public class EmployeeService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên có mã: " + employeeCode));
 
         User user = info.getUser();
-        Contract contract = contractRepository.findFirstByUserEmployeeCodeOrderByStartDateDesc(employeeCode).orElse(null);
+        String contractCode = "CT-" + employeeCode;
+        Contract contract = contractRepository.findFirstByUserEmployeeCodeOrderByStartDateDesc(employeeCode)
+                .orElseGet(() -> {
+                    Contract c = new Contract();
+                    c.setContractCode(contractCode);
+                    c.setUser(user);
+                    // các field khác để null → bổ sung sau
+                    return contractRepository.save(c);
+                });
 
         if (isEmployee(role)) {
             validateEmployeeFields(request);
@@ -81,9 +122,6 @@ public class EmployeeService {
 
         userRepository.save(user);
         repo.save(info);
-        if (contract != null) {
-            contractRepository.save(contract);
-        }
 
         return mapToProfile(info, contract);
     }
@@ -134,6 +172,10 @@ public class EmployeeService {
         if (contract != null) {
             if (request.getContractType() != null) {
                 contract.setType(request.getContractType());
+            }
+            if (request.getBaseSalary() != null) {
+                createInitialSalaryInformationIfNeeded(user, request.getBaseSalary());
+                contract.setBaseSalary(request.getBaseSalary());
             }
             updateStatus(user, contract, request.getStatus());
 
@@ -267,15 +309,11 @@ public class EmployeeService {
         String status = contract != null ? contract.getStatus() : resolveUserStatus(user.getStatus());
         String contractType = contract != null ? contract.getType() : null;
 
-        // ⭐ SỬA LOGIC LẤY CONTRACT URL
         String contractUrl = null;
         if (contract != null) {
-            // Ưu tiên: nếu có PDF trong database → tạo view URL
             if (contract.hasPdfInDatabase()) {
                 contractUrl = "/api/v1/hr/users/" + user.getEmployeeCode() + "/contract/view";
-            }
-            // Fallback: nếu chỉ có path (data cũ) → giữ nguyên path
-            else if (contract.getPdfPath() != null && !contract.getPdfPath().isEmpty()) {
+            } else if (contract.getPdfPath() != null && !contract.getPdfPath().isEmpty()) {
                 contractUrl = contract.getPdfPath();
             }
         }
@@ -285,10 +323,12 @@ public class EmployeeService {
         return new EmployeeProfileResponse(
                 user.getEmployeeCode(),
                 user.getFullName(),
-                position != null ? position.getName() : null,
+                position != null ? position.getId() : null,        // ⭐ Thêm positionId
+                position != null ? position.getName() : null,      // Position name
                 joinDate,
                 user.getEmail(),
                 contractType,
+                contract != null ? contract.getBaseSalary() : null,
                 user.getPhoneNo(),
                 user.getDob(),
                 status,

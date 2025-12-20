@@ -6,13 +6,11 @@ import com.g98.sangchengpayrollmanager.model.dto.RoleSummaryDTO;
 import com.g98.sangchengpayrollmanager.model.dto.UpdateUserRequest;
 import com.g98.sangchengpayrollmanager.model.dto.UserDTO;
 import com.g98.sangchengpayrollmanager.model.dto.api.response.ApiResponse;
+import com.g98.sangchengpayrollmanager.model.entity.EmployeeInformation;
 import com.g98.sangchengpayrollmanager.model.entity.LeaveQuota;
 import com.g98.sangchengpayrollmanager.model.entity.Role;
 import com.g98.sangchengpayrollmanager.model.entity.User;
-import com.g98.sangchengpayrollmanager.repository.AdminRepository;
-import com.g98.sangchengpayrollmanager.repository.LeaveQuotaRepository;
-import com.g98.sangchengpayrollmanager.repository.RoleCountProjection;
-import com.g98.sangchengpayrollmanager.repository.RoleRepository;
+import com.g98.sangchengpayrollmanager.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,6 +30,8 @@ public class AdminService {
     private final AdminRepository adminRepository;
     private final BiometricSyncService biometricSyncService;
     private final LeaveQuotaService leaveQuotaService;
+    private final EmployeeInformationRepository employeeInfoRepo;
+
 
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
@@ -119,14 +119,6 @@ public class AdminService {
         Role role = roleRepository.findById(req.getRoleId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy role id = " + req.getRoleId()));
 
-        LocalDate dob = LocalDate.of(2000, 1, 1);
-        if (req.getDob() != null && !req.getDob().isBlank()) {
-            try {
-                dob = LocalDate.parse(req.getDob().trim());
-            } catch (DateTimeParseException e) {
-                return ApiResponse.builder().status(400).message("Định dạng ngày sinh không hợp lệ (yyyy-MM-dd)").build();
-            }
-        }
 
         User user = User.builder()
                 .employeeCode(req.getEmployeeCode())
@@ -135,7 +127,6 @@ public class AdminService {
                 .username(username)
                 .password(passwordEncoder.encode(req.getPassword()))
                 .email(email)
-                .dob(dob)
                 .phoneNo(phoneNo)
                 .role(role)
                 .status(req.getStatus() != null ? req.getStatus() : 1)
@@ -143,7 +134,7 @@ public class AdminService {
 
         boolean isAdmin = req.getRoleId() != null && req.getRoleId() == 1L;
         String devicePin = req.getDevicePin() != null ? req.getDevicePin().trim() : "";
-        String ip = "192.168.0.2";
+        String ip = "192.168.11.2";
 
         // Pre-check TCP để fail nhanh khi máy offline (2s)
         if (!portOpen(ip, 4370, 2000)) {
@@ -165,6 +156,11 @@ public class AdminService {
 
         // Lưu user vào DB
         adminRepository.save(user);
+
+//        EmployeeInformation info = new EmployeeInformation();
+//        info.setUser(user);
+//        employeeInfoRepo.save(info);
+
 
         Integer year = LocalDate.now().getYear();
         leaveQuotaService.initQuotaForNewEmployee(user.getEmployeeCode(), year);

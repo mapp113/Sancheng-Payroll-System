@@ -12,10 +12,15 @@ import java.time.LocalDate;
 public class EmployeeProfileResponse {
     private String employeeCode;
     private String fullName;
-    private String position;
+
+    // ⭐ Thêm positionId để frontend có thể gửi lại khi update
+    private Integer positionId;
+    private String position; // Giữ lại để hiển thị tên position
+
     private LocalDate joinDate;
     private String personalEmail;
     private String contractType;
+    private Integer baseSalary;
     private String phone;
     private LocalDate dob;
     private String status;
@@ -24,5 +29,5 @@ public class EmployeeProfileResponse {
     private LocalDate visaExpiry;
     private String contractUrl;
     private String taxCode;
-    private Integer dependentsNo; // ⭐ Đổi từ String sang Integer nếu cần
+    private Integer dependentsNo;
 }
