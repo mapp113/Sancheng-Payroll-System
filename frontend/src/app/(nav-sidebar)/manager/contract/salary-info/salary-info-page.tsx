@@ -69,6 +69,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
     // ⭐ NEW: State to track current user info
     const [currentUserRole, setCurrentUserRole] = useState<string>("");
     const [currentUserEmployeeCode, setCurrentUserEmployeeCode] = useState<string>("");
+    const [isManager, setIsManager] = useState<boolean>(false);
 
     // ⭐ NEW: Extract token info on mount
     useEffect(() => {
@@ -78,6 +79,18 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
             if (decoded) {
                 setCurrentUserRole(decoded.role_name || "");
                 setCurrentUserEmployeeCode(decoded.employee_code || "");
+            }
+        }
+
+        // Check if user is manager from session storage
+        const authUserStr = sessionStorage.getItem("scpm.auth.user");
+        if (authUserStr) {
+            try {
+                const authUser = JSON.parse(authUserStr);
+                const role = authUser?.role?.toLowerCase();
+                setIsManager(role === "manager");
+            } catch (e) {
+                console.error("Error parsing session storage:", e);
             }
         }
     }, []);
@@ -92,6 +105,11 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
         }
         return false;
     }, [currentUserRole, currentUserEmployeeCode, code]);
+
+    // Check if editing should be disabled (HR viewing own salary OR user is manager)
+    const isEditingDisabled = useMemo(() => {
+        return isViewingOwnSalary || isManager;
+    }, [isViewingOwnSalary, isManager]);
 
     const [rows, setRows] = useState<PayrollRow[]>([]);
     const [loadingSalary, setLoadingSalary] = useState(false);
@@ -429,11 +447,16 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                 <p className="text-sm text-[#56749A]">
                                     Mã nhân viên: {code || "(Chưa có mã)"}
                                 </p>
-                                {/* ⭐ NEW: Warning for HR viewing own salary */}
+                                {/* ⭐ NEW: Warning for HR viewing own salary or manager role */}
                                 {isViewingOwnSalary && (
                                     <p className="text-sm font-medium text-amber-600">
                                         ⚠️ Bạn đang xem thông tin lương của chính mình - Không thể
                                         chỉnh sửa
+                                    </p>
+                                )}
+                                {isManager && !isViewingOwnSalary && (
+                                    <p className="text-sm font-medium text-amber-600">
+                                        ⚠️ Bạn không có quyền chỉnh sửa thông tin lương
                                     </p>
                                 )}
                             </div>
@@ -466,7 +489,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                             Ngày kết thúc
                                         </th>
                                         {/* ⭐ NEW: Edit column */}
-                                        {!isViewingOwnSalary && (
+                                        {!isEditingDisabled && (
                                             <th className="px-5 py-3 font-semibold">
                                                 Chỉnh sửa
                                             </th>
@@ -478,7 +501,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                         <tr>
                                             <td
                                                 className="px-4 py-3 text-center"
-                                                colSpan={isViewingOwnSalary ? 4 : 5}
+                                                colSpan={isEditingDisabled ? 4 : 5}
                                             >
                                                 Đang tải thông tin lương...
                                             </td>
@@ -496,7 +519,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                                 <td className="px-4 py-3">{row.startDate}</td>
                                                 <td className="px-4 py-3">{row.endDate}</td>
                                                 {/* ⭐ NEW: Edit button */}
-                                                {!isViewingOwnSalary && (
+                                                {!isEditingDisabled && (
                                                     <td className="px-10 py-3 align-middle">
                                                         <button
                                                             onClick={() =>
@@ -514,7 +537,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                         <tr>
                                             <td
                                                 className="px-4 py-3 text-center"
-                                                colSpan={isViewingOwnSalary ? 4 : 5}
+                                                colSpan={isEditingDisabled ? 4 : 5}
                                             >
                                                 Chưa có thông tin lương để hiển thị
                                             </td>
@@ -524,8 +547,8 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                 </table>
                             </div>
 
-                            {/* ⭐ UPDATED: Hide button for HR viewing own salary */}
-                            {!isViewingOwnSalary && (
+                            {/* ⭐ UPDATED: Hide button for HR viewing own salary or manager */}
+                            {!isEditingDisabled && (
                                 <div className="mt-6 flex justify-end">
                                     <button
                                         className="rounded-full bg-[#CCE1F0] px-4 py-2 text-sm font-semibold text-[#345EA8] shadow hover:bg-[#B8D8EC]"
@@ -550,8 +573,8 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                     </h2>
                                 </div>
                             </div>
-                            {/* ⭐ UPDATED: Hide button for HR viewing own salary */}
-                            {!isViewingOwnSalary && (
+                            {/* ⭐ UPDATED: Hide button for HR viewing own salary or manager */}
+                            {!isEditingDisabled && (
                                 <button
                                     className="rounded-full bg-[#CCE1F0] px-4 py-2 text-sm font-semibold text-[#345EA8] shadow hover:bg-[#B8D8EC]"
                                     onClick={() => {
@@ -574,8 +597,8 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                     <th className="px-4 py-3 font-semibold">Giá trị</th>
                                     <th className="px-4 py-3 font-semibold">Ngày bắt đầu</th>
                                     <th className="px-4 py-3 font-semibold">Ngày kết thúc</th>
-                                    {/* ⭐ UPDATED: Hide column for HR viewing own salary */}
-                                    {!isViewingOwnSalary && (
+                                    {/* ⭐ UPDATED: Hide column for HR viewing own salary or manager */}
+                                    {!isEditingDisabled && (
                                         <th className="px-4 py-3 font-semibold">Chỉnh sửa</th>
                                     )}
                                 </tr>
@@ -586,7 +609,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                     <tr>
                                         <td
                                             className="px-4 py-3 text-center"
-                                            colSpan={isViewingOwnSalary ? 5 : 6}
+                                            colSpan={isEditingDisabled ? 5 : 6}
                                         >
                                             Đang tải trợ cấp...
                                         </td>
@@ -612,7 +635,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                             <td className="px-4 py-3 text-sm">
                                                 {allowance.endDate}
                                             </td>
-                                            {!isViewingOwnSalary && (
+                                            {!isEditingDisabled && (
                                                 <td className="px-4 py-3">
                                                     <button
                                                         type="button"
@@ -633,7 +656,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                     <tr>
                                         <td
                                             className="px-4 py-3 text-center"
-                                            colSpan={isViewingOwnSalary ? 5 : 6}
+                                            colSpan={isEditingDisabled ? 5 : 6}
                                         >
                                             Chưa có trợ cấp hoặc thưởng để hiển thị
                                         </td>

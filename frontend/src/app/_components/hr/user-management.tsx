@@ -4,6 +4,7 @@ import {Search, X} from "lucide-react";
 import {ChangeEvent, useEffect, useMemo, useState} from "react";
 import {useRouter} from "next/navigation";
 import Toast from "@/app/_components/common/notification/toast";
+import {formatSalary, parseSalary, handleSalaryInput} from "@/app/_components/utils/formatSalary";
 
 
 type UserItem = {
@@ -128,7 +129,7 @@ function mapProfileResponse(data: EmployeeProfileResponse): EmployeeProfile {
         joinDate: data.joinDate ?? "",
         personalEmail: data.personalEmail ?? "",
         contractType: data.contractType ?? "",
-        baseSalary: data.baseSalary?.toString() ?? "",
+        baseSalary: formatSalary(data.baseSalary?.toString() ?? ""),
         phone: data.phone ?? "",
         dob: data.dob ?? "",
         status: data.status ?? "",
@@ -421,6 +422,10 @@ export default function UserManagement() {
                     value = sanitizeEmailInput(value);
                 }
 
+                if (field === "baseSalary") {
+                    value = handleSalaryInput(value);
+                }
+
                 setSelectedProfile((prev) => ({...prev, [field]: value}));
                 setProfileError(null);
 
@@ -483,7 +488,7 @@ export default function UserManagement() {
             }
 
 
-            const parsedBaseSalary = Number(selectedProfile.baseSalary);
+            const parsedBaseSalary = Number(parseSalary(selectedProfile.baseSalary));
             const baseSalaryValue =
                 selectedProfile.baseSalary && !isNaN(parsedBaseSalary)
                     ? parsedBaseSalary
@@ -626,6 +631,10 @@ export default function UserManagement() {
         return false;
     }, [currentUserRole, currentUserEmployeeCode, selectedEmployeeCode]);
 
+    const isManager = useMemo(() => {
+        return currentUserRole.toLowerCase() === "manager";
+    }, [currentUserRole]);
+
     return (
         <div className="flex h-full flex-col gap-4 p-4 text-[#1F2A44]">
             <header className="flex flex-col gap-2 rounded-2xl bg-white p-6 shadow-sm">
@@ -742,7 +751,7 @@ export default function UserManagement() {
                             className="sticky top-0 z-10 flex items-start justify-between border-b border-slate-200 bg-white px-6 py-4">
                             <div>
                                 <h3 className="text-xl font-semibold text-[#1F2A44]">
-                                    {isEditingOwnProfile ? "Xem hồ sơ" : "Chỉnh sửa hồ sơ"}
+                                    {isEditingOwnProfile || isManager ? "Xem hồ sơ" : "Chỉnh sửa hồ sơ"}
                                 </h3>
                                 <p className="text-sm text-slate-500">
                                     Hồ sơ được tải và cập nhật theo mã nhân viên: {selectedEmployeeCode ?? "-"}
@@ -750,6 +759,11 @@ export default function UserManagement() {
                                 {isEditingOwnProfile && (
                                     <p className="mt-1 text-sm text-amber-600">
                                         Bạn không thể chỉnh sửa hồ sơ của chính mình
+                                    </p>
+                                )}
+                                {isManager && (
+                                    <p className="mt-1 text-sm text-amber-600">
+                                        Manager chỉ có quyền xem thông tin, không thể chỉnh sửa
                                     </p>
                                 )}
                             </div>
@@ -782,7 +796,7 @@ export default function UserManagement() {
                                             className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
                                             value={selectedProfile.name}
                                             onChange={handleProfileChange("name")}
-                                            disabled={profileLoading || isEditingOwnProfile}
+                                            disabled={profileLoading || isEditingOwnProfile || isManager}
                                         />
                                     </label>
 
@@ -792,7 +806,7 @@ export default function UserManagement() {
                                             className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
                                             value={selectedProfile.personalEmail}
                                             onChange={handleProfileChange("personalEmail")}
-                                            disabled={profileLoading || isEditingOwnProfile}
+                                            disabled={profileLoading || isEditingOwnProfile || isManager}
                                         />
                                     </label>
 
@@ -802,7 +816,7 @@ export default function UserManagement() {
                                             className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
                                             value={selectedProfile.positionId}
                                             onChange={handleProfileChange("positionId")}
-                                            disabled={profileLoading || loadingPositions || isEditingOwnProfile}
+                                            disabled={profileLoading || loadingPositions || isEditingOwnProfile || isManager}
                                         >
                                             <option value="">-- Chọn chức vụ --</option>
                                             {positions.map((pos) => (
@@ -820,7 +834,7 @@ export default function UserManagement() {
                                             className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
                                             value={selectedProfile.dob}
                                             onChange={handleProfileChange("dob")}
-                                            disabled={profileLoading || isEditingOwnProfile}
+                                            disabled={profileLoading || isEditingOwnProfile || isManager}
                                         />
                                     </label>
 
@@ -830,7 +844,7 @@ export default function UserManagement() {
                                             className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
                                             value={selectedProfile.phone}
                                             onChange={handleProfileChange("phone")}
-                                            disabled={profileLoading || isEditingOwnProfile}
+                                            disabled={profileLoading || isEditingOwnProfile || isManager}
                                         />
                                     </label>
 
@@ -841,7 +855,7 @@ export default function UserManagement() {
                                             className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
                                             value={selectedProfile.address}
                                             onChange={handleProfileChange("address")}
-                                            disabled={profileLoading || isEditingOwnProfile}
+                                            disabled={profileLoading || isEditingOwnProfile || isManager}
                                         />
                                     </label>
 
@@ -875,7 +889,7 @@ export default function UserManagement() {
                                             className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
                                             value={selectedProfile.joinDate}
                                             onChange={handleProfileChange("joinDate")}
-                                            disabled={profileLoading || isEditingOwnProfile}
+                                            disabled={profileLoading || isEditingOwnProfile || isManager}
                                         />
                                     </label>
 
@@ -885,7 +899,7 @@ export default function UserManagement() {
                                             className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
                                             value={selectedProfile.contractType}
                                             onChange={handleProfileChange("contractType")}
-                                            disabled={profileLoading || isEditingOwnProfile}
+                                            disabled={profileLoading || isEditingOwnProfile || isManager}
                                         >
                                             <option value="">Chọn loại hợp đồng</option>
                                             {CONTRACT_TYPE_OPTIONS.map((option) => (
@@ -903,7 +917,7 @@ export default function UserManagement() {
                                             className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
                                             value={selectedProfile.baseSalary}
                                             onChange={handleProfileChange("baseSalary")}
-                                            disabled={profileLoading || isEditingOwnProfile}
+                                            disabled={profileLoading || isEditingOwnProfile || isManager}
                                             placeholder="0"
                                         />
                                     </label>
@@ -915,7 +929,7 @@ export default function UserManagement() {
                                             className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
                                             value={selectedProfile.visaExpiry}
                                             onChange={handleProfileChange("visaExpiry")}
-                                            disabled={profileLoading || isEditingOwnProfile}
+                                            disabled={profileLoading || isEditingOwnProfile || isManager}
                                         />
                                     </label>
                                     <label className="flex flex-col gap-1 text-sm">
@@ -924,7 +938,7 @@ export default function UserManagement() {
                                             className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
                                             value={selectedProfile.bankNumber}
                                             onChange={handleProfileChange("bankNumber")}
-                                            disabled={profileLoading || isEditingOwnProfile}
+                                            disabled={profileLoading || isEditingOwnProfile || isManager}
                                         />
                                     </label>
                                     <label className="flex flex-col gap-1 text-sm lg:col-span-1">
@@ -933,7 +947,7 @@ export default function UserManagement() {
                                             className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
                                             value={selectedProfile.citizenId}
                                             onChange={handleProfileChange("citizenId")}
-                                            disabled={profileLoading || isEditingOwnProfile}
+                                            disabled={profileLoading || isEditingOwnProfile || isManager}
                                         />
                                     </label>
 
@@ -945,7 +959,7 @@ export default function UserManagement() {
                                             className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
                                             value={selectedProfile.dependentsNo}
                                             onChange={handleProfileChange("dependentsNo")}
-                                            disabled={profileLoading || isEditingOwnProfile}
+                                            disabled={profileLoading || isEditingOwnProfile || isManager}
                                         />
                                     </label>
                                     <label className="flex flex-col gap-1 text-sm">
@@ -954,106 +968,107 @@ export default function UserManagement() {
                                             className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 outline-none transition focus:border-[#4AB4DE] focus:ring-2 focus:ring-[#4AB4DE]/20 disabled:bg-gray-50 disabled:text-gray-500"
                                             value={selectedProfile.taxCode}
                                             onChange={handleProfileChange("taxCode")}
-                                            disabled={profileLoading || isEditingOwnProfile}
+                                            disabled={profileLoading || isEditingOwnProfile || isManager}
                                         />
                                     </label>
 
 
-                                    {/* Upload hợp đồng + các trạng thái */}
-                                    <label className="flex flex-col gap-1 text-sm lg:col-span-3">
-                                        <span className="font-medium text-slate-700">Tải lên hợp đồng (PDF)</span>
+                                    {/* Upload hợp đồng + các trạng thái - Hidden for Manager */}
+                                    {!isManager && (
+                                        <label className="flex flex-col gap-1 text-sm lg:col-span-3">
+                                            <span className="font-medium text-slate-700">Tải lên hợp đồng (PDF)</span>
 
-                                        <div className="mt-1 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                                            <div
-                                                className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                                                <input
-                                                    type="file"
-                                                    accept="application/pdf"
-                                                    className="w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-500 md:max-w-md"
-                                                    onChange={handleContractUpload}
-                                                    disabled={profileLoading || uploadingContract || isEditingOwnProfile}
-                                                />
+                                            <div className="mt-1 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                                <div
+                                                    className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                                    <input
+                                                        type="file"
+                                                        accept="application/pdf"
+                                                        className="w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-500 md:max-w-md"
+                                                        onChange={handleContractUpload}
+                                                        disabled={profileLoading || uploadingContract || isEditingOwnProfile}
+                                                    />
 
-                                                <button
-                                                    type="button"
-                                                    onClick={handleDownloadTemplate}
-                                                    disabled={
-                                                        profileLoading ||
-                                                        downloadingTemplate ||
-                                                        !selectedEmployeeCode ||
-                                                        isEditingOwnProfile
-                                                    }
-                                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#4AB4DE] bg-white px-4 py-2 text-sm font-medium text-[#4AB4DE] transition enabled:hover:bg-[#E0F2FE] disabled:cursor-not-allowed disabled:opacity-60"
-                                                >
-                                                    {downloadingTemplate ? "Đang tải..." : "Tải hợp đồng mẫu"}
-                                                </button>
-                                            </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleDownloadTemplate}
+                                                        disabled={
+                                                            profileLoading ||
+                                                            downloadingTemplate ||
+                                                            !selectedEmployeeCode ||
+                                                            isEditingOwnProfile
+                                                        }
+                                                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#4AB4DE] bg-white px-4 py-2 text-sm font-medium text-[#4AB4DE] transition enabled:hover:bg-[#E0F2FE] disabled:cursor-not-allowed disabled:opacity-60"
+                                                    >
+                                                        {downloadingTemplate ? "Đang tải..." : "Tải hợp đồng mẫu"}
+                                                    </button>
+                                                </div>
 
-                                            {selectedProfile.contractUrl && (
-                                                <div className="mt-4 rounded-2xl">
-                                                    <div
-                                                        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                                        {/*<div className="flex items-center gap-2">*/}
-                                                        {/*    <svg*/}
-                                                        {/*        xmlns="http://www.w3.org/2000/svg"*/}
-                                                        {/*        className="h-5 w-5 text-red-500"*/}
-                                                        {/*        fill="none"*/}
-                                                        {/*        viewBox="0 0 24 24"*/}
-                                                        {/*        stroke="currentColor"*/}
-                                                        {/*    >*/}
-                                                        {/*        <path*/}
-                                                        {/*            strokeLinecap="round"*/}
-                                                        {/*            strokeLinejoin="round"*/}
-                                                        {/*            strokeWidth={2}*/}
-                                                        {/*            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"*/}
-                                                        {/*        />*/}
-                                                        {/*    </svg>*/}
-                                                        {/*    <div>*/}
-                                                        {/*        <p className="font-semibold text-[#1F2A44]">Hợp đồng đã*/}
-                                                        {/*            tải lên</p>*/}
-                                                        {/*        <p className="text-sm text-slate-500">Xem hoặc tải xuống*/}
-                                                        {/*            file PDF</p>*/}
-                                                        {/*    </div>*/}
-                                                        {/*</div>*/}
+                                                {selectedProfile.contractUrl && (
+                                                    <div className="mt-4 rounded-2xl">
+                                                        <div
+                                                            className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                                            {/*<div className="flex items-center gap-2">*/}
+                                                            {/*    <svg*/}
+                                                            {/*        xmlns="http://www.w3.org/2000/svg"*/}
+                                                            {/*        className="h-5 w-5 text-red-500"*/}
+                                                            {/*        fill="none"*/}
+                                                            {/*        viewBox="0 0 24 24"*/}
+                                                            {/*        stroke="currentColor"*/}
+                                                            {/*    >*/}
+                                                            {/*        <path*/}
+                                                            {/*            strokeLinecap="round"*/}
+                                                            {/*            strokeLinejoin="round"*/}
+                                                            {/*            strokeWidth={2}*/}
+                                                            {/*            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"*/}
+                                                            {/*        />*/}
+                                                            {/*    </svg>*/}
+                                                            {/*    <div>*/}
+                                                            {/*        <p className="font-semibold text-[#1F2A44]">Hợp đồng đã*/}
+                                                            {/*            tải lên</p>*/}
+                                                            {/*        <p className="text-sm text-slate-500">Xem hoặc tải xuống*/}
+                                                            {/*            file PDF</p>*/}
+                                                            {/*    </div>*/}
+                                                            {/*</div>*/}
 
-                                                        <div className="flex flex-wrap gap-2">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => window.open(selectedProfile.contractUrl, "_blank")}
-                                                                className="inline-flex items-center gap-1.5 rounded-xl bg-[#4AB4DE] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#3c9ec3]"
-                                                            >
-                                                                Xem hợp đồng
-                                                            </button>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => window.open(selectedProfile.contractUrl, "_blank")}
+                                                                    className="inline-flex items-center gap-1.5 rounded-xl bg-[#4AB4DE] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#3c9ec3]"
+                                                                >
+                                                                    Xem hợp đồng
+                                                                </button>
 
-                                                            <button
-                                                                type="button"
-                                                                onClick={async () => {
-                                                                    try {
-                                                                        const downloadUrl = selectedProfile.contractUrl.replace(
-                                                                            "/view",
-                                                                            "/download"
-                                                                        );
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={async () => {
+                                                                        try {
+                                                                            const downloadUrl = selectedProfile.contractUrl.replace(
+                                                                                "/view",
+                                                                                "/download"
+                                                                            );
 
-                                                                        const res = await fetch(downloadUrl, {
-                                                                            headers: {
-                                                                                Authorization: `Bearer ${
-                                                                                    localStorage.getItem("access_token") ?? ""
-                                                                                }`,
-                                                                            },
-                                                                        });
+                                                                            const res = await fetch(downloadUrl, {
+                                                                                headers: {
+                                                                                    Authorization: `Bearer ${
+                                                                                        localStorage.getItem("access_token") ?? ""
+                                                                                    }`,
+                                                                                },
+                                                                            });
 
-                                                                        if (!res.ok) throw new Error("Không thể tải xuống file");
+                                                                            if (!res.ok) throw new Error("Không thể tải xuống file");
 
-                                                                        const blob = await res.blob();
-                                                                        const url = window.URL.createObjectURL(blob);
-                                                                        const a = document.createElement("a");
-                                                                        a.href = url;
-                                                                        a.download = `contract-${selectedEmployeeCode}.pdf`;
-                                                                        document.body.appendChild(a);
-                                                                        a.click();
-                                                                        window.URL.revokeObjectURL(url);
-                                                                        document.body.removeChild(a);
-                                                                    } catch (error) {
+                                                                            const blob = await res.blob();
+                                                                            const url = window.URL.createObjectURL(blob);
+                                                                            const a = document.createElement("a");
+                                                                            a.href = url;
+                                                                            a.download = `contract-${selectedEmployeeCode}.pdf`;
+                                                                            document.body.appendChild(a);
+                                                                            a.click();
+                                                                            window.URL.revokeObjectURL(url);
+                                                                            document.body.removeChild(a);
+                                                                        } catch (error) {
                                                                         console.error("Download failed:", error);
                                                                         setToast({
                                                                             message: "Không thể tải xuống file",
@@ -1121,6 +1136,7 @@ export default function UserManagement() {
                                             )}
                                         </div>
                                     </label>
+                                    )}
                                 </div>
                             </div>
 
@@ -1134,7 +1150,7 @@ export default function UserManagement() {
                                     Đóng
                                 </button>
 
-                                {!isEditingOwnProfile && (
+                                {!isEditingOwnProfile && !isManager && (
                                     <button
                                         className="inline-flex items-center gap-2 rounded-full bg-[#4AB4DE] px-5 py-2 text-sm font-medium text-white transition hover:bg-[#3c9ec3] disabled:cursor-not-allowed disabled:opacity-70"
                                         onClick={saveProfile}

@@ -34,6 +34,31 @@ function ManagerApprovalLeavesContent() {
     router.push(`/manager/requests/leaves?${params.toString()}`);
   };
 
+  const handleViewFile = async () => {
+    if (!leaveData?.file) return;
+    
+    try {
+      const token = sessionStorage.getItem("scpm.auth.token");
+      const fileName = leaveData.file.split('/').pop();
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/leave/attachments/${fileName}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Không thể tải file");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(url), 100);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "Đã xảy ra lỗi khi tải file");
+    }
+  };
+
   const handleApprove = async () => {
     if (!id) return;
     
@@ -209,14 +234,12 @@ function ManagerApprovalLeavesContent() {
                 <div className="rounded-lg border border-gray-200 bg-white p-4">
                   <div className="flex items-center gap-3">
                     <File className="h-5 w-5 text-gray-600" />
-                    <a 
-                      href={leaveData.file} 
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm font-medium text-blue-600 hover:text-blue-700 underline"
+                    <button 
+                      onClick={handleViewFile}
+                      className="text-sm font-medium text-blue-600 hover:text-blue-700 underline cursor-pointer"
                     >
-                      Xem file đính kèm
-                    </a>
+                      {leaveData.file.split('/').pop()}
+                    </button>
                   </div>
                 </div>
               )}
@@ -258,6 +281,7 @@ function ManagerApprovalLeavesContent() {
               try {
                 const user = JSON.parse(userStr);
                 if (user.role !== 'MANAGER') return null;
+                if (user.employeeCode === leaveData.employeeCode) return null;
               } catch {
                 return null;
               }

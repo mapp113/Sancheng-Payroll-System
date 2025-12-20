@@ -5,7 +5,7 @@ import { Search } from "lucide-react";
 import Pagination from "./pagination";
 import { useNotification } from "../../common/pop-box/notification/notification-context";
 import { formatNumber } from "../../utils/formatNumber";
-import { mapStatus } from "../../utils/statusMapping";
+import { mapStatus, vietnameseToStatusCode } from "../../utils/statusMapping";
 import FilterButton from "../toolbar/filter-button";
 
 
@@ -27,13 +27,19 @@ export default function PayrollTable() {
     }, []);
 
     const searchHandler = async (e: FormEvent<HTMLInputElement>) => {
+        const inputValue = (e.target as HTMLInputElement).value;
+        
+        // Giữ nguyên giá trị user nhập vào state
         payrollParams.setPayrollParams({
             ...payrollParams.payrollParams,
-            keyword: (e.target as HTMLInputElement).value,
+            keyword: inputValue,
         });
+        
+        // Chỉ convert sang status code khi gọi API
+        const searchKeyword = vietnameseToStatusCode(inputValue);
         const newParams = {
             ...payrollParams.payrollParams,
-            keyword: (e.target as HTMLInputElement).value,
+            keyword: searchKeyword,
         };
 
         const data = await PayrollQuery(newParams);
@@ -72,7 +78,6 @@ export default function PayrollTable() {
                             onInput={searchHandler}
                         />
                     </label>
-                    <FilterButton />
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="flex items-center rounded-full border border-[#E2E8F0] px-3 py-2">
