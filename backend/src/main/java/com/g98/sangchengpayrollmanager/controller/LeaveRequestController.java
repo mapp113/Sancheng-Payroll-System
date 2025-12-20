@@ -179,7 +179,7 @@ public class LeaveRequestController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/attachments/{fileName}")
+    @GetMapping("/attachments/{fileName:.+}")
     public ResponseEntity<org.springframework.core.io.Resource> viewAttachment(@PathVariable String fileName) throws java.io.IOException {
         return leaveRequestService.viewLeaveAttachment(fileName);
     }
