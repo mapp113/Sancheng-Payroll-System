@@ -4,6 +4,7 @@ import {Search, X} from "lucide-react";
 import {ChangeEvent, useEffect, useMemo, useState} from "react";
 import {useRouter} from "next/navigation";
 import Toast from "@/app/_components/common/notification/toast";
+import {formatSalary, parseSalary, handleSalaryInput} from "../utils/formatSalary";
 
 
 type UserItem = {
@@ -125,7 +126,7 @@ function mapProfileResponse(data: EmployeeProfileResponse): EmployeeProfile {
         joinDate: data.joinDate ?? "",
         personalEmail: data.personalEmail ?? "",
         contractType: data.contractType ?? "",
-        baseSalary: data.baseSalary?.toString() ?? "",
+        baseSalary: formatSalary(data.baseSalary?.toString() ?? ""),
         phone: data.phone ?? "",
         dob: data.dob ?? "",
         status: data.status ?? "",
@@ -414,6 +415,10 @@ export default function UserManagement() {
                     value = sanitizeEmailInput(value);
                 }
 
+                if (field === "baseSalary") {
+                    value = handleSalaryInput(value);
+                }
+
                 setSelectedProfile((prev) => ({...prev, [field]: value}));
                 setProfileError(null);
 
@@ -476,9 +481,10 @@ export default function UserManagement() {
             }
 
 
-            const parsedBaseSalary = Number(selectedProfile.baseSalary);
+            const rawBaseSalary = parseSalary(selectedProfile.baseSalary);
+            const parsedBaseSalary = Number(rawBaseSalary);
             const baseSalaryValue =
-                selectedProfile.baseSalary && !isNaN(parsedBaseSalary)
+                rawBaseSalary && !isNaN(parsedBaseSalary)
                     ? parsedBaseSalary
                     : undefined;
 
@@ -857,13 +863,12 @@ export default function UserManagement() {
                             <label className="flex flex-col gap-1 text-sm">
                                 Lương hợp đồng
                                 <input
-                                    type="number"
-                                    min={0}
-                                    step="0.01"
+                                    type="text"
                                     className="rounded-lg border border-[#E2E8F0] px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500"
                                     value={selectedProfile.baseSalary}
                                     onChange={handleProfileChange("baseSalary")}
                                     disabled={profileLoading || isEditingOwnProfile}
+                                    placeholder="0"
                                 />
                             </label>
 

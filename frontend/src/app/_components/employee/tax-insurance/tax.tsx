@@ -5,6 +5,7 @@ import { Trash } from "lucide-react";
 import FormPopBox from "@/app/_components/common/pop-box/form";
 import ConfirmPopBox from "@/app/_components/common/pop-box/confirm";
 import { useNotification } from "@/app/_components/common/pop-box/notification/notification-context";
+import { formatSalary, parseSalary, handleSalaryInput } from "@/app/_components/utils/formatSalary";
 
 export default function TaxLevelComponent() {
   const [loading, setLoading] = useState(true);
@@ -15,8 +16,8 @@ export default function TaxLevelComponent() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState<CreateTaxLevelRequest>({
     name: "",
-    fromValue: 0,
-    toValue: 0,
+    fromValue: "" as unknown as number,
+    toValue: "" as unknown as number,
     percentage: 0,
     effectiveFrom: "",
     effectiveTo: "",
@@ -44,12 +45,24 @@ export default function TaxLevelComponent() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    const numericFields = ["fromValue", "toValue", "percentage"];
-    const newValue: string | number = numericFields.includes(name) ? Number(value) : value;
-    setFormData(prev => ({
-      ...prev,
-      [name]: newValue,
-    } as unknown as typeof prev));
+    
+    if (name === "fromValue" || name === "toValue") {
+      const formattedValue = handleSalaryInput(value);
+      setFormData(prev => ({
+        ...prev,
+        [name]: formattedValue,
+      } as unknown as typeof prev));
+    } else if (name === "percentage") {
+      setFormData(prev => ({
+        ...prev,
+        [name]: Number(value),
+      } as unknown as typeof prev));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+      } as unknown as typeof prev));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -62,14 +75,19 @@ export default function TaxLevelComponent() {
       return;
     }
     try {
-      const success = await createTaxLevel(formData);
+      const payload = {
+        ...formData,
+        fromValue: Number(parseSalary(String(formData.fromValue))),
+        toValue: Number(parseSalary(String(formData.toValue))),
+      };
+      const success = await createTaxLevel(payload);
       
       if (success) {
         addNotification("ok", "Thành công", "Thêm bậc thuế thành công!");
         // Refresh data
         await fetchTaxLevels(taxLevelsContext, setLoading);
         // Reset form and close
-        setFormData({ name: "", fromValue: 0, toValue: 0, percentage: 0, effectiveFrom: "", effectiveTo: "" });
+        setFormData({ name: "", fromValue: "" as unknown as number, toValue: "" as unknown as number, percentage: 0, effectiveFrom: "", effectiveTo: "" });
         setShowAddForm(false);
       } else {
         addNotification("error", "Lỗi", "Không thể thêm bậc thuế. Vui lòng thử lại.");
@@ -86,8 +104,8 @@ export default function TaxLevelComponent() {
     setEditingId(tax.id);
     setFormData({
       name: tax.name,
-      fromValue: tax.fromValue,
-      toValue: tax.toValue,
+      fromValue: formatSalary(String(tax.fromValue)) as unknown as number,
+      toValue: formatSalary(String(tax.toValue)) as unknown as number,
       percentage: tax.percentage,
       effectiveFrom: tax.effectiveFrom,
       effectiveTo: tax.effectiveTo || "",
@@ -107,14 +125,19 @@ export default function TaxLevelComponent() {
       return;
     }
     try {
-      const success = await updateTaxLevel(editingId, formData);
+      const payload = {
+        ...formData,
+        fromValue: Number(parseSalary(String(formData.fromValue))),
+        toValue: Number(parseSalary(String(formData.toValue))),
+      };
+      const success = await updateTaxLevel(editingId, payload);
       
       if (success) {
         addNotification("ok", "Thành công", "Cập nhật bậc thuế thành công!");
         // Refresh data
         await fetchTaxLevels(taxLevelsContext, setLoading);
         // Reset form and close
-        setFormData({ name: "", fromValue: 0, toValue: 0, percentage: 0, effectiveFrom: "", effectiveTo: "" });
+        setFormData({ name: "", fromValue: "" as unknown as number, toValue: "" as unknown as number, percentage: 0, effectiveFrom: "", effectiveTo: "" });
         setShowEditForm(false);
         setEditingId(null);
       } else {
@@ -225,7 +248,7 @@ export default function TaxLevelComponent() {
                   <td className="px-4 py-3">{index + 1}</td>
                   <td className="px-4 py-3">{tax.fromValue.toLocaleString()}</td>
                   <td className="px-4 py-3">{tax.toValue.toLocaleString()}</td>
-                  <td className="px-4 py-3">{tax.percentage}%</td>
+                  <td className="px-4 py-3">{tax.percentage * 100}%</td>
                   <td className="px-4 py-3">{tax.effectiveFrom}</td>
                   <td className="px-4 py-3">{tax.effectiveTo || "-"}</td>
                   <td className="px-4 py-3">
@@ -292,46 +315,43 @@ export default function TaxLevelComponent() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-[#1D3E6A]">Thu nhập tính thuế từ</label>
+                <label className="text-sm font-semibold text-[#1D3E6A]">Thu nhập tính thuế từ </label>
                 <input
-                  type="number"
+                  type="text"
                   name="fromValue"
                   value={formData.fromValue}
                   onChange={handleInputChange}
                   required
-                  min="0"
                   className="w-full px-4 py-2 border border-[#CCE1F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#81d4fa]"
-                  placeholder="Nhập giá trị từ"
+                  placeholder="VD: 5.000.000"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-[#1D3E6A]">Thu nhập tính thuế đến</label>
                 <input
-                  type="number"
+                  type="text"
                   name="toValue"
                   value={formData.toValue}
                   onChange={handleInputChange}
                   required
-                  min="0"
                   className="w-full px-4 py-2 border border-[#CCE1F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#81d4fa]"
-                  placeholder="Nhập giá trị đến"
+                  placeholder="VD: 10.000.000"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-[#1D3E6A]">Thuế suất (%)</label>
+                <label className="text-sm font-semibold text-[#1D3E6A]">Thuế suất (%) </label>
                 <input
                   type="number"
                   name="percentage"
-                  value={formData.percentage}
                   onChange={handleInputChange}
                   required
                   min="0"
                   max="100"
                   step="0.01"
                   className="w-full px-4 py-2 border border-[#CCE1F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#81d4fa]"
-                  placeholder="Nhập thuế suất"
+                  placeholder="VD: 10% ghi là 0,1"
                 />
               </div>
 
@@ -391,7 +411,7 @@ export default function TaxLevelComponent() {
                 onClick={() => {
                   setShowEditForm(false);
                   setEditingId(null);
-                  setFormData({ name: "", fromValue: 0, toValue: 0, percentage: 0, effectiveFrom: "", effectiveTo: "" });
+                  setFormData({ name: "", fromValue: "" as unknown as number, toValue: "" as unknown as number, percentage: 0, effectiveFrom: "", effectiveTo: "" });
                 }}
                 className="rounded-full p-2 text-gray-500 hover:bg-gray-100 transition cursor-pointer"
               >
@@ -419,28 +439,26 @@ export default function TaxLevelComponent() {
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-[#1D3E6A]">Thu nhập tính thuế từ</label>
                 <input
-                  type="number"
+                  type="text"
                   name="fromValue"
                   value={formData.fromValue}
                   onChange={handleInputChange}
                   required
-                  min="0"
                   className="w-full px-4 py-2 border border-[#CCE1F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#81d4fa]"
-                  placeholder="Nhập giá trị từ"
+                  placeholder="VD: 5.000.000"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-[#1D3E6A]">Thu nhập tính thuế đến</label>
                 <input
-                  type="number"
+                  type="text"
                   name="toValue"
                   value={formData.toValue}
                   onChange={handleInputChange}
                   required
-                  min="0"
                   className="w-full px-4 py-2 border border-[#CCE1F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#81d4fa]"
-                  placeholder="Nhập giá trị đến"
+                  placeholder="VD: 10.000.000"
                 />
               </div>
 

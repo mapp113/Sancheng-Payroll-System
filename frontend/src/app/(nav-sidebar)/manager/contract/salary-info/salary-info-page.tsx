@@ -1,6 +1,7 @@
 "use client";
 import {ArrowLeft, Pencil} from "lucide-react";
 import {useCallback, useEffect, useMemo, useState} from "react";
+import {formatSalary, parseSalary, handleSalaryInput} from "@/app/_components/utils/formatSalary";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 
@@ -158,7 +159,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
         setEditingSalaryId(row.id);
         setBaseSalary(
             row.baseSalaryValue !== undefined && row.baseSalaryValue !== null
-                ? String(row.baseSalaryValue)
+                ? formatSalary(String(row.baseSalaryValue))
                 : "",
         );
         setBaseHourlyRate(
@@ -178,6 +179,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
         setSubmittingSalary(true);
         try {
             const isEditing = Boolean(editingSalaryId);
+            const parsedBaseSalary = Number(parseSalary(baseSalary));
             const response = await fetch(
                 isEditing
                     ? `${API_BASE_URL}/api/v1/hr/users/${code}/salary-information/${editingSalaryId}`
@@ -186,7 +188,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                     method: isEditing ? "PUT" : "POST",
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({
-                        baseSalary: Number(baseSalary),
+                        baseSalary: parsedBaseSalary,
                         baseHourlyRate: Number(baseHourlyRate) || 0,
                         effectiveFrom: startDate,
                         effectiveTo: endDate || null,
@@ -301,6 +303,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
 
         setSubmittingAllowance(true);
         try {
+            const parsedAmount = Number(parseSalary(allowAmount));
             const response = await fetch(
                 `${API_BASE_URL}/api/v1/hr/users/${code}/pay-components`,
                 {
@@ -310,7 +313,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                         typeId: Number(allowTypeId),
                         name: allowName,
                         description: allowName,
-                        value: Number(allowAmount),
+                        value: parsedAmount,
                         startDate: allowStart,
                         endDate: allowEnd || null,
                         isAddition: true,
@@ -543,7 +546,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                             <div className="flex items-center gap-3">
                                 <div>
                                     <h2 className="text-lg font-semibold text-[#1F2A44]">
-                                        Trợ cấp nhân viên hiện có
+                                        Thành phần lương
                                     </h2>
                                 </div>
                             </div>
@@ -556,7 +559,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                         setShowAllowanceModal(true);
                                     }}
                                 >
-                                    Thêm trợ cấp, thưởng mới
+                                    Thêm thành phần lương
                                 </button>
                             )}
                         </div>
@@ -659,10 +662,10 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                 <span>Giá trị</span>
                                 <input
                                     className="h-10 w-full rounded-full border border-[#CCE1F0] bg-[#F8FAFC] px-4 text-sm font-normal text-[#003344] focus:border-[#4AB4DE] focus:outline-none focus:ring-2 focus:ring-[#4AB4DE]/50"
-                                    type="number"
+                                    type="text"
                                     value={baseSalary}
-                                    onChange={(e) => setBaseSalary(e.target.value)}
-                                    placeholder="VD: 20000000"
+                                    onChange={(e) => setBaseSalary(handleSalaryInput(e.target.value))}
+                                    placeholder="VD: 20.000.000"
                                 />
                             </div>
 
@@ -726,7 +729,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                     <div className="w-full max-w-xl rounded-3xl border border-[#8CECF0] bg-white p-8 shadow-2xl">
                         <div className="mb-6 flex items-center">
                             <h3 className="flex-1 text-center text-lg font-semibold text-[#003344]">
-                                Thêm trợ cấp / thưởng mới
+                                Thêm thành phần lương
                             </h3>
                         </div>
 
@@ -739,7 +742,7 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                     onChange={(e) => setAllowTypeId(e.target.value)}
                                 >
                                     <option value="" disabled>
-                                        Chọn loại phụ cấp
+                                        Chọn loại thành phần
                                     </option>
                                     {payComponentTypes.map((type) => (
                                         <option key={type.id} value={type.id}>
@@ -762,10 +765,10 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                                 <span>Giá trị</span>
                                 <input
                                     className="h-10 w-full rounded-full border border-[#CCE1F0] bg-[#F8FAFC] px-4 text-sm font-normal text-[#003344] focus:border-[#4AB4DE] focus:outline-none focus:ring-2 focus:ring-[#4AB4DE]/50"
-                                    type="number"
+                                    type="text"
                                     value={allowAmount}
-                                    onChange={(e) => setAllowAmount(e.target.value)}
-                                    placeholder="VD: 500000"
+                                    onChange={(e) => setAllowAmount(handleSalaryInput(e.target.value))}
+                                    placeholder="VD: 500.000"
                                 />
                             </div>
 
@@ -816,10 +819,10 @@ export function SalaryInfoPage({employeeCode}: SalaryInfoProps) {
                     <div className="w-full max-w-md rounded-3xl border border-[#CCE1F0] bg-white p-8 shadow-2xl">
                         <div className="mb-6 text-center">
                             <h3 className="text-lg font-semibold text-[#003344]">
-                                Cập nhật ngày kết thúc trợ cấp
+                                Cập nhật ngày kết thúc
                             </h3>
                             <p className="mt-1 text-xs text-slate-500">
-                                Để trống ngày kết thúc nếu bạn muốn áp dụng trợ cấp vô thời hạn.
+                                Để trống ngày kết thúc nếu bạn muốn áp dụng vô thời hạn.
                             </p>
                         </div>
 

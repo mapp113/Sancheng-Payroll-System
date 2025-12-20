@@ -30,7 +30,7 @@ function ManagerTimesheetDetailContent() {
         [activeTab]
     );
 
-    const view = activeTab === "Khác" ? "other" : "timesheet";
+    const view = activeTab === "Thành phần lương" ? "other" : "timesheet";
 
     return (
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 pb-12">

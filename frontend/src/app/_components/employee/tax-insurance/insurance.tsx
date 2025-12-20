@@ -5,6 +5,7 @@ import { Trash } from "lucide-react";
 import FormPopBox from "@/app/_components/common/pop-box/form";
 import ConfirmPopBox from "@/app/_components/common/pop-box/confirm";
 import { useNotification } from "@/app/_components/common/pop-box/notification/notification-context";
+import { formatSalary, parseSalary, handleSalaryInput } from "@/app/_components/utils/formatSalary";
 
 export default function InsuranceComponent() {
   const context = useContext(InsuranceListContext);
@@ -18,7 +19,7 @@ export default function InsuranceComponent() {
     insurancePolicyName: "",
     employeePercentage: 0,
     companyPercentage: 0,
-    maxAmount: 0,
+    maxAmount: "" as unknown as number,
     effectiveFrom: "",
     effectiveTo: "",
   });
@@ -44,12 +45,24 @@ export default function InsuranceComponent() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    const numericFields = ["employeePercentage", "companyPercentage", "maxAmount"];
-    const newValue: string | number = numericFields.includes(name) ? Number(value) : value;
-    setFormData(prev => ({
-      ...prev,
-      [name]: newValue,
-    } as unknown as typeof prev));
+    
+    if (name === "maxAmount") {
+      const formattedValue = handleSalaryInput(value);
+      setFormData(prev => ({
+        ...prev,
+        [name]: formattedValue,
+      } as unknown as typeof prev));
+    } else if (name === "employeePercentage" || name === "companyPercentage") {
+      setFormData(prev => ({
+        ...prev,
+        [name]: Number(value),
+      } as unknown as typeof prev));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+      } as unknown as typeof prev));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,14 +76,18 @@ export default function InsuranceComponent() {
     }
     
     try {
-      const success = await createInsurancePolicy(formData);
+      const payload = {
+        ...formData,
+        maxAmount: Number(parseSalary(String(formData.maxAmount))),
+      };
+      const success = await createInsurancePolicy(payload);
       
       if (success) {
         addNotification("ok", "Thành công", "Thêm bảo hiểm thành công!");
         // Refresh data
         await fetchInsurancePolicies(context, setLoading);
         // Reset form and close
-        setFormData({ insurancePolicyName: "", employeePercentage: 0, companyPercentage: 0, maxAmount: 0, effectiveFrom: "", effectiveTo: "" });
+        setFormData({ insurancePolicyName: "", employeePercentage: 0, companyPercentage: 0, maxAmount: "" as unknown as number, effectiveFrom: "", effectiveTo: "" });
         setShowAddForm(false);
       } else {
         addNotification("error", "Lỗi", "Không thể thêm bảo hiểm. Vui lòng thử lại.");
@@ -89,7 +106,7 @@ export default function InsuranceComponent() {
       insurancePolicyName: insurance.insurancePolicyName,
       employeePercentage: insurance.employeePercentage,
       companyPercentage: insurance.companyPercentage,
-      maxAmount: insurance.maxAmount,
+      maxAmount: formatSalary(String(insurance.maxAmount)) as unknown as number,
       effectiveFrom: insurance.effectiveFrom || "",
       effectiveTo: insurance.effectiveTo || "",
     });
@@ -108,14 +125,18 @@ export default function InsuranceComponent() {
       return;
     }
     try {
-      const success = await updateInsurancePolicy(editingId, formData);
+      const payload = {
+        ...formData,
+        maxAmount: Number(parseSalary(String(formData.maxAmount))),
+      };
+      const success = await updateInsurancePolicy(editingId, payload);
       
       if (success) {
         addNotification("ok", "Thành công", "Cập nhật bảo hiểm thành công!");
         // Refresh data
         await fetchInsurancePolicies(context, setLoading);
         // Reset form and close
-        setFormData({ insurancePolicyName: "", employeePercentage: 0, companyPercentage: 0, maxAmount: 0, effectiveFrom: "", effectiveTo: "" });
+        setFormData({ insurancePolicyName: "", employeePercentage: 0, companyPercentage: 0, maxAmount: "" as unknown as number, effectiveFrom: "", effectiveTo: "" });
         setShowEditForm(false);
         setEditingId(null);
       } else {
@@ -224,8 +245,8 @@ export default function InsuranceComponent() {
               context?.insurancePolicies.map((insurance) => (
                 <tr key={insurance.insurancePolicyId} className="border-b">
                   <td className="px-4 py-3">{insurance.insurancePolicyName}</td>
-                  <td className="px-4 py-3">{insurance.employeePercentage}%</td>
-                  <td className="px-4 py-3">{insurance.companyPercentage}%</td>
+                  <td className="px-4 py-3">{insurance.employeePercentage * 100}%</td>
+                  <td className="px-4 py-3">{insurance.companyPercentage * 100}%</td>
                   <td className="px-4 py-3">{insurance.maxAmount.toLocaleString()}</td>
                   <td className="px-4 py-3">{insurance.effectiveFrom || "-"}</td>
                   <td className="px-4 py-3">{insurance.effectiveTo || "-"}</td>
@@ -297,14 +318,13 @@ export default function InsuranceComponent() {
                 <input
                   type="number"
                   name="employeePercentage"
-                  value={formData.employeePercentage}
                   onChange={handleInputChange}
                   required
                   min="0"
                   max="100"
                   step="0.01"
                   className="w-full px-4 py-2 border border-[#CCE1F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#81d4fa]"
-                  placeholder="Nhập tỉ lệ nhân viên"
+                  placeholder="VD: 10% thì ghi 0,01"
                 />
               </div>
 
@@ -313,28 +333,26 @@ export default function InsuranceComponent() {
                 <input
                   type="number"
                   name="companyPercentage"
-                  value={formData.companyPercentage}
                   onChange={handleInputChange}
                   required
                   min="0"
                   max="100"
                   step="0.01"
                   className="w-full px-4 py-2 border border-[#CCE1F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#81d4fa]"
-                  placeholder="Nhập tỉ lệ doanh nghiệp"
+                  placeholder="VD: 10% thì ghi 0,01"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-[#1D3E6A]">Số tiền tối đa</label>
                 <input
-                  type="number"
+                  type="text"
                   name="maxAmount"
                   value={formData.maxAmount}
                   onChange={handleInputChange}
                   required
-                  min="0"
                   className="w-full px-4 py-2 border border-[#CCE1F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#81d4fa]"
-                  placeholder="Nhập số tiền tối đa"
+                  placeholder="VD: 5.000.000"
                 />
               </div>
 
@@ -394,7 +412,7 @@ export default function InsuranceComponent() {
                 onClick={() => {
                   setShowEditForm(false);
                   setEditingId(null);
-                  setFormData({ insurancePolicyName: "", employeePercentage: 0, companyPercentage: 0, maxAmount: 0, effectiveFrom: "", effectiveTo: "" });
+                  setFormData({ insurancePolicyName: "", employeePercentage: 0, companyPercentage: 0, maxAmount: "" as unknown as number, effectiveFrom: "", effectiveTo: "" });
                 }}
                 className="rounded-full p-2 text-gray-500 hover:bg-gray-100 transition cursor-pointer"
               >
@@ -454,14 +472,13 @@ export default function InsuranceComponent() {
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-[#1D3E6A]">Số tiền tối đa</label>
                 <input
-                  type="number"
+                  type="text"
                   name="maxAmount"
                   value={formData.maxAmount}
                   onChange={handleInputChange}
                   required
-                  min="0"
                   className="w-full px-4 py-2 border border-[#CCE1F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#81d4fa]"
-                  placeholder="Nhập số tiền tối đa"
+                  placeholder="VD: 5.000.000"
                 />
               </div>
 
