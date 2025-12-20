@@ -5,6 +5,8 @@ import com.g98.sangchengpayrollmanager.model.dto.leave.LeaveRequestResponse;
 import com.g98.sangchengpayrollmanager.model.enums.LeaveandOTStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 
 
 
@@ -46,4 +48,8 @@ public interface LeaveRequestService {
 
     // Manager từ chối yêu cầu
     LeaveRequestResponse rejectLeaveRequest(Integer id, String note);
+
+    // Xem ảnh khi gửi leaverequest
+    ResponseEntity<Resource> viewLeaveAttachment(String fileName) throws java.io.IOException;
+
 }
