@@ -16,12 +16,12 @@ export default function LeavesPage() {
   // Pagination states for leave
   const [leaveIndexPage, setLeaveIndexPage] = useState(0);
   const [leaveTotalPages, setLeaveTotalPages] = useState(1);
-  const leaveMaxItems = 10;
+  const leaveMaxItems = 5;
 
   // Pagination states for OT
   const [otIndexPage, setOtIndexPage] = useState(0);
   const [otTotalPages, setOtTotalPages] = useState(1);
-  const otMaxItems = 10;
+  const otMaxItems = 5;
 
   useEffect(() => {
     async function fetchLeaveData() {
