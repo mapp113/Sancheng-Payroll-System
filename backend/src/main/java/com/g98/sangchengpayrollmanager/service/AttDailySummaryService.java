@@ -105,6 +105,10 @@ public class AttDailySummaryService {
                 dailySummary.setWorkHours(policy.getStandardHoursPerDay());
                 dailySummary.setIsPayableDay(true);
                 dailySummary.setIsCountPayableDay(true);
+                if(leaveRequest.getLeaveType().getCode().equalsIgnoreCase("sick")
+                        || leaveRequest.getLeaveType().getCode().equalsIgnoreCase("maternity")){
+                    dailySummary.setIsCountPayableDay(false);
+                }
                 return attDailySummaryRepo.save(dailySummary);
             }
 

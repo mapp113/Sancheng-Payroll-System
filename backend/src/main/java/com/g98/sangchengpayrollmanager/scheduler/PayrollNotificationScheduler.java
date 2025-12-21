@@ -16,7 +16,7 @@ public class PayrollNotificationScheduler {
 
     private final PayrollNotificationService payrollNotificationService;
 
-    @Scheduled(cron = "${app.payroll-notification.cron:0 05 23 * * ?}")
+    @Scheduled(cron = "${app.payroll-notification.cron:0 00 12 7 * ?}")
     public void sendMonthlyPayrollReminder() {
         LocalDate today = LocalDate.now();
         YearMonth payrollMonth = YearMonth.from(today.minusMonths(1));

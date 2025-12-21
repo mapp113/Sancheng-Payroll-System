@@ -9,4 +9,5 @@ public interface PayComponentTypeRepository extends JpaRepository<PayComponentTy
 
     Optional<PayComponentType> findByid(Integer id);
 
+    Optional<PayComponentType> findByName(String name);
 }

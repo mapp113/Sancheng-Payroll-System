@@ -9,6 +9,8 @@ import com.g98.sangchengpayrollmanager.model.entity.User;
 import com.g98.sangchengpayrollmanager.model.enums.DurationType;
 import com.g98.sangchengpayrollmanager.model.enums.LeaveandOTStatus;
 import com.g98.sangchengpayrollmanager.repository.*;
+import com.g98.sangchengpayrollmanager.service.AttDailySummaryService;
+import com.g98.sangchengpayrollmanager.service.AttMonthSummaryService;
 import com.g98.sangchengpayrollmanager.service.FileStorageService;
 import com.g98.sangchengpayrollmanager.service.LeaveRequestService;
 import com.g98.sangchengpayrollmanager.service.NotificationService;
@@ -28,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 
 @Service
@@ -42,6 +45,8 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     private static final String ANNUAL_LEAVE_CODE = "annual";
     private final SpecialDaysRepository specialDaysRepository;
     private final NotificationService notificationService;
+    private final AttDailySummaryService attDailySummaryService;
+    private final AttMonthSummaryService attMonthSummaryService;
     private final FileStorageService fileStorageService;
 
     @Override
@@ -404,6 +409,44 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         leaveRequest.setNote(note);
         leaveRequest.setApprovedDate(LocalDateTime.now());
         LeaveRequest savedLeaveRequest = leaveRequestRepository.save(leaveRequest);
+
+        // kiểm tra xem là trong khoảng thời gian đăng kí xin nghỉ có bao nhiêu ngày trong quá khu
+        // sau đó gọi lại hàm tôổng hợp ngày và tháng ở trong service khác cho các ngày trong quá khứ
+        if (leaveRequest.getFromDate().isBefore(LocalDate.now())) {
+
+            LocalDate today = LocalDate.now();
+            LocalDate start = leaveRequest.getFromDate();
+            LocalDate end = leaveRequest.getToDate() != null
+                    ? leaveRequest.getToDate()
+                    : leaveRequest.getFromDate();
+
+            // chỉ xử lý các ngày trong quá khứ
+            LocalDate recalEnd = end.isBefore(today) ? end : today.minusDays(1);
+            YearMonth thisMonth = YearMonth.from(LocalDate.now());
+            YearMonth fromMonth = YearMonth.from(leaveRequest.getFromDate());
+            YearMonth toMonth = YearMonth.from(end);
+
+            LocalDate current = start;
+            while (!current.isAfter(recalEnd)) {
+
+                // gọi service tổng hợp lại công/ngày nghỉ cho ngày đã qua
+                attDailySummaryService.createDailySummary(leaveRequest.getUser().getEmployeeCode(), current);
+                current = current.plusDays(1);
+            }
+            // Nếu khoảng xin nghỉ trong cùng 1 tháng
+            if (fromMonth.equals(toMonth)) {
+                LocalDate recaculateMonth = !thisMonth.equals(fromMonth)
+                        ? fromMonth.atEndOfMonth()
+                        : recalEnd;
+                attMonthSummaryService.createMonthSummary(leaveRequest.getUser().getEmployeeCode(), recaculateMonth);
+            } else {
+                attMonthSummaryService.createMonthSummary(leaveRequest.getUser().getEmployeeCode(), fromMonth.atEndOfMonth());
+                LocalDate recaculateMonth = !thisMonth.equals(toMonth)
+                        ? toMonth.atEndOfMonth()
+                        : recalEnd;
+                attMonthSummaryService.createMonthSummary(leaveRequest.getUser().getEmployeeCode(), recaculateMonth);
+            }
+        }
 
         User employee = leaveRequest.getUser();
 

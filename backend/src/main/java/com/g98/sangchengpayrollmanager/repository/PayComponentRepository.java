@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface PayComponentRepository extends JpaRepository<PayComponent, Integer> {
     @Query("""
@@ -33,5 +34,20 @@ public interface PayComponentRepository extends JpaRepository<PayComponent, Inte
             @Param("startOfMonth") LocalDate startOfMonth,
             @Param("endOfMonth") LocalDate endOfMonth
     );
+
+    @Query("""
+    SELECT pc FROM PayComponent pc
+    WHERE pc.user.employeeCode = :employeeCode
+      AND pc.name = :name
+      AND pc.startDate <= :endDate
+      AND (pc.endDate IS NULL OR pc.endDate >= :startDate)
+""")
+    Optional<PayComponent> findOneByEmployeeAndNameAndPeriod(
+            @Param("employeeCode") String employeeCode,
+            @Param("name") String name,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
 
 }
