@@ -12,6 +12,7 @@ export default function LeavesPage() {
   const [otLoading, setOtLoading] = useState(true);
   const [remainingLeave, setRemainingLeave] = useState<number | null>(null);
   const [remainingOT, setRemainingOT] = useState<number | null>(null);
+  const [employeeCode, setEmployeeCode] = useState<string>("");
 
   // Pagination states for leave
   const [leaveIndexPage, setLeaveIndexPage] = useState(0);
@@ -22,6 +23,18 @@ export default function LeavesPage() {
   const [otIndexPage, setOtIndexPage] = useState(0);
   const [otTotalPages, setOtTotalPages] = useState(1);
   const otMaxItems = 5;
+
+  useEffect(() => {
+    const userStr = sessionStorage.getItem("scpm.auth.user");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setEmployeeCode(user.employeeCode || "");
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     async function fetchLeaveData() {
@@ -98,17 +111,25 @@ export default function LeavesPage() {
         }
 
         // Fetch remaining OT (only once)
-        if (otIndexPage === 0) {
-          const remainingOTResponse = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/overtime/remaining-month`, {
-            headers: {
-              "Authorization": `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          });
+        if (otIndexPage === 0 && employeeCode) {
+          const currentDate = new Date();
+          const year = currentDate.getFullYear();
+          const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+          const monthParam = `${year}-${month}-01`;
+
+          const remainingOTResponse = await fetch(
+            `${process.env.NEXT_PUBLIC_SERVER_URL}/api/attsummary/month?month=${monthParam}&employeeCode=${employeeCode}`,
+            {
+              headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
 
           if (remainingOTResponse.ok) {
             const remainingOTData = await remainingOTResponse.json();
-            setRemainingOT(remainingOTData);
+            setRemainingOT(remainingOTData.otHours || 0);
           }
         }
       } catch (error) {
@@ -119,7 +140,7 @@ export default function LeavesPage() {
     }
 
     fetchOTData();
-  }, [otIndexPage]);
+  }, [otIndexPage, employeeCode]);
 
   const getStatusText = (status: string) => {
     switch (status) {
