@@ -20,6 +20,7 @@ import {formatDecimal, formatHours, formatTime} from "./utils";
 import {useState, useEffect, useContext} from "react";
 import {TimesheetDetailParam} from "./context";
 import FormPopBoxNotScroll from "../common/pop-box/form-not-scroll";
+import Toast from "../common/notification/toast";
 import { useRouter } from "next/navigation";
 
 // Thêm interface cho PayComponent
@@ -65,6 +66,7 @@ export default function ManagerTimesheetDetail({
     const [payComponents, setPayComponents] = useState<PayComponentResponse[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [selectedDay, setSelectedDay] = useState<AttendanceDaily | null>(null);
+    const [toast, setToast] = useState<{message: string; type: "success" | "error" | "warning"} | null>(null);
     const timesheetParams = useContext(TimesheetDetailParam);
 
     useEffect(() => {
@@ -111,78 +113,78 @@ export default function ManagerTimesheetDetail({
     }, [timesheetParams?.employeeCode]);
 
     // Gọi API để lấy attendance summary
-    useEffect(() => {
-        const fetchAttendanceSummary = async () => {
-            if (!timesheetParams?.employeeCode || !startDate) return;
+    const fetchAttendanceSummary = async () => {
+        if (!timesheetParams?.employeeCode || !startDate) return;
 
-            const month = startDate.slice(0, 7);
-            
-            setIsLoading(true);
-            try {
-                const userStr = window.sessionStorage.getItem("scpm.auth.user");
-                const token = userStr ? JSON.parse(userStr)?.token : null;
+        const month = startDate.slice(0, 7);
+        
+        setIsLoading(true);
+        try {
+            const userStr = window.sessionStorage.getItem("scpm.auth.user");
+            const token = userStr ? JSON.parse(userStr)?.token : null;
 
-                const monthParam = `${month}-01`;
-                const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/attsummary/month?month=${monthParam}&employeeCode=${timesheetParams.employeeCode}`,
-                    {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                        },
-                    }
-                );
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch attendance summary');
+            const monthParam = `${month}-01`;
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_SERVER_URL}/api/attsummary/month?month=${monthParam}&employeeCode=${timesheetParams.employeeCode}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
                 }
+            );
 
-                const data: AttendanceSummary = await response.json();
-                setAttendanceSummary(data);
-            } catch (error) {
-                console.error('Lỗi khi tải thống kê chấm công:', error);
-            } finally {
-                setIsLoading(false);
+            if (!response.ok) {
+                throw new Error('Failed to fetch attendance summary');
             }
-        };
 
+            const data: AttendanceSummary = await response.json();
+            setAttendanceSummary(data);
+        } catch (error) {
+            console.error('Lỗi khi tải thống kê chấm công:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchAttendanceSummary();
     }, [timesheetParams?.employeeCode, startDate]);
 
     // Gọi API để lấy attendance daily
-    useEffect(() => {
-        const fetchAttendanceDaily = async () => {
-            if (!timesheetParams?.employeeCode || !startDate) return;
+    const fetchAttendanceDaily = async () => {
+        if (!timesheetParams?.employeeCode || !startDate) return;
 
-            const month = startDate.slice(0, 7);
+        const month = startDate.slice(0, 7);
 
-            setIsLoading(true);
-            try {
-                const userStr = window.sessionStorage.getItem("scpm.auth.user");
-                const token = userStr ? JSON.parse(userStr)?.token : null;
+        setIsLoading(true);
+        try {
+            const userStr = window.sessionStorage.getItem("scpm.auth.user");
+            const token = userStr ? JSON.parse(userStr)?.token : null;
 
-                const monthParam = `${month}-01`;
-                const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/attsummary/by-month?employeeCode=${timesheetParams.employeeCode}&month=${monthParam}`,
-                    {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                        },
-                    }
-                );
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch attendance daily');
+            const monthParam = `${month}-01`;
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_SERVER_URL}/api/attsummary/by-month?employeeCode=${timesheetParams.employeeCode}&month=${monthParam}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
                 }
+            );
 
-                const data: AttendanceDaily[] = await response.json();
-                setAttendanceDaily(data);
-            } catch (error) {
-                console.error('Lỗi khi tải dữ liệu chấm công hàng ngày:', error);
-            } finally {
-                setIsLoading(false);
+            if (!response.ok) {
+                throw new Error('Failed to fetch attendance daily');
             }
-        };
 
+            const data: AttendanceDaily[] = await response.json();
+            setAttendanceDaily(data);
+        } catch (error) {
+            console.error('Lỗi khi tải dữ liệu chấm công hàng ngày:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchAttendanceDaily();
     }, [timesheetParams?.employeeCode, startDate]);
 
@@ -228,6 +230,10 @@ export default function ManagerTimesheetDetail({
             fetchPayComponents();
         }
     }, [timesheetParams?.employeeCode, startDate, view]);
+
+    const handleRefetchData = async () => {
+        await Promise.all([fetchAttendanceSummary(), fetchAttendanceDaily()]);
+    };
 
     const headerLines: DetailHeaderLine[] = [];
     if (employeeInfo?.employeeCode || detail.employee.employeeId) {
@@ -332,6 +338,16 @@ export default function ManagerTimesheetDetail({
                     attendanceData={selectedDay}
                     employeeInfo={employeeInfo}
                     onClose={() => setSelectedDay(null)}
+                    onShowToast={(message, type) => setToast({message, type})}
+                    onRefetchData={handleRefetchData}
+                />
+            )}
+
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
                 />
             )}
         </DetailShell>
@@ -471,12 +487,15 @@ function TimesheetTable({
                         note: "Nghỉ không phép",
                     });
                 } else if (dailyData.leaveTypeCode) {
+                    const leaveTypeDisplay = dailyData.leaveTypeCode.toLowerCase() === 'unpaid' 
+                        ? 'Nghỉ không lương' 
+                        : dailyData.leaveTypeCode;
                     days.push({
                         id: dateStr,
                         day: dayName,
                         date: `${String(day).padStart(2, '0')}/${String(monthNum).padStart(2, '0')}/${year}`,
                         type: "leave",
-                        note: dailyData.leaveTypeCode,
+                        note: leaveTypeDisplay,
                     });
                 } else {
                     const checkIn = dailyData.checkInTime ? dailyData.checkInTime.split('T')[1]?.substring(0, 5) : null;
@@ -771,10 +790,14 @@ function AttendanceDayDetailPopup({
                                       attendanceData,
                                       employeeInfo,
                                       onClose,
+                                      onShowToast,
+                                      onRefetchData,
                                   }: {
     attendanceData: AttendanceDaily;
     employeeInfo: EmployeeInfomation | null;
     onClose: () => void;
+    onShowToast: (message: string, type: "success" | "error" | "warning") => void;
+    onRefetchData: () => Promise<void>;
 }) {
     const [isEditing, setIsEditing] = useState(false);
     const [isLateCounted, setIsLateCounted] = useState(attendanceData.isLateCounted);
@@ -796,7 +819,20 @@ function AttendanceDayDetailPopup({
         }
     };
 
-    const canEdit = !isOwnEmployee();
+    // Kiểm tra xem có phải role Manager không
+    const isManager = () => {
+        const userStr = window.sessionStorage.getItem("scpm.auth.user");
+        if (!userStr) return false;
+        
+        try {
+            const user = JSON.parse(userStr);
+            return user.role?.toLowerCase() === 'manager';
+        } catch {
+            return false;
+        }
+    };
+
+    const canEdit = !isOwnEmployee() && !isManager();
 
     // Lưu giá trị ban đầu để kiểm tra
     const initialIsLateCounted = attendanceData.isLateCounted;
@@ -838,12 +874,16 @@ function AttendanceDayDetailPopup({
             if (!response.ok) {
                 throw new Error('Không thể cập nhật thông tin chấm công');
             }
+            
+            onShowToast('Cập nhật thông tin chấm công thành công', 'success');
             setIsEditing(false);
             onClose();
-            window.location.reload();
+            
+            // Refetch data instead of reload
+            await onRefetchData();
         } catch (error) {
             console.error('Lỗi khi cập nhật chấm công:', error);
-            alert('Không thể cập nhật thông tin chấm công');
+            onShowToast('Không thể cập nhật thông tin chấm công', 'error');
         } finally {
             setIsSaving(false);
         }
@@ -920,7 +960,13 @@ function AttendanceDayDetailPopup({
                                 <div className="space-y-1">
                                     <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Loại
                                         nghỉ phép</label>
-                                    <p className="text-sm font-bold text-[#1D3E6A]">{attendanceData.leaveTypeCode || "--"}</p>
+                                    <p className="text-sm font-bold text-[#1D3E6A]">
+                                        {attendanceData.leaveTypeCode 
+                                            ? (attendanceData.leaveTypeCode.toLowerCase() === 'unpaid' 
+                                                ? 'Nghỉ không lương' 
+                                                : attendanceData.leaveTypeCode)
+                                            : "--"}
+                                    </p>
                                 </div>
 
                                 <div className="space-y-1">

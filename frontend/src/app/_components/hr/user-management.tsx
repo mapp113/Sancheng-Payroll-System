@@ -186,6 +186,8 @@ export default function UserManagement() {
     const [users, setUsers] = useState<UserItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 7;
 
     const [positions, setPositions] = useState<Position[]>([]);
     const [loadingPositions, setLoadingPositions] = useState(false);
@@ -193,6 +195,7 @@ export default function UserManagement() {
     const [profileModalOpen, setProfileModalOpen] = useState(false);
     const [selectedEmployeeCode, setSelectedEmployeeCode] = useState<string | null>(null);
     const [selectedProfile, setSelectedProfile] = useState<EmployeeProfile>(emptyProfile);
+    const [initialProfile, setInitialProfile] = useState<EmployeeProfile>(emptyProfile);
     const [profileLoading, setProfileLoading] = useState(false);
     const [profileError, setProfileError] = useState<string | null>(null);
     const [contractUploadError, setContractUploadError] = useState<string | null>(null);
@@ -315,6 +318,17 @@ export default function UserManagement() {
         return list;
     }, [users, filterRole, search]);
 
+    // Calculate pagination
+    const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+    // Reset to page 1 when filter or search changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filterRole, search]);
+
     const reloadUsers = async () => {
         try {
             const res = await fetch(`${API_BASE}/api/v1/hr/users`, {
@@ -378,6 +392,14 @@ export default function UserManagement() {
                 phone: userData.phoneNo ?? mappedProfile.phone,
             }));
 
+            // Store initial profile for validation
+            setInitialProfile({
+                ...mappedProfile,
+                name: userData.fullName ?? mappedProfile.name,
+                personalEmail: userData.email ?? mappedProfile.personalEmail,
+                phone: userData.phoneNo ?? mappedProfile.phone,
+            });
+
         } catch (error) {
             console.error(error);
             setProfileError("Không thể tải thông tin hồ sơ");
@@ -397,6 +419,7 @@ export default function UserManagement() {
         setProfileModalOpen(false);
         setSelectedEmployeeCode(null);
         setSelectedProfile(emptyProfile);
+        setInitialProfile(emptyProfile);
         setProfileError(null);
         setContractUploadError(null);
     };
@@ -436,6 +459,44 @@ export default function UserManagement() {
             setProfileError(null);
             setProfileLoading(true);
 
+            // Validate that fields with initial values cannot be cleared (except contractUrl)
+            const fieldsToValidate: (keyof EmployeeProfile)[] = [
+                "name", "personalEmail", "positionId", "dob", "phone", "address",
+                "joinDate", "contractType", "baseSalary", "visaExpiry", "bankNumber",
+                "citizenId", "dependentsNo", "taxCode"
+            ];
+
+            for (const field of fieldsToValidate) {
+                const initialValue = initialProfile[field];
+                const currentValue = selectedProfile[field];
+                
+                // If field had a value initially and is now empty/undefined
+                if (initialValue && initialValue.toString().trim() !== "" && 
+                    (!currentValue || currentValue.toString().trim() === "")) {
+                    const fieldLabels: Record<string, string> = {
+                        name: "Họ và tên",
+                        personalEmail: "Email",
+                        positionId: "Chức vụ",
+                        dob: "Ngày sinh",
+                        phone: "Số điện thoại",
+                        address: "Địa chỉ",
+                        joinDate: "Ngày vào làm",
+                        contractType: "Loại hợp đồng",
+                        baseSalary: "Lương hợp đồng",
+                        visaExpiry: "Ngày hết hạn hợp đồng",
+                        bankNumber: "Số tài khoản",
+                        citizenId: "Căn cước công dân",
+                        dependentsNo: "Số người phụ thuộc",
+                        taxCode: "Mã số thuế"
+                    };
+                    
+                    const message = `${fieldLabels[field] || field} không được để trống`;
+                    setToast({message, type: "error"});
+                    setProfileLoading(false);
+                    return;
+                }
+            }
+
             if (
                 selectedProfile.personalEmail &&
                 !isValidEmail(selectedProfile.personalEmail)
@@ -470,19 +531,19 @@ export default function UserManagement() {
             const visaExpiry = selectedProfile.visaExpiry ? new Date(selectedProfile.visaExpiry) : null;
 
             if (dobDate && dobDate > today) {
-                setProfileError("Ngày sinh không được nằm trong tương lai");
+                setToast({message: "Ngày sinh không được nằm trong tương lai", type: "error"});
                 setProfileLoading(false);
                 return;
             }
 
             if (dobDate && joinDate && joinDate < dobDate) {
-                setProfileError("Ngày bắt đầu làm việc phải sau ngày sinh");
+                setToast({message: "Ngày bắt đầu làm việc phải sau ngày sinh", type: "error"});
                 setProfileLoading(false);
                 return;
             }
 
             if (joinDate && visaExpiry && joinDate >= visaExpiry) {
-                setProfileError("Ngày bắt đầu phải nhỏ hơn ngày kết thúc hợp đồng");
+                setToast({message: "Ngày bắt đầu phải nhỏ hơn ngày kết thúc hợp đồng", type: "error"});
                 setProfileLoading(false);
                 return;
             }
@@ -662,7 +723,7 @@ export default function UserManagement() {
                                 onChange={(event) => setFilterRole(event.target.value)}
                                 className="rounded-full border border-[#E2E8F0] px-4 py-2 text-sm focus:border-[#4AB4DE] focus:outline-none"
                             >
-                                <option value="all">All</option>
+                                <option value="all">Tất cả</option>
                                 <option value="HR">HR</option>
                                 <option value="Manager">Manager</option>
                                 <option value="Employee">Employee</option>
@@ -692,7 +753,7 @@ export default function UserManagement() {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredUsers.map((user) => (
+                                paginatedUsers.map((user) => (
                                     <tr key={`${user.employeeCode}-${user.userId}`} className="hover:bg-[#F1F5F9]">
                                         <td className="whitespace-nowrap px-4 py-3 font-medium">
                                             {user.userId}
@@ -740,6 +801,67 @@ export default function UserManagement() {
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                        <div className="mt-4 flex items-center justify-between">
+                            <div className="text-sm text-slate-600">
+                                Hiển thị {startIndex + 1} - {Math.min(endIndex, filteredUsers.length)} trong tổng số {filteredUsers.length} nhân viên
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                    disabled={currentPage === 1}
+                                    className="rounded-lg border border-[#E2E8F0] px-3 py-1.5 text-sm font-medium text-[#1F2A44] transition hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    Trước
+                                </button>
+                                
+                                <div className="flex items-center gap-1">
+                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                                        // Show first page, last page, current page, and pages around current
+                                        if (
+                                            page === 1 ||
+                                            page === totalPages ||
+                                            (page >= currentPage - 1 && page <= currentPage + 1)
+                                        ) {
+                                            return (
+                                                <button
+                                                    key={page}
+                                                    onClick={() => setCurrentPage(page)}
+                                                    className={`min-w-[32px] rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                                                        currentPage === page
+                                                            ? "bg-[#4AB4DE] text-white"
+                                                            : "border border-[#E2E8F0] text-[#1F2A44] hover:bg-[#F8FAFC]"
+                                                    }`}
+                                                >
+                                                    {page}
+                                                </button>
+                                            );
+                                        } else if (
+                                            page === currentPage - 2 ||
+                                            page === currentPage + 2
+                                        ) {
+                                            return (
+                                                <span key={page} className="px-2 text-slate-400">
+                                                    ...
+                                                </span>
+                                            );
+                                        }
+                                        return null;
+                                    })}
+                                </div>
+
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className="rounded-lg border border-[#E2E8F0] px-3 py-1.5 text-sm font-medium text-[#1F2A44] transition hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    Sau
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </section>
             </div>
 
