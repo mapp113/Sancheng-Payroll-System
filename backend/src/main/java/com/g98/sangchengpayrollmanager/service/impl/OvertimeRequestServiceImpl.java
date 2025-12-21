@@ -248,7 +248,7 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
 
             LocalDate recalculateMonthDate = !thisMonth.equals(otMonth)
                     ? otDate.withDayOfMonth(otDate.lengthOfMonth())   // tháng cũ -> cuối tháng đó
-                    : otDate;                                         // tháng hiện tại -> tính tới ngày OT
+                    : today.minusDays(1);               // tháng hiện tại -> ổng hop lại đến ngày hiện tại
 
             attMonthSummaryService.createMonthSummary(empCode, recalculateMonthDate);
         }
