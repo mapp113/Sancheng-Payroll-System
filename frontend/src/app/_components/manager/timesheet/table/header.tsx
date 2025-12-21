@@ -4,8 +4,8 @@ export default function TimesheetTableHeader() {
       <tr>
         <th className="px-4 py-3 font-medium">Mã nhân viên</th>
         <th className="px-4 py-3 font-medium">Họ và tên</th>
-        <th className="px-4 py-3 font-medium">Chức vụ</th>
-        <th className="px-4 py-3 font-medium">Thời gian làm việc<br />(chưa bao gồm OT)</th>
+        <th className="px-4 py-3 font-medium">Công chuẩn</th>
+        <th className="px-4 py-3 font-medium">Công thực tế</th>
         <th className="px-4 py-3 font-medium">Làm thêm</th>
         <th className="px-4 py-3 font-medium text-center">Nghỉ phép năm đã dùng</th>
         <th className="px-4 py-3 font-medium"/>

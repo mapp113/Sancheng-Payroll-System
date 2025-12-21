@@ -34,7 +34,7 @@ type JwtPayload = {
 const ROLE_REDIRECTS: Record<string, string> = {
     ADMIN: "/admin",
     HR: "/contract",
-    MANAGER: "/payroll",
+    MANAGER: "/contract",
     ACCOUNTANT: "/home",
     EMPLOYEE: "/employee",
 }
@@ -82,7 +82,7 @@ export async function login(payload: LoginPayload): Promise<AuthenticatedUser> {
 
 // 🔁 Lấy đường dẫn redirect theo role
 export function resolveRedirectPath(user: AuthenticatedUser): string {
-    const path = ROLE_REDIRECTS[user.role] ?? "/payroll"
+    const path = ROLE_REDIRECTS[user.role] ?? "/contract"
     return path
 }
 

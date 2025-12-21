@@ -10,6 +10,7 @@ type FirstCheckInResponse = {
 import { getUserData } from "@/app/_components/utils/getUserData";
 import AttendanceTable from "@/app/_components/employee/attendance-table";
 import type { EmployeeInfomation, AttendanceSummary, AttendanceDaily } from "@/app/_components/manager-timesheet-detail/types";
+import { getLeaveTypeName } from "@/app/_components/utils/leaveTypeMapping";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 type JwtPayload = {
@@ -409,7 +410,9 @@ export default function EmployeesDashboardPage() {
 
                                             <div className="space-y-1">
                                                 <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Loại nghỉ phép</label>
-                                                <p className="text-sm font-bold text-[#1D3E6A]">{selectedDayData.leaveTypeCode || "--"}</p>
+                                                <p className="text-sm font-bold text-[#1D3E6A]">
+                                                    {selectedDayData.leaveTypeCode ? getLeaveTypeName(selectedDayData.leaveTypeCode) : "--"}
+                                                </p>
                                             </div>
 
                                             <div className="space-y-1">

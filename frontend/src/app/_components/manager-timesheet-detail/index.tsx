@@ -22,6 +22,7 @@ import {TimesheetDetailParam} from "./context";
 import FormPopBoxNotScroll from "../common/pop-box/form-not-scroll";
 import Toast from "../common/notification/toast";
 import { useRouter } from "next/navigation";
+import { getLeaveTypeName } from "../utils/leaveTypeMapping";
 
 // Thêm interface cho PayComponent
 interface PayComponentResponse {
@@ -487,15 +488,12 @@ function TimesheetTable({
                         note: "Nghỉ không phép",
                     });
                 } else if (dailyData.leaveTypeCode) {
-                    const leaveTypeDisplay = dailyData.leaveTypeCode.toLowerCase() === 'unpaid' 
-                        ? 'Nghỉ không lương' 
-                        : dailyData.leaveTypeCode;
                     days.push({
                         id: dateStr,
                         day: dayName,
                         date: `${String(day).padStart(2, '0')}/${String(monthNum).padStart(2, '0')}/${year}`,
                         type: "leave",
-                        note: leaveTypeDisplay,
+                        note: getLeaveTypeName(dailyData.leaveTypeCode),
                     });
                 } else {
                     const checkIn = dailyData.checkInTime ? dailyData.checkInTime.split('T')[1]?.substring(0, 5) : null;
@@ -962,9 +960,7 @@ function AttendanceDayDetailPopup({
                                         nghỉ phép</label>
                                     <p className="text-sm font-bold text-[#1D3E6A]">
                                         {attendanceData.leaveTypeCode 
-                                            ? (attendanceData.leaveTypeCode.toLowerCase() === 'unpaid' 
-                                                ? 'Nghỉ không lương' 
-                                                : attendanceData.leaveTypeCode)
+                                            ? getLeaveTypeName(attendanceData.leaveTypeCode)
                                             : "--"}
                                     </p>
                                 </div>

@@ -7,6 +7,8 @@ import type { LeaveDetailResponse } from "@/app/_components/employee/request/typ
 import RequestConfirmation from "@/app/_components/common/pop-box/request-confirmation";
 import SuccessNotification from "@/app/_components/common/pop-box/notification/success";
 import ErrorNotification from "@/app/_components/common/pop-box/notification/error";
+import { getLeaveTypeName, getDurationName } from "@/app/_components/utils/leaveTypeMapping";
+import { mapStatus } from "@/app/_components/utils/statusMapping";
 
 function ManagerApprovalLeavesContent() {
   const searchParams = useSearchParams();
@@ -204,7 +206,7 @@ function ManagerApprovalLeavesContent() {
                 <div className="space-y-3">
                   <div className="flex items-start">
                     <span className="w-32 text-sm font-medium text-gray-600">Loại nghỉ:</span>
-                    <span className="flex-1 text-sm text-gray-900">{leaveData.leaveTypeCode}</span>
+                    <span className="flex-1 text-sm text-gray-900">{getLeaveTypeName(leaveData.leaveTypeCode)}</span>
                   </div>
                   <div className="flex items-start">
                     <span className="w-32 text-sm font-medium text-gray-600">Ngày bắt đầu:</span>
@@ -216,7 +218,7 @@ function ManagerApprovalLeavesContent() {
                   </div>
                   <div className="flex items-start">
                     <span className="w-32 text-sm font-medium text-gray-600">Thời gian:</span>
-                    <span className="flex-1 text-sm font-semibold text-blue-600">{leaveData.duration}</span>
+                    <span className="flex-1 text-sm font-semibold text-blue-600">{getDurationName(leaveData.duration)}</span>
                   </div>
                 </div>
               </div>
@@ -253,7 +255,7 @@ function ManagerApprovalLeavesContent() {
                     leaveData.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
                     'bg-yellow-100 text-yellow-800'
                   }`}>
-                    {leaveData.status}
+                    {mapStatus(leaveData.status)}
                   </span>
                 </div>
               </div>
