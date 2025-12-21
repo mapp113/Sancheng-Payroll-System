@@ -61,13 +61,6 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
         leaveRequestDTO.setToDate(toDate);
 
-        if (leaveRequestDTO.getFromDate().isBefore(today)) {
-            throw new IllegalArgumentException("Ngày bắt đầu không được trong quá khứ ");
-        }
-
-        if (leaveRequestDTO.getToDate().isBefore(leaveRequestDTO.getFromDate())) {
-            throw new IllegalArgumentException("Ngày kết thúc không được nhỏ hơn ngày bắt đầu.");
-        }
 
         User user = userRepository.findByUsernameWithRole(username)
                 .orElseThrow(() -> new RuntimeException("Không có người này: " + username));
@@ -75,17 +68,17 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         LeaveType leaveType = leaveTypeRepository.findByCode(leaveRequestDTO.getLeaveType())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy ngày nghỉ: " + leaveRequestDTO.getLeaveType()));
 
-        DurationType durationType = DurationType.valueOf(leaveRequestDTO.getDuration().toUpperCase());
-
-        if((durationType == DurationType.HALF_DAY_AM || durationType == DurationType.HALF_DAY_PM)
-                && !leaveType.getCode().equals("unpaid_half")) {
-            throw new IllegalArgumentException("Nghỉ nửa ngày bắt buộc phải là nghỉ không phép");
-        }
-
-        if ((durationType == DurationType.HALF_DAY_AM || durationType == DurationType.HALF_DAY_PM)
-                && !fromDate.equals(toDate)) {
-            throw new IllegalArgumentException("Nghỉ nửa ngày chỉ được chọn 1 ngày");
-        }
+//        DurationType durationType = DurationType.valueOf(leaveRequestDTO.getDuration().toUpperCase());
+//
+//        if((durationType == DurationType.HALF_DAY_AM || durationType == DurationType.HALF_DAY_PM)
+//                && !leaveType.getCode().equals("unpaid_half")) {
+//            throw new IllegalArgumentException("Nghỉ nửa ngày bắt buộc phải là nghỉ không phép");
+//        }
+//
+//        if ((durationType == DurationType.HALF_DAY_AM || durationType == DurationType.HALF_DAY_PM)
+//                && !fromDate.equals(toDate)) {
+//            throw new IllegalArgumentException("Nghỉ nửa ngày chỉ được chọn 1 ngày");
+//        }
 
         boolean overlap = leaveRequestRepository.existsOverlappingLeave(
                 user.getEmployeeCode(), fromDate, toDate
@@ -527,6 +520,39 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
         return Math.max((entitled + carried) - used, 0.0);
     }
+
+    // check cho 1 nhân viên
+    public void validateNoPendingLeave(String employeeCode, YearMonth ym) {
+        LocalDate fromDate = ym.atDay(1);
+        LocalDate toDate   = ym.atEndOfMonth();
+
+        boolean hasPendingLeave =
+                leaveRequestRepository.existsPendingLeaveInMonth(employeeCode, fromDate, toDate);
+
+        if (hasPendingLeave) {
+            throw new RuntimeException(
+                    "Không thể tạo phiếu lương vì còn đơn nghỉ chưa duyệt trong tháng "
+                            + ym.getMonthValue() + "/" + ym.getYear()
+            );
+        }
+    }
+
+    // Check cho toa nhân viên
+    public void validateNoPendingLeaveCompanyWide(YearMonth ym) {
+        LocalDate fromDate = ym.atDay(1);
+        LocalDate toDate   = ym.atEndOfMonth();
+
+        boolean hasPendingLeave =
+                leaveRequestRepository.existsAnyPendingLeaveInMonth(fromDate, toDate);
+
+        if (hasPendingLeave) {
+            throw new RuntimeException(
+                    "Không thể chốt lương vì còn đơn nghỉ chưa duyệt trong tháng "
+                            + ym.getMonthValue() + "/" + ym.getYear()
+            );
+        }
+    }
+
 
     private boolean isWorkingDay(LocalDate date) {
         if (specialDaysRepository.existsByDate(date)) {

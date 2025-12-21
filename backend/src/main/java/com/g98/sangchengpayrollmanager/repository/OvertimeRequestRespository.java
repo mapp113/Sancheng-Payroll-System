@@ -117,4 +117,29 @@ import java.util.Optional;
     int sumWorkedHoursInYear(@Param("empCode") String empCode,
                              @Param("yearStart") LocalDate yearStart,
                              @Param("yearEnd") LocalDate yearEnd);
+
+    // Check cho nhân viên trong tháng
+    @Query("""
+    SELECT COUNT(o) > 0
+    FROM OvertimeRequest o
+    WHERE o.user.employeeCode = :employeeCode
+      AND o.otDate BETWEEN :fromDate AND :toDate
+      AND o.status = :status
+""")
+    boolean existsByEmployeeAndOtDateRangeAndStatus(@Param("employeeCode") String employeeCode,
+                                                    @Param("fromDate") LocalDate fromDate,
+                                                    @Param("toDate") LocalDate toDate,
+                                                    @Param("status") String status);
+
+    // Check cho toàn bộ nhân viên
+    @Query("""
+    SELECT COUNT(o) > 0
+    FROM OvertimeRequest o
+    WHERE o.otDate BETWEEN :fromDate AND :toDate
+      AND o.status = :status
+""")
+    boolean existsAnyInDateRangeWithStatus(@Param("fromDate") LocalDate fromDate,
+                                           @Param("toDate") LocalDate toDate,
+                                           @Param("status") String status);
+
 }
