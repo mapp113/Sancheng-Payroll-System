@@ -471,12 +471,15 @@ function TimesheetTable({
                         note: "Nghỉ không phép",
                     });
                 } else if (dailyData.leaveTypeCode) {
+                    const leaveTypeDisplay = dailyData.leaveTypeCode.toLowerCase() === 'unpaid' 
+                        ? 'Ngày nghỉ không lương' 
+                        : dailyData.leaveTypeCode;
                     days.push({
                         id: dateStr,
                         day: dayName,
                         date: `${String(day).padStart(2, '0')}/${String(monthNum).padStart(2, '0')}/${year}`,
                         type: "leave",
-                        note: dailyData.leaveTypeCode,
+                        note: leaveTypeDisplay,
                     });
                 } else {
                     const checkIn = dailyData.checkInTime ? dailyData.checkInTime.split('T')[1]?.substring(0, 5) : null;
@@ -920,7 +923,13 @@ function AttendanceDayDetailPopup({
                                 <div className="space-y-1">
                                     <label className="text-xs font-semibold text-[#56749A] uppercase tracking-wider">Loại
                                         nghỉ phép</label>
-                                    <p className="text-sm font-bold text-[#1D3E6A]">{attendanceData.leaveTypeCode || "--"}</p>
+                                    <p className="text-sm font-bold text-[#1D3E6A]">
+                                        {attendanceData.leaveTypeCode 
+                                            ? (attendanceData.leaveTypeCode.toLowerCase() === 'unpaid' 
+                                                ? 'Ngày nghỉ không lương' 
+                                                : attendanceData.leaveTypeCode)
+                                            : "--"}
+                                    </p>
                                 </div>
 
                                 <div className="space-y-1">
