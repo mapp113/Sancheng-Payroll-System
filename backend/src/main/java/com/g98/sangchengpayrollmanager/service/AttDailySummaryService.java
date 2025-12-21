@@ -79,10 +79,10 @@ public class AttDailySummaryService {
 
         // 5. Lấy đơn nghỉ đã duyệt trong ngày (nếu có)
         LeaveRequest leaveRequest = leaveRequestRepo.findByUserAndDateAndStatus(user, date, "APPROVED")
-                                                    .orElse(null);
+                .orElse(null);
         String leaveTypeCode = null;
         //neu da xin va duoc cho nghi
-        if(leaveRequest != null) {
+        if (leaveRequest != null) {
             leaveTypeCode = leaveRequest.getLeaveType().getCode();
             dailySummary.setUser(user);
             dailySummary.setDate(date);
@@ -101,12 +101,12 @@ public class AttDailySummaryService {
             dailySummary.setIsAbsent(false);
 
             // neu la nghi co luong
-            if(leaveRequest.getIsPaidLeave()){
+            if (leaveRequest.getIsPaidLeave()) {
                 dailySummary.setWorkHours(policy.getStandardHoursPerDay());
                 dailySummary.setIsPayableDay(true);
                 dailySummary.setIsCountPayableDay(true);
-                if(leaveRequest.getLeaveType().getCode().equalsIgnoreCase("sick")
-                        || leaveRequest.getLeaveType().getCode().equalsIgnoreCase("maternity")){
+                if (leaveRequest.getLeaveType().getCode().equalsIgnoreCase("sick")
+                        || leaveRequest.getLeaveType().getCode().equalsIgnoreCase("maternity")) {
                     dailySummary.setIsCountPayableDay(false);
                 }
                 return attDailySummaryRepo.save(dailySummary);
@@ -139,14 +139,14 @@ public class AttDailySummaryService {
         Boolean isCountPayableDay = false;
         Boolean isAbsent = false;
 
-        if(schedule == null && otRequests.isEmpty() && specialDay == null) {
+        if (schedule == null && otRequests.isEmpty() && specialDay == null) {
             //ngày nghỉ bình thuong: không có schedule, không có ot request, không phải special day(nghỉ lễ có lương)
             throw new IllegalStateException(
                     "No working/OT/special info for " + employeeCode + " on " + date + " (normal off day)"
             );
         }
 
-        if(!records.isEmpty()) {
+        if (!records.isEmpty()) {
             // Có chấm công
             checkInTime = records.get(0).getCheckTime();
             checkOutTime = records.get(records.size() - 1).getCheckTime();
@@ -185,8 +185,8 @@ public class AttDailySummaryService {
                 LocalDateTime checkOutTime1 = checkOutTime;
                 if (shiftStart != null && shiftEnd != null) {
                     //khi có shift
-                    if(checkInTime.isBefore(shiftStart)) checkInTime1 = shiftStart;
-                    if(checkOutTime.isAfter(shiftEnd)) checkOutTime1 = shiftEnd;
+                    if (checkInTime.isBefore(shiftStart)) checkInTime1 = shiftStart;
+                    if (checkOutTime.isAfter(shiftEnd)) checkOutTime1 = shiftEnd;
                 }
                 Integer workMinutes = (int) Duration.between(checkInTime1, checkOutTime1).toMinutes() - breakMinutes;
                 if (workMinutes > 0) {
@@ -265,23 +265,23 @@ public class AttDailySummaryService {
             }
 
             // Quyết định có được tính full luong ngày theo late/early
-            if(!isLateCounted && !isEarlyLeaveCounted && workHours >= policy.getMinHoursForFullDay()) {
+            if (!isLateCounted && !isEarlyLeaveCounted && workHours >= policy.getMinHoursForFullDay()) {
                 isPayableDay = true;
             }
 
             // Quyết định co tính công cơm
-            if(workHours >= policy.getMinHoursForMeal()){
+            if (workHours >= policy.getMinHoursForMeal()) {
                 isDayMeal = true;
             }
 
             //Quyết định có tính ngày công thực te
-            if(workHours >= policy.getMinHoursForPayable()){
+            if (workHours >= policy.getMinHoursForPayable()) {
                 isCountPayableDay = true;
             }
 
         } else {
             // không co du lieu cham cong
-            if(specialDay != null) {
+            if (specialDay != null) {
                 // ngay dac biet: nghỉ lễ co lương
                 isPayableDay = true;
                 isCountPayableDay = true;
@@ -291,10 +291,11 @@ public class AttDailySummaryService {
                 isAbsent = true;
             }
 
-            if(!otRequests.isEmpty()) {
+            if (!otRequests.isEmpty()) {
                 // co request ot nhung khong co du lieu cham cong
                 otHour = 0;
             }
+
         }
 
         // 9. Trial day: tạm chưa xu ly de la false
@@ -325,13 +326,17 @@ public class AttDailySummaryService {
         dailySummary.setLeaveTypeCode(leaveTypeCode);
         dailySummary.setIsAbsent(isAbsent);
 
+        if (!otRequests.isEmpty() && schedule == null && records.isEmpty()) {
+            return null;
+        }
+
         return attDailySummaryRepo.save(dailySummary);
     }
 
     public List<AttDailySummaryResponse> getByEmployeeAndMonth(String employeeCode, LocalDate month) {
         YearMonth ym = YearMonth.from(month);
         LocalDate start = ym.atDay(1);
-        LocalDate end   = ym.atEndOfMonth();
+        LocalDate end = ym.atEndOfMonth();
 
         List<AttDailySummary> entities =
                 attDailySummaryRepo.findByUserEmployeeCodeAndDateBetween(employeeCode, start, end);
