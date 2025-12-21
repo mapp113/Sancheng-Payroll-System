@@ -62,11 +62,11 @@ public class PayrollServiceImpl implements PayrollService {
                 payComponentService.calculate(employeeCode, monthStart, monthEnd);
         snapshot.addAll(pcResult.getPaySummaryComponentItems());
 
-        int totalAddition       = pcResult.getTotalAddition();        // khoản cộng thêm
-        int totalDeduction      = pcResult.getTotalDeduction();       // khoản trừ nội bộ
-        int taxableAddition     = pcResult.getTaxableAddition();      // phần addition phải tính thuế TNCN
-        int nonTaxableAddition  = pcResult.getNonTaxableAddition();   // phần addition không tính thuế
-        int insuredBaseExtra    = pcResult.getInsuredBaseExtra();     // phần cộng vào base đóng BH
+        int totalAddition = pcResult.getTotalAddition();        // khoản cộng thêm
+        int totalDeduction = pcResult.getTotalDeduction();       // khoản trừ nội bộ
+        int taxableAddition = pcResult.getTaxableAddition();      // phần addition phải tính thuế TNCN
+        int nonTaxableAddition = pcResult.getNonTaxableAddition();   // phần addition không tính thuế
+        int insuredBaseExtra = pcResult.getInsuredBaseExtra();     // phần cộng vào base đóng BH
 
         // 5. gross_income
         int grossIncome = baseSalaryAmount + otAmount + totalAddition;
@@ -104,7 +104,7 @@ public class PayrollServiceImpl implements PayrollService {
 
         if (approvedExists != null) {
             throw new IllegalStateException(
-                    "Payslip for " + employeeCode + " " + month + " is already APPROVED and cannot be modified"
+                    "Phiếu lương " + employeeCode + " " + month + " Đã được chốt, không thể tạo lại"
             );
         }
 
@@ -126,7 +126,6 @@ public class PayrollServiceImpl implements PayrollService {
             // yêu cầu entity PaySummary.components phải có cascade + orphanRemoval
             summary.getComponents().clear();
         }
-
 
 
         // set lại các field đã tính
@@ -158,7 +157,6 @@ public class PayrollServiceImpl implements PayrollService {
 
         return summary;
     }
-
 
 
 }

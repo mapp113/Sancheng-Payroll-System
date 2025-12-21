@@ -26,7 +26,7 @@ public class AttendanceSyncScheduler {
     /**
      * SYNC TỰ ĐỘNG MỖI 5 PHÚT
      */
-    @Scheduled(fixedRate = 20000) // 5 minutes = 300,000 ms
+    @Scheduled(fixedRate = 6000000) // 5 minutes = 300,000 ms
     public void scheduledSync() {
         log.debug("⏰ 5-minute sync triggered");
         syncService.syncIncremental();

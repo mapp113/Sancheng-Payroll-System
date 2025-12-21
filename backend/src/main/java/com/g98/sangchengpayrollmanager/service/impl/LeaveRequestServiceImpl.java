@@ -9,6 +9,8 @@ import com.g98.sangchengpayrollmanager.model.entity.User;
 import com.g98.sangchengpayrollmanager.model.enums.DurationType;
 import com.g98.sangchengpayrollmanager.model.enums.LeaveandOTStatus;
 import com.g98.sangchengpayrollmanager.repository.*;
+import com.g98.sangchengpayrollmanager.service.AttDailySummaryService;
+import com.g98.sangchengpayrollmanager.service.AttMonthSummaryService;
 import com.g98.sangchengpayrollmanager.service.LeaveRequestService;
 import com.g98.sangchengpayrollmanager.service.NotificationService;
 import jakarta.transaction.Transactional;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 
 @Service
@@ -35,6 +38,8 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     private static final String ANNUAL_LEAVE_CODE = "annual";
     private final SpecialDaysRepository specialDaysRepository;
     private final NotificationService notificationService;
+    private final AttDailySummaryService attDailySummaryService;
+    private final AttMonthSummaryService attMonthSummaryService;
 
     @Override
     public LeaveRequestResponse submitLeaveRequest(LeaveRequestCreateDTO leaveRequestDTO) {
@@ -64,7 +69,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
         DurationType durationType = DurationType.valueOf(leaveRequestDTO.getDuration().toUpperCase());
 
-        if((durationType == DurationType.HALF_DAY_AM || durationType == DurationType.HALF_DAY_PM)
+        if ((durationType == DurationType.HALF_DAY_AM || durationType == DurationType.HALF_DAY_PM)
                 && !leaveType.getCode().equals("unpaid_half")) {
             throw new IllegalArgumentException("Nghỉ nửa ngày bắt buộc phải là nghỉ không phép");
         }
@@ -110,7 +115,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         entity.setToDate(toDate);
         LeaveRequest savedLeaveRequest = LeaveRequestRepository.save(entity);
 
-        List<User> managers  = userRepository.findAllManagers();
+        List<User> managers = userRepository.findAllManagers();
 
         for (User u : managers) {
             notificationService.createNotification(
@@ -118,7 +123,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                     "Có đơn xin nghỉ mới từ nhân viên ",
                     user.getFullName()
                             + " Đã xin nghỉ từ " + leaveRequestDTO.getFromDate()
-                            + " tới " + leaveRequestDTO.getToDate() ,
+                            + " tới " + leaveRequestDTO.getToDate(),
                     "LEAVE_REQUEST",
                     savedLeaveRequest.getId()
             );
@@ -128,52 +133,51 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     }
 
 
-
-// tính toán số ngày nghỉ
+    // tính toán số ngày nghỉ
     private double calculateLeaveDays(LocalDate fromDate, LocalDate toDate, String duration) {
-       DurationType durationType = DurationType.valueOf(duration.trim().toUpperCase());
-       switch (durationType) {
-           case FULL_DAY -> {
-               double days = 0.0;
-               LocalDate date = fromDate;
-               while (!date.isAfter(toDate)) {
-                   if(isWorkingDay(date)) {
-                       days++;
-                   }
-                   date = date.plusDays(1);
-               }
-               return days;
+        DurationType durationType = DurationType.valueOf(duration.trim().toUpperCase());
+        switch (durationType) {
+            case FULL_DAY -> {
+                double days = 0.0;
+                LocalDate date = fromDate;
+                while (!date.isAfter(toDate)) {
+                    if (isWorkingDay(date)) {
+                        days++;
+                    }
+                    date = date.plusDays(1);
+                }
+                return days;
 
-           }
+            }
 
-           case HALF_DAY_AM, HALF_DAY_PM -> {
-               return isWorkingDay(fromDate) ? 0.5 : 0.0;
-           }
+            case HALF_DAY_AM, HALF_DAY_PM -> {
+                return isWorkingDay(fromDate) ? 0.5 : 0.0;
+            }
 
-           default -> throw new RuntimeException("Unsupported duration type: " + durationType);
-       }
+            default -> throw new RuntimeException("Unsupported duration type: " + durationType);
+        }
     }
 
     // Tinh số ngày còn lại của nghỉ phép năm
     @Override
     public double getMyAnnualRemainingLeave() {
 
-            String username = getCurrentUsername();
+        String username = getCurrentUsername();
 
-            User user  = userRepository.findByUsernameWithRole(username)
-                    .orElseThrow(() -> new RuntimeException("người không tồn tại: " + username));
+        User user = userRepository.findByUsernameWithRole(username)
+                .orElseThrow(() -> new RuntimeException("người không tồn tại: " + username));
 
-            String  empCode = user.getEmployeeCode();
-            int year = LocalDate.now().getYear();
+        String empCode = user.getEmployeeCode();
+        int year = LocalDate.now().getYear();
 
-            LeaveQuota quota = leaveQuotaRepository
-                    .findByEmployeeCodeAndLeaveTypeCodeAndYear(empCode, ANNUAL_LEAVE_CODE, year)
-                    .orElseThrow(() -> new RuntimeException("Chưa có quota thành viên này trong năm nay"));
-            Double entitledDays = quota.getEntitledDays();
-            Double carried = quota.getCarriedOver() == null ? 0.0 : quota.getCarriedOver();
-            Double used = quota.getUsedDays() == null ? 0.0 : quota.getUsedDays();
+        LeaveQuota quota = leaveQuotaRepository
+                .findByEmployeeCodeAndLeaveTypeCodeAndYear(empCode, ANNUAL_LEAVE_CODE, year)
+                .orElseThrow(() -> new RuntimeException("Chưa có quota thành viên này trong năm nay"));
+        Double entitledDays = quota.getEntitledDays();
+        Double carried = quota.getCarriedOver() == null ? 0.0 : quota.getCarriedOver();
+        Double used = quota.getUsedDays() == null ? 0.0 : quota.getUsedDays();
 
-        double remainingDays = Math.max((entitledDays+ carried) - used, 0.0);
+        double remainingDays = Math.max((entitledDays + carried) - used, 0.0);
 
         return remainingDays;
 
@@ -185,13 +189,13 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
     public void deleteMyLeaveRequest(Integer id) {
         String username = getCurrentUsername();
 
-        User user  = userRepository.findByUsernameWithRole(username)
+        User user = userRepository.findByUsernameWithRole(username)
                 .orElseThrow(() -> new RuntimeException("người không tồn tại: " + username));
 
         LeaveRequest leaveRequest = LeaveRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Yêu cầu không tồn tại: " + id));
 
-        if(!leaveRequest.getUser().getEmployeeCode().equals(user.getEmployeeCode())) {
+        if (!leaveRequest.getUser().getEmployeeCode().equals(user.getEmployeeCode())) {
             throw new RuntimeException("Xóa đơn nghỉ của chính mình.");
         }
 
@@ -247,7 +251,6 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
         return pageResult.map(this::mapToResponse);
     }
-
 
 
     @Override
@@ -323,14 +326,14 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                     .findByEmployeeCodeAndLeaveTypeCodeAndYear(emp, typeCode, year)
                     .orElseThrow(() -> new RuntimeException("Quota not found"));
 
-            if (quota.getEntitledDays() != null){
+            if (quota.getEntitledDays() != null) {
 
                 double limit = quota.getEntitledDays() + quota.getCarriedOver();
-                double used =  quota.getUsedDays()  == null ? 0.0 : quota.getUsedDays();
+                double used = quota.getUsedDays() == null ? 0.0 : quota.getUsedDays();
                 double remain = limit - used;
 
                 if (requestedDays > remain) {
-                    throw new IllegalArgumentException(" Không đủ số ngày nghỉ còn lại. Vui lòng tạo 2 yêu cầu khác nhau " );
+                    throw new IllegalArgumentException(" Không đủ số ngày nghỉ còn lại. Vui lòng tạo 2 yêu cầu khác nhau ");
                 }
                 quota.setUsedDays(used + requestedDays);
                 leaveQuotaRepository.save(quota);
@@ -342,13 +345,51 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         leaveRequest.setApprovedDate(LocalDateTime.now());
         LeaveRequest savedLeaveRequest = LeaveRequestRepository.save(leaveRequest);
 
+        // kiểm tra xem là trong khoảng thời gian đăng kí xin nghỉ có bao nhiêu ngày trong quá khu
+        // sau đó gọi lại hàm tôổng hợp ngày và tháng ở trong service khác cho các ngày trong quá khứ
+        if (leaveRequest.getFromDate().isBefore(LocalDate.now())) {
+
+            LocalDate today = LocalDate.now();
+            LocalDate start = leaveRequest.getFromDate();
+            LocalDate end = leaveRequest.getToDate() != null
+                    ? leaveRequest.getToDate()
+                    : leaveRequest.getFromDate();
+
+            // chỉ xử lý các ngày trong quá khứ
+            LocalDate recalEnd = end.isBefore(today) ? end : today.minusDays(1);
+            YearMonth thisMonth = YearMonth.from(LocalDate.now());
+            YearMonth fromMonth = YearMonth.from(leaveRequest.getFromDate());
+            YearMonth toMonth = YearMonth.from(end);
+
+            LocalDate current = start;
+            while (!current.isAfter(recalEnd)) {
+
+                // gọi service tổng hợp lại công/ngày nghỉ cho ngày đã qua
+                attDailySummaryService.createDailySummary(leaveRequest.getUser().getEmployeeCode(), current);
+                current = current.plusDays(1);
+            }
+            // Nếu khoảng xin nghỉ trong cùng 1 tháng
+            if (fromMonth.equals(toMonth)) {
+                LocalDate recaculateMonth = !thisMonth.equals(fromMonth)
+                        ? fromMonth.atEndOfMonth()
+                        : recalEnd;
+                attMonthSummaryService.createMonthSummary(leaveRequest.getUser().getEmployeeCode(), recaculateMonth);
+            } else {
+                attMonthSummaryService.createMonthSummary(leaveRequest.getUser().getEmployeeCode(), fromMonth.atEndOfMonth());
+                LocalDate recaculateMonth = !thisMonth.equals(toMonth)
+                        ? toMonth.atEndOfMonth()
+                        : recalEnd;
+                attMonthSummaryService.createMonthSummary(leaveRequest.getUser().getEmployeeCode(), recaculateMonth);
+            }
+        }
+
         User employee = leaveRequest.getUser();
 
         notificationService.createNotification(
                 employee.getEmployeeCode(),
                 "Đơn xin nghỉ của bạn đã được chấp nhận ",
                 " Đơn xin nghỉ ngày " + leaveRequest.getFromDate() +
-                        " Tới ngày " +leaveRequest.getToDate() + " đã được duyệt ",
+                        " Tới ngày " + leaveRequest.getToDate() + " đã được duyệt ",
                 "LEAVE_APPROVED",
                 savedLeaveRequest.getId()
         );
@@ -390,7 +431,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                 employee.getEmployeeCode(),
                 "Đơn xin nghỉ của bạn đã không được chấp nhận ",
                 " Đơn xin nghỉ ngày " + leaveRequest.getFromDate() +
-                        " Tới ngày " +leaveRequest.getToDate() + " không được duyệt ",
+                        " Tới ngày " + leaveRequest.getToDate() + " không được duyệt ",
                 "LEAVE_REJECTED",
                 savedLeaveRequest.getId()
         );
