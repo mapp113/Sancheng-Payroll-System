@@ -6,6 +6,8 @@ import com.g98.sangchengpayrollmanager.model.entity.*;
 import com.g98.sangchengpayrollmanager.model.enums.LeaveandOTStatus;
 import com.g98.sangchengpayrollmanager.repository.*;
 import com.g98.sangchengpayrollmanager.security.ConfirmException;
+import com.g98.sangchengpayrollmanager.service.AttDailySummaryService;
+import com.g98.sangchengpayrollmanager.service.AttMonthSummaryService;
 import com.g98.sangchengpayrollmanager.service.NotificationService;
 import com.g98.sangchengpayrollmanager.service.OvertimeRequestService;
 import com.g98.sangchengpayrollmanager.service.validator.RequestValidator;
@@ -17,10 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.time.DayOfWeek;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +39,8 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
     private final LeaveTypeRepository leaveTypeRepository;
     private final LeaveQuotaRepository leaveQuotaRepository;
     private final NotificationService notificationService;
+    private final AttDailySummaryService attDailySummaryService;
+    private final AttMonthSummaryService attMonthSummaryService;
 
     @Override
     public OvertimeRequestResponse submitOvertimeRequest(OvertimeRequestCreateDTO overtimeRequestDTO) {
@@ -231,6 +232,27 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
 
         changeOvertimetoLeaveWithMonthlyOverLimit(overtimeRequest.getUser(), overtimeRequest.getOtDate());
 
+        // Đơn được duyệt sau và tính lại công ngày OT
+        LocalDate otDate = overtimeRequest.getOtDate();
+        LocalDate today = LocalDate.now();
+
+        if (otDate.isBefore(today)) {
+            String empCode = overtimeRequest.getUser().getEmployeeCode();
+
+            // Tính lại công ngày OT (vì là 1 ngày duy nhất)
+            attDailySummaryService.createDailySummary(empCode, otDate);
+
+            // Tính lại công tháng chứa ngày OT
+            YearMonth thisMonth = YearMonth.from(today);
+            YearMonth otMonth = YearMonth.from(otDate);
+
+            LocalDate recalculateMonthDate = !thisMonth.equals(otMonth)
+                    ? otDate.withDayOfMonth(otDate.lengthOfMonth())   // tháng cũ -> cuối tháng đó
+                    : today.minusDays(1);               // tháng hiện tại -> ổng hop lại đến ngày hiện tại
+
+            attMonthSummaryService.createMonthSummary(empCode, recalculateMonthDate);
+        }
+
         User employee = overtimeRequest.getUser();
         notificationService.createNotification(
                 employee.getEmployeeCode(),
@@ -405,6 +427,34 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
         overtimeBalanceRepository.save(balance);
     }
 
+    // check khi tạo phiếu lương cho 1 nhân viên
+    public void validateNoPendingOvertime(String employeeCode, YearMonth yearMonth) {
+        LocalDate fromDate = yearMonth.atDay(1);
+        LocalDate toDate   = yearMonth.atEndOfMonth();
+
+        boolean hasPending = overtimeRequestRespository
+                .existsByEmployeeAndOtDateRangeAndStatus(employeeCode, fromDate, toDate, LeaveandOTStatus.PENDING.name());
+
+        if (hasPending) {
+            throw new RuntimeException("Không thể tạo phiếu lương vì còn đơn OT đang chờ duyệt trong tháng "
+                    + yearMonth.getMonthValue() + "/" + yearMonth.getYear());
+        }
+    }
+
+    // check khi tạo phiếu lương cho toàn bộ nhân viên
+    private void validateNoPendingOvertimeCompanyWide(YearMonth yearMonth) {
+        LocalDate fromDate = yearMonth.atDay(1);
+        LocalDate toDate   = yearMonth.atEndOfMonth();
+
+        boolean hasPending = overtimeRequestRespository
+                .existsAnyInDateRangeWithStatus(fromDate, toDate, LeaveandOTStatus.PENDING.name());
+
+        if (hasPending) {
+            throw new RuntimeException("Không thể chốt lương vì còn đơn OT đang chờ duyệt trong tháng "
+                    + yearMonth.getMonthValue() + "/" + yearMonth.getYear());
+        }
+    }
+
     private int calcIntRemainingFromQuota(LeaveQuota quota) {
         double entitledDaysRaw = quota.getEntitledDays();
         double usedRaw = quota.getUsedDays();
@@ -414,7 +464,6 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
 
         return Math.max(entitledInt - usedInt,0);
     }
-
 
     // xác định dạng ngày overtime
     private DayType resolveDayType(LocalDate otDate) {
@@ -434,7 +483,6 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ngày "));
     }
 
-
     // xác định ngươời gửi đơn
     public static String getCurrentUsername() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -443,8 +491,6 @@ public class OvertimeRequestServiceImpl implements OvertimeRequestService {
         }
         return auth.getName();
     }
-
-
 
     private OvertimeRequest mapToEntity(OvertimeRequestCreateDTO overtimeRequestDTO, User user, LocalDate otDate, DayType dayType, int workedHours) {
         LocalDateTime fromTime = overtimeRequestDTO.getFromTime();

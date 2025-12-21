@@ -134,7 +134,7 @@ public class AdminService {
 
         boolean isAdmin = req.getRoleId() != null && req.getRoleId() == 1L;
         String devicePin = req.getDevicePin() != null ? req.getDevicePin().trim() : "";
-        String ip = "192.168.0.2";
+        String ip = "192.168.11.2";
 
         // Pre-check TCP để fail nhanh khi máy offline (2s)
         if (!portOpen(ip, 4370, 2000)) {

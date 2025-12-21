@@ -68,5 +68,30 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Inte
                                                       String status
     );
 
+    // Check cho toàn nhân viên trong tháng
+    @Query("""
+    SELECT COUNT(l) > 0
+    FROM LeaveRequest l
+    WHERE l.fromDate <= :toDate
+      AND COALESCE(l.toDate, l.fromDate) >= :fromDate
+      AND l.status = 'PENDING'
+""")
+    boolean existsAnyPendingLeaveInMonth(@Param("fromDate") LocalDate fromDate,
+                                         @Param("toDate") LocalDate toDate);
+
+
+    // Check cho 1 nhân viên trong tháng
+    @Query("""
+    SELECT COUNT(l) > 0
+    FROM LeaveRequest l
+    WHERE l.user.employeeCode = :employeeCode
+      AND l.fromDate <= :toDate
+      AND COALESCE(l.toDate, l.fromDate) >= :fromDate
+      AND l.status = 'PENDING'
+""")
+    boolean existsPendingLeaveInMonth(@Param("employeeCode") String employeeCode,
+                                      @Param("fromDate") LocalDate fromDate,
+                                      @Param("toDate") LocalDate toDate);
+
     Optional<LeaveRequest> findByAttachmentPath(String attachmentPath);
 }

@@ -82,11 +82,21 @@ public class EmployeeService {
             return;
         }
 
+        Contract contract = contractRepository.findFirstByUserEmployeeCodeOrderByStartDateDesc(user.getEmployeeCode())
+                .orElse(null);
+
+        if (contract == null) {
+            return;
+        }
+
+        if (contract.getBaseSalary() == null || contract.getStartDate() == null) {
+            return;
+        }
         SalaryInformation salaryInformation = SalaryInformation.builder()
                 .user(user)
                 .baseSalary(baseSalary)
                 .baseHourlyRate(0)
-                .effectiveFrom(LocalDate.now())
+                .effectiveFrom(contract.getStartDate())
                 .date(LocalDate.now())
                 .status("ACTIVE")
                 .build();
@@ -189,10 +199,6 @@ public class EmployeeService {
                 contract.setEndDate(request.getVisaExpiry());
             }
 
-            // ⭐ XÓA HOẶC COMMENT DÒNG NÀY - không cập nhật pdfPath từ request nữa
-            // if (request.getContractUrl() != null) {
-            //     contract.setPdfPath(request.getContractUrl());
-            // }
         } else {
             updateStatus(user, null, request.getStatus());
         }

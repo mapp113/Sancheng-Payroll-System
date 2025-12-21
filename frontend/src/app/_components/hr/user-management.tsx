@@ -981,7 +981,6 @@ export default function UserManagement() {
                                         />
                                     </label>
 
-
                                     {/*<label className="flex flex-col gap-1 text-sm">*/}
                                     {/*    <span className="font-medium text-slate-700">Số tài khoản</span>*/}
                                     {/*    <input*/}
@@ -1191,73 +1190,74 @@ export default function UserManagement() {
                                                                             window.URL.revokeObjectURL(url);
                                                                             document.body.removeChild(a);
                                                                         } catch (error) {
-                                                                        console.error("Download failed:", error);
-                                                                        setToast({
-                                                                            message: "Không thể tải xuống file",
-                                                                            type: "error"
-                                                                        });
-                                                                    }
-                                                                }}
-                                                                className="inline-flex items-center gap-1.5 rounded-xl border border-[#4AB4DE] bg-white px-4 py-2 text-sm font-medium text-[#4AB4DE] transition hover:bg-[#E0F2FE]"
-                                                            >
-                                                                Tải xuống
-                                                            </button>
+                                                                            console.error("Download failed:", error);
+                                                                            setToast({
+                                                                                message: "Không thể tải xuống file",
+                                                                                type: "error"
+                                                                            });
+                                                                        }
+                                                                    }}
+                                                                    className="inline-flex items-center gap-1.5 rounded-xl border border-[#4AB4DE] bg-white px-4 py-2 text-sm font-medium text-[#4AB4DE] transition hover:bg-[#E0F2FE]"
+                                                                >
+                                                                    Tải xuống
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            )}
+                                                )}
 
-                                            {contractUploadError && (
-                                                <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 p-3">
-                                                    <div className="flex items-start gap-2">
+                                                {contractUploadError && (
+                                                    <div
+                                                        className="mt-3 rounded-2xl border border-red-200 bg-red-50 p-3">
+                                                        <div className="flex items-start gap-2">
+                                                            <svg
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                className="h-5 w-5 text-red-500"
+                                                                fill="none"
+                                                                viewBox="0 0 24 24"
+                                                                stroke="currentColor"
+                                                            >
+                                                                <path
+                                                                    strokeLinecap="round"
+                                                                    strokeLinejoin="round"
+                                                                    strokeWidth={2}
+                                                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                                />
+                                                            </svg>
+                                                            <p className="text-sm text-red-600">{contractUploadError}</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {uploadingContract && (
+                                                    <div
+                                                        className="mt-3 flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 p-3">
                                                         <svg
+                                                            className="h-5 w-5 animate-spin text-[#4AB4DE]"
                                                             xmlns="http://www.w3.org/2000/svg"
-                                                            className="h-5 w-5 text-red-500"
                                                             fill="none"
                                                             viewBox="0 0 24 24"
-                                                            stroke="currentColor"
                                                         >
+                                                            <circle
+                                                                className="opacity-25"
+                                                                cx="12"
+                                                                cy="12"
+                                                                r="10"
+                                                                stroke="currentColor"
+                                                                strokeWidth="4"
+                                                            />
                                                             <path
-                                                                strokeLinecap="round"
-                                                                strokeLinejoin="round"
-                                                                strokeWidth={2}
-                                                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                                className="opacity-75"
+                                                                fill="currentColor"
+                                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                                             />
                                                         </svg>
-                                                        <p className="text-sm text-red-600">{contractUploadError}</p>
+                                                        <p className="text-sm font-medium text-[#4AB4DE]">Đang tải
+                                                            lên...</p>
                                                     </div>
-                                                </div>
-                                            )}
-
-                                            {uploadingContract && (
-                                                <div
-                                                    className="mt-3 flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 p-3">
-                                                    <svg
-                                                        className="h-5 w-5 animate-spin text-[#4AB4DE]"
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                    >
-                                                        <circle
-                                                            className="opacity-25"
-                                                            cx="12"
-                                                            cy="12"
-                                                            r="10"
-                                                            stroke="currentColor"
-                                                            strokeWidth="4"
-                                                        />
-                                                        <path
-                                                            className="opacity-75"
-                                                            fill="currentColor"
-                                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                                        />
-                                                    </svg>
-                                                    <p className="text-sm font-medium text-[#4AB4DE]">Đang tải
-                                                        lên...</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </label>
+                                                )}
+                                            </div>
+                                        </label>
                                     )}
                                 </div>
                             </div>
