@@ -7,6 +7,7 @@ import type { LeaveDetailResponse } from "@/app/_components/employee/request/typ
 import DeleteConfirmation from "@/app/_components/common/pop-box/delete-confirmation";
 import SuccessNotification from "@/app/_components/common/pop-box/notification/success";
 import ErrorNotification from "@/app/_components/common/pop-box/notification/error";
+import { getLeaveTypeName, getDurationName } from "@/app/_components/utils/leaveTypeMapping";
 
 function LeavesDetailContent() {
   const searchParams = useSearchParams();
@@ -184,7 +185,7 @@ function LeavesDetailContent() {
                 Loại nghỉ:
               </div>
               <div className="w-2/3 text-[#1F2A44]">
-                {leaveData.leaveTypeCode}
+                {getLeaveTypeName(leaveData.leaveTypeCode)}
               </div>
             </div>
 
@@ -211,7 +212,7 @@ function LeavesDetailContent() {
                 Thời gian:
               </div>
               <div className="w-2/3 text-[#1F2A44]">
-                {leaveData.duration}
+                {getDurationName(leaveData.duration)}
               </div>
             </div>
 

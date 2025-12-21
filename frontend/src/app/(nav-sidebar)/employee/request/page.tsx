@@ -4,6 +4,7 @@ import LeavesToolBar from "@/app/_components/employee/request/tool-bar";
 import { useEffect, useState } from "react";
 import { LeaveResponseData, OTResponseData } from "@/app/_components/employee/request/types";
 import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Info } from "lucide-react";
+import { getLeaveTypeName } from "@/app/_components/utils/leaveTypeMapping";
 
 export default function LeavesPage() {
   const [leaveRequests, setLeaveRequests] = useState<LeaveResponseData[]>([]);
@@ -241,7 +242,7 @@ export default function LeavesPage() {
                     <td className={`px-4 py-3 text-center text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>
                       {new Date(request.toDate).toLocaleDateString('vi-VN')}
                     </td>
-                    <td className={`px-4 py-3 text-center text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>{request.leaveTypeCode}</td>
+                    <td className={`px-4 py-3 text-center text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>{getLeaveTypeName(request.leaveTypeCode)}</td>
                     <td className={`px-4 py-3 text-left font-semibold ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'} ${getStatusColor(request.status)}`}>
                       {getStatusText(request.status)}
                     </td>

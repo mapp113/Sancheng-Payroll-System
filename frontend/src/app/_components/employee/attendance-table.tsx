@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Clock4, TimerReset } from "lucide-react";
 import type { AttendanceDaily } from "@/app/_components/manager-timesheet-detail/types";
+import { getLeaveTypeName } from "../utils/leaveTypeMapping";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:8080";
 
@@ -105,7 +106,7 @@ export default function AttendanceTable({ employeeCode, month, onDayClick }: Att
             day: dayName,
             date: `${String(day).padStart(2, "0")}/${String(monthNum).padStart(2, "0")}/${year}`,
             type: "leave",
-            note: dailyData.leaveTypeCode,
+            note: getLeaveTypeName(dailyData.leaveTypeCode),
             checkIn: null,
             checkOut: null,
             workHours: null,
