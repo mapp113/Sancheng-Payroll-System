@@ -72,12 +72,17 @@ export default function AttendanceTable({ employeeCode, month, onDayClick }: Att
     const [year, monthNum] = monthStr.split("-").map(Number);
     const daysInMonth = new Date(year, monthNum, 0).getDate();
     const days: TableEntry[] = [];
+    const today = new Date();
+    const currentDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, monthNum - 1, day);
       const dateStr = `${year}-${String(monthNum).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
       const dayNames = ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
       const dayName = dayNames[date.getDay()];
+
+      // Kiểm tra xem ngày này có trong tương lai không
+      const isFutureDate = date > currentDate;
 
       const dailyData = attendanceDaily.find((d) => d.date === dateStr);
 
@@ -126,12 +131,14 @@ export default function AttendanceTable({ employeeCode, month, onDayClick }: Att
           });
         }
       } else {
+        // Nếu là ngày trong tương lai, hiển thị "Không có dữ liệu"
+        // Nếu là ngày trong quá khứ, hiển thị "Ngày nghỉ"
         days.push({
           id: dateStr,
           day: dayName,
           date: `${String(day).padStart(2, "0")}/${String(monthNum).padStart(2, "0")}/${year}`,
           type: "leave",
-          note: "Ngày nghỉ",
+          note: isFutureDate ? "Không có dữ liệu" : "Ngày nghỉ",
           checkIn: null,
           checkOut: null,
           workHours: null,
@@ -218,6 +225,7 @@ export default function AttendanceTable({ employeeCode, month, onDayClick }: Att
               const dailyData = attendanceDaily.find((d) => d.date === entry.id);
               const isLeave = entry.type === "leave";
               const isDefaultLeave = entry.note === "Ngày nghỉ";
+              const isNoData = entry.note === "Không có dữ liệu";
 
               return (
                 <tr key={entry.id}>
@@ -247,7 +255,11 @@ export default function AttendanceTable({ employeeCode, month, onDayClick }: Att
                   </td>
                   <td className="px-4 py-3 text-center">
                     {isLeave ? (
-                      <span className="inline-flex items-center rounded-full bg-[#FFEFD6] px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[#B45309]">
+                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] ${
+                        isNoData 
+                          ? 'bg-gray-100 text-gray-500' 
+                          : 'bg-[#FFEFD6] text-[#B45309]'
+                      }`}>
                         {entry.note}
                       </span>
                     ) : (
@@ -258,7 +270,7 @@ export default function AttendanceTable({ employeeCode, month, onDayClick }: Att
                     {isLeave ? "--" : formatHours(entry.overtimeHours)}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {!isDefaultLeave && dailyData && onDayClick && (
+                    {!isDefaultLeave && !isNoData && dailyData && onDayClick && (
                       <button
                         type="button"
                         onClick={() => onDayClick(dailyData)}
