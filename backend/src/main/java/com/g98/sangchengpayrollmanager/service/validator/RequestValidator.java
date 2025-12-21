@@ -38,12 +38,6 @@ public class RequestValidator {
         //  Parse enum duration + quy tắc theo duration
         LocalDate from = dto.getFromDate();
         LocalDate to = (dto.getToDate() != null) ? dto.getToDate() : from;
-        if (to.isBefore(from)) throw new IllegalArgumentException("toDate phải >= fromDate");
-
-//        if ((durationType == DurationType.HALF_DAY_AM || durationType == DurationType.HALF_DAY_PM)
-//                && !from.equals(to)) {
-//            throw new IllegalArgumentException("Nghỉ nửa ngày yêu cầu fromDate = toDate");
-//        }
 
         DurationType durationType;
         try {

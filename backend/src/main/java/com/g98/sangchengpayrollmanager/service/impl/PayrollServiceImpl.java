@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,9 +34,15 @@ public class PayrollServiceImpl implements PayrollService {
     private final PayComponentService payComponentService;
     private final InsuranceService insuranceService;
     private final TaxService taxService;
+    private final OvertimeRequestServiceImpl overtimeRequestService;
+    private final LeaveRequestServiceImpl leaveRequestService;
 
     @Transactional
     public PaySummary calculateMonthlySalary(String employeeCode, LocalDate month, LocalDate monthStart, LocalDate monthEnd) {
+
+        overtimeRequestService.validateNoPendingOvertime(employeeCode, YearMonth.from(month));
+        leaveRequestService.validateNoPendingLeave(employeeCode, YearMonth.from(month));
+
         // 1. Lấy thông tin cơ bản
         List<SalaryInformation> salaryInformationList =
                 salaryRepo.findActiveByEmployeeCode(employeeCode, monthStart, monthEnd);
