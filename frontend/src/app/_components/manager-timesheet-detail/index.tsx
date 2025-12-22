@@ -17,7 +17,7 @@ import type {
     AttDailySummaryUpdateRequest,
 } from "./types";
 import {formatDecimal, formatHours, formatTime} from "./utils";
-import {useState, useEffect, useContext} from "react";
+import {useState, useEffect, useContext, useMemo} from "react";
 import {TimesheetDetailParam} from "./context";
 import FormPopBoxNotScroll from "../common/pop-box/form-not-scroll";
 import Toast from "../common/notification/toast";
@@ -59,8 +59,15 @@ export default function ManagerTimesheetDetail({
                                                    view = "timesheet",
                                                }: ManagerTimesheetDetailProps) {
     const router = useRouter();
-    const [startDate, setStartDate] = useState(detail.startDate);
-    const [endDate, setEndDate] = useState(detail.endDate);
+    const timesheetParams = useContext(TimesheetDetailParam);
+    
+    const monthRange = useMemo(() => {
+        return getMonthRange(timesheetParams?.month);
+    }, [timesheetParams?.month]);
+    
+    const startDate = monthRange?.start || detail.startDate;
+    const endDate = monthRange?.end || detail.endDate;
+    
     const [employeeInfo, setEmployeeInfo] = useState<EmployeeInfomation | null>(null);
     const [attendanceSummary, setAttendanceSummary] = useState<AttendanceSummary | null>(null);
     const [attendanceDaily, setAttendanceDaily] = useState<AttendanceDaily[]>([]);
@@ -68,16 +75,6 @@ export default function ManagerTimesheetDetail({
     const [isLoading, setIsLoading] = useState(false);
     const [selectedDay, setSelectedDay] = useState<AttendanceDaily | null>(null);
     const [toast, setToast] = useState<{message: string; type: "success" | "error" | "warning"} | null>(null);
-    const timesheetParams = useContext(TimesheetDetailParam);
-
-    useEffect(() => {
-        const monthRange = getMonthRange(timesheetParams?.month);
-
-        if (monthRange) {
-            setStartDate(monthRange.start);
-            setEndDate(monthRange.end);
-        }
-    }, [timesheetParams?.month]);
     // Gọi API để lấy thông tin nhân viên
     useEffect(() => {
         const fetchEmployeeInfo = async () => {
@@ -290,10 +287,6 @@ export default function ManagerTimesheetDetail({
                     <OtherPeriodCard
                         startDate={startDate}
                         endDate={endDate}
-                        onChange={(s, e) => {
-                            setStartDate(s);
-                            setEndDate(e);
-                        }}
                         employeeCode={timesheetParams?.employeeCode}
                     />
                     <OtherEntriesTable
@@ -314,10 +307,6 @@ export default function ManagerTimesheetDetail({
                 <div className="space-y-6">
                     <LeaveSummaryCard
                         month={startDate}
-                        onChange={(s, e) => {
-                            setStartDate(s);
-                            setEndDate(e);
-                        }}
                         leaveSummary={detail.leaveSummary}
                         attendanceSummary={attendanceSummary}
                         employeeCode={timesheetParams?.employeeCode}
@@ -359,13 +348,11 @@ export default function ManagerTimesheetDetail({
 
 function LeaveSummaryCard({
                               month,
-                              onChange,
                               leaveSummary,
                               attendanceSummary,
                               employeeCode,
                           }: {
     month: string;
-    onChange: (s: string, e: string) => void;
     leaveSummary: ManagerTimesheetDetailData["leaveSummary"];
     attendanceSummary: AttendanceSummary | null;
     employeeCode?: string;
@@ -473,8 +460,8 @@ function TimesheetTable({
             const dayNames = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
             const dayName = dayNames[date.getDay()];
 
-            // Kiểm tra xem ngày này có trong tương lai không
-            const isFutureDate = date > currentDate;
+            // Kiểm tra xem ngày này có trong tương lai hoặc hôm nay không
+            const isFutureOrTodayDate = date >= currentDate;
 
             const dailyData = attendanceDaily.find(d => d.date === dateStr);
 
@@ -511,14 +498,14 @@ function TimesheetTable({
                     });
                 }
             } else {
-                // Nếu là ngày trong tương lai, hiển thị "Không có dữ liệu"
+                // Nếu là ngày hôm nay hoặc trong tương lai, hiển thị "Không có dữ liệu"
                 // Nếu là ngày trong quá khứ, hiển thị "Ngày nghỉ"
                 days.push({
                     id: dateStr,
                     day: dayName,
                     date: `${String(day).padStart(2, '0')}/${String(monthNum).padStart(2, '0')}/${year}`,
                     type: "leave",
-                    note: isFutureDate ? "Không có dữ liệu" : "Ngày nghỉ",
+                    note: isFutureOrTodayDate ? "Không có dữ liệu" : "Ngày nghỉ",
                     checkIn: null,
                     checkOut: null,
                     workHours: null,
@@ -594,12 +581,10 @@ function TimesheetTable({
 function OtherPeriodCard({
                              startDate,
                              endDate,
-                             onChange,
                              employeeCode,
                          }: {
     startDate: string;
     endDate: string;
-    onChange: (s: string, e: string) => void;
     employeeCode?: string;
 }) {
     const router = useRouter();
