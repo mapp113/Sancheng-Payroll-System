@@ -62,6 +62,13 @@ export default function PayrollPage() {
         }).format(amount);
     };
 
+    const formatMonth = (dateString: string) => {
+        const date = new Date(dateString);
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${month}/${year}`;
+    };
+
     const handleDownload = async (employeeCode: string, month: string) => {
         try {
             const token = localStorage.getItem("access_token");
@@ -158,7 +165,7 @@ export default function PayrollPage() {
                                         key={index}
                                         className="bg-white transition-colors hover:bg-[#F4FBFF]"
                                     >
-                                        <td className={`px-4 py-3 text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>{row.month}</td>
+                                        <td className={`px-4 py-3 text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>{formatMonth(row.month)}</td>
                                         <td className={`px-4 py-3 text-right text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>{row.dayStandard}</td>
                                         <td className={`px-4 py-3 text-right text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>{row.daysPayable}</td>
                                         <td className={`px-4 py-3 text-right font-semibold text-[#1F2A44] ${index < arr.length - 1 ? 'border-b border-r border-[#CCE1F0]' : 'border-r border-[#CCE1F0]'}`}>
