@@ -82,8 +82,8 @@ export default function AttendanceTable({ employeeCode, month, onDayClick }: Att
       const dayNames = ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
       const dayName = dayNames[date.getDay()];
 
-      // Kiểm tra xem ngày này có trong tương lai không
-      const isFutureDate = date > currentDate;
+      // Kiểm tra xem ngày này có trong tương lai hoặc hôm nay không
+      const isFutureOrTodayDate = date >= currentDate;
 
       const dailyData = attendanceDaily.find((d) => d.date === dateStr);
 
@@ -132,14 +132,14 @@ export default function AttendanceTable({ employeeCode, month, onDayClick }: Att
           });
         }
       } else {
-        // Nếu là ngày trong tương lai, hiển thị "Không có dữ liệu"
+        // Nếu là ngày hôm nay hoặc trong tương lai, hiển thị "Không có dữ liệu"
         // Nếu là ngày trong quá khứ, hiển thị "Ngày nghỉ"
         days.push({
           id: dateStr,
           day: dayName,
           date: `${String(day).padStart(2, "0")}/${String(monthNum).padStart(2, "0")}/${year}`,
           type: "leave",
-          note: isFutureDate ? "Không có dữ liệu" : "Ngày nghỉ",
+          note: isFutureOrTodayDate ? "Không có dữ liệu" : "Ngày nghỉ",
           checkIn: null,
           checkOut: null,
           workHours: null,
