@@ -207,6 +207,7 @@ function LeavesPageContent() {
           {(() => {
             const leaveTypeName = leaveTypeOptions.find(opt => opt.code === formData.leaveType)?.name;
             return leaveTypeName !== "Nghỉ ốm" && leaveTypeName !== "Thai sản" && leaveTypeName !== "Nghỉ không lương" && (
+
               <div className="rounded-full border border-[#4AB4DE] bg-[#F4FBFF] px-4 py-2">
                 <span className="text-sm font-semibold text-[#4AB4DE]">
                   {(loadingBalance) ? (
