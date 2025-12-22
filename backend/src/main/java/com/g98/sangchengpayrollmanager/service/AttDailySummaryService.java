@@ -83,6 +83,18 @@ public class AttDailySummaryService {
         String leaveTypeCode = null;
         //neu da xin va duoc cho nghi
         if (leaveRequest != null) {
+            if (!leaveRequest.getLeaveType().getCode().equalsIgnoreCase("sick")
+                    && !leaveRequest.getLeaveType().getCode().equalsIgnoreCase("maternity")){
+                if(dayType.getName().equalsIgnoreCase("Weekend") || specialDay != null){
+                    AttDailySummary dailySummaryExist = attDailySummaryRepo
+                            .findByUserAndDate(user, date).orElse(null);
+                    if (dailySummaryExist != null) {
+                        attDailySummaryRepo.delete(dailySummaryExist);
+                    }
+                    return null;
+                }
+            }
+
             leaveTypeCode = leaveRequest.getLeaveType().getCode();
             dailySummary.setUser(user);
             dailySummary.setDate(date);
