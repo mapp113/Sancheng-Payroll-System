@@ -65,7 +65,7 @@ public class AttendanceReminderService {
         }
 
         String body = String.format(
-                "Xin chào %s,%n%nHệ thống chưa ghi nhận chấm công của bạn trong ngày %s trước 12h trưa." +
+                "Xin chào %s,%n%nHệ thống chưa ghi nhận chấm công của bạn trong ngày %s trước 9h30 sáng." +
                         " Vui lòng kiểm tra lại và thực hiện chấm công hoặc liên hệ bộ phận nhân sự nếu có vướng mắc.%n%n" +
                         "Trân trọng,%nSangcheng Payroll Manager",
                 user.getFullName(),

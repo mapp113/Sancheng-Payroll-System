@@ -15,7 +15,7 @@ public class AttendanceReminderScheduler {
 
     private final AttendanceReminderService attendanceReminderService;
 
-    @Scheduled(cron = "${app.attendance-reminder.cron:0 00 12 * * ?}")
+    @Scheduled(cron = "${app.attendance-reminder.cron:0 30 09 * * ?}")
     public void sendMiddayReminders() {
         LocalDate today = LocalDate.now();
         log.info("Chạy job nhắc nhở chấm công buổi trưa cho ngày {}", today);
