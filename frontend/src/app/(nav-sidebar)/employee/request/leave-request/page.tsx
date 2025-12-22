@@ -204,19 +204,22 @@ function LeavesPageContent() {
               ))}
             </select>
           </div>
-          {leaveTypeOptions.find(opt => opt.code === formData.leaveType)?.name !== "Nghỉ ốm" && (
-            <div className="rounded-full border border-[#4AB4DE] bg-[#F4FBFF] px-4 py-2">
-              <span className="text-sm font-semibold text-[#4AB4DE]">
-                {(loadingBalance) ? (
-                  "Đang tải..."
-                ) : leaveBalance ? (
-                  `Còn lại: ${leaveBalance.remainingDays} ngày`
-                ) : (
-                  "Còn lại: -- ngày"
-                )}
-              </span>
-            </div>
-          )}
+          {(() => {
+            const leaveTypeName = leaveTypeOptions.find(opt => opt.code === formData.leaveType)?.name;
+            return leaveTypeName !== "Nghỉ ốm" && leaveTypeName !== "Thai sản" && leaveTypeName !== "Nghỉ không lương" && (
+              <div className="rounded-full border border-[#4AB4DE] bg-[#F4FBFF] px-4 py-2">
+                <span className="text-sm font-semibold text-[#4AB4DE]">
+                  {(loadingBalance) ? (
+                    "Đang tải..."
+                  ) : leaveBalance ? (
+                    `Còn lại: ${leaveBalance.remainingDays} ngày`
+                  ) : (
+                    "Còn lại: -- ngày"
+                  )}
+                </span>
+              </div>
+            );
+          })()}
         </div>
         <div className="mb-4 flex items-center gap-3">
           <label className="min-w-[120px] text-sm font-medium text-[#1F2A44]">Ngày bắt đầu:</label>
