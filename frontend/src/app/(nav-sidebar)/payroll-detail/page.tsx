@@ -342,6 +342,7 @@ function splitComponentItems(
         deductionItems.push({
             label: "Thuế Thu Nhập",
             value: Math.abs(paySummary.taxAmount),
+            description: `Thu nhập tính thuế: ${paySummary.taxableIncome.toLocaleString('vi-VN')} ₫`,
             subItems: taxDeductionItems.length > 0 ? taxDeductionItems : undefined,
         });
     }
